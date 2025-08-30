@@ -46,5 +46,6 @@ jobs:
 
   coverage-upload:
     needs: [third-party-tests, apple-tests]
+    if: always() # ⬅️ Importante: executa mesmo se alguns jobs falharem
     uses: snapshot-testing/.github/.github/workflows/coverage-upload.yml@main
     secrets: inherit
