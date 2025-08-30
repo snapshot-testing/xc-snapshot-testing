@@ -34,8 +34,8 @@ jobs:
           - "platform=watchOS Simulator,arch=arm64,name=Apple Watch Series 10 (42mm),OS=26.0"
           - "platform=tvOS Simulator,arch=arm64,name=Apple TV 4K (3rd generation) (at 1080p),OS=26.0"
           - "platform=visionOS Simulator,arch=arm64,name=Apple Vision Pro,OS=26.0"
-          - "platform=macOS"
-          - "platform=macOS,variant=Catalyst"
+          - "platform=macOS,arch=arm64,name=My Mac"
+          - "platform=macOS,arch=arm64,variant=Mac Catalyst,name=My Mac"
 
     uses: snapshot-testing/.github/.github/workflows/apple-tests.yml@main
     with:
