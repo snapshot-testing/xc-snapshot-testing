@@ -18,7 +18,7 @@ jobs:
   third-party-tests:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-11-arm]
     uses: snapshot-testing/.github/.github/workflows/third-party-tests.yml@main
     with:
       platform: ${{ matrix.os }}
