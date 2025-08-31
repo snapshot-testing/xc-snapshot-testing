@@ -6,7 +6,7 @@ let package = Package(
     name: "xc-snapshot-testing",
     platforms: [
         .iOS(.v13),
-        .macOS(.v11),
+        .macOS(.v10_15),
         .tvOS(.v13),
         .watchOS(.v6),
     ],
