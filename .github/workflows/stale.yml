@@ -14,5 +14,5 @@ jobs:
     permissions:
       issues: write
       pull-requests: write
-    uses: request-dl/.github/.github/workflows/stale.yml@main
+    uses: snapshot-testing/.github/.github/workflows/stale.yml@main
     secrets: inherit

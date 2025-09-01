@@ -11,5 +11,5 @@ jobs:
     permissions:
       issues: write
       pull-requests: write
-    uses: request-dl/.github/.github/workflows/auto-assign.yml@main
+    uses: snapshot-testing/.github/.github/workflows/auto-assign.yml@main
     secrets: inherit
