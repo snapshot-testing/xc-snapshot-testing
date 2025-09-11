@@ -10,5 +10,5 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    uses: request-dl/.github/.github/workflows/generate-release.yml@main
+    uses: snapshot-testing/.github/.github/workflows/generate-release.yml@main
     secrets: inherit

@@ -1,6 +1,6 @@
 [![Swift Compatibility](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fsnapshot-testing%2Fxc-snapshot-testing%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/snapshot-testing/xc-snapshot-testing)
 [![Platform Compatibility](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fsnapshot-testing%2Fxc-snapshot-testing%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/snapshot-testing/xc-snapshot-testing)
-[![codecov](https://codecov.io/gh/snapshot-testing/xc-snapshot-testing/graph/badge.svg?token=MW5J053T85)](https://codecov.io/gh/snapshot-testing/xc-snapshot-testing)
+[![codecov](https://codecov.io/gh/snapshot-testing/xc-snapshot-testing/graph/badge.svg?token=YN43HSRRAU)](https://codecov.io/gh/snapshot-testing/xc-snapshot-testing)
 
 # XCSnapshotTesting
 
@@ -26,7 +26,7 @@ XCSnapshotTesting can be installed using Swift Package Manager. To include it in
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/snapshot-testing/xc-snapshot-testing.git", from: "3.0.3")
+    .package(url: "https://github.com/snapshot-testing/xc-snapshot-testing.git", from: "1.0.0")
 ]
 ```
 
