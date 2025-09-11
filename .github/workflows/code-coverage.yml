@@ -29,7 +29,7 @@ jobs:
             name: "Linux"
           # - platform: "windows-latest"
           #   name: "Windows"
-    uses: snapshot-testing/.github/.github/workflows/third-party-tests.yml@main
+    uses: request-dl/.github/.github/workflows/third-party-tests.yml@main
     with:
       platform: ${{ matrix.platform }}
       name: ${{ matrix.name }}
@@ -59,7 +59,7 @@ jobs:
             name: "macOS Catalyst"
     uses: snapshot-testing/.github/.github/workflows/apple-tests.yml@main
     with:
-      package-name: "xc-snapshot-testing"
+      package-name: "xc-snapshot-testing-Package"
       destination: ${{ matrix.destination }}
       name: ${{ matrix.name }}
       coverage-enabled: true
