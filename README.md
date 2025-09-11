@@ -4,21 +4,13 @@
 
 # XCSnapshotTesting
 
-Under development 🚧
+WIP 🚧
 
 ## [Documentation](https://swiftpackageindex.com/snapshot-testing/xc-snapshot-testing/main/documentation/xcsnapshottesting)
 
 Check out our comprehensive documentation to get all the necessary information to start using XCSnapshotTesting in your project.
 
-### First steps
-
-- [Creating the project property](https://swiftpackageindex.com/snapshot-testing/xc-snapshot-testing/main/documentation/xcsnapshottesting/creating-the-project-property)
-- [Preparing the certificates](https://swiftpackageindex.com/snapshot-testing/xc-snapshot-testing/main/documentation/xcsnapshottesting/preparing-the-certificates)
-
-### Essentials
-
-- [Building the request](https://swiftpackageindex.com/snapshot-testing/xc-snapshot-testing/main/documentation/xcsnapshottesting/building-the-request)
-- [Executing the request](https://swiftpackageindex.com/snapshot-testing/xc-snapshot-testing/main/documentation/xcsnapshottesting/executing-the-request)
+WIP...
 
 ## Installation
 
@@ -26,13 +18,13 @@ XCSnapshotTesting can be installed using Swift Package Manager. To include it in
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/snapshot-testing/xc-snapshot-testing.git", from: "1.0.0")
+    .package(url: "https://github.com/snapshot-testing/xc-snapshot-testing", from: "1.0.0")
 ]
 ```
 
 ## Usage
 
-Under development 🚧
+WIP 🚧
 
 ## Versioning
 
