@@ -4,8 +4,18 @@ final class AsyncOperation: @unchecked Sendable {
 
     private enum State {
         case idle
-        case scheduled(UnsafeContinuation<Void, Error>)
+        case scheduled(UnsafeContinuation<Void, Never>)
         case cancelled
+    }
+
+    var isScheduled: Bool {
+        lock.withLock {
+            if case .scheduled = _state {
+                return true
+            } else {
+                return false
+            }
+        }
     }
 
     private let lock = NSLock()
@@ -13,7 +23,7 @@ final class AsyncOperation: @unchecked Sendable {
 
     init() {}
 
-    func schedule(_ continuation: UnsafeContinuation<Void, Error>) {
+    func schedule(_ continuation: UnsafeContinuation<Void, Never>) {
         lock.withLock {
             if case .idle = _state {
                 _state = .scheduled(continuation)
@@ -24,6 +34,7 @@ final class AsyncOperation: @unchecked Sendable {
     func resume() {
         lock.withLock {
             if case .scheduled(let continuation) = _state {
+                _state = .idle
                 continuation.resume()
             }
         }
@@ -32,14 +43,6 @@ final class AsyncOperation: @unchecked Sendable {
     func cancelled() {
         lock.withLock {
             _state = .cancelled
-        }
-    }
-
-    func dispose() {
-        lock.withLock {
-            if case .scheduled(let continuation) = _state {
-                continuation.resume(throwing: CancellationError())
-            }
         }
     }
 }
