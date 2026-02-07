@@ -30,10 +30,10 @@ extension Snapshot {
                     let executor = try await operation(configuration, executor)
                     let output = try await executor(newInput)
 
-                    await windowPool.release(window)
+                    windowPool.release(window)
                     return output
                 } catch {
-                    await windowPool.release(window)
+                    windowPool.release(window)
                     throw error
                 }
             }

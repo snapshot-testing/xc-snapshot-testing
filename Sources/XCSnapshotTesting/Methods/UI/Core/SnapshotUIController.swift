@@ -10,6 +10,8 @@ import SceneKit
 import SpriteKit
 #endif
 
+import SwiftAsyncStream
+
 #if os(iOS) || os(tvOS) || os(macOS) || os(visionOS)
 @MainActor
 class SnapshotUIController: SDKViewController {
@@ -107,10 +109,7 @@ class SnapshotUIController: SDKViewController {
         super.viewDidLayout()
         if isWaitingSnapshotSignal {
             isWaitingSnapshotSignal = false
-
-            Task {
-                await snapshotSignal.signal()
-            }
+            snapshotSignal.signal()
         }
     }
 
@@ -189,8 +188,8 @@ class SnapshotUIController: SDKViewController {
         view.layoutIfNeeded()
         #endif
 
-        try await snapshotSignal.wait()
-        await snapshotSignal.lock()
+        await snapshotSignal.wait()
+        snapshotSignal.lock()
 
         if let sceneView = childController.view as? SCNView {
             return sceneView.snapshot()
@@ -265,8 +264,8 @@ class SnapshotUIController: SDKViewController {
         view.layoutIfNeeded()
         #endif
 
-        try await snapshotSignal.wait()
-        await snapshotSignal.lock()
+        await snapshotSignal.wait()
+        snapshotSignal.lock()
 
         return method(childController)
     }
