@@ -21,11 +21,15 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.3.3"),
+        .package(url: "https://github.com/o-nnerb/swift-async-stream", from: "1.3.1"),
+        .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.4.1"),
     ],
     targets: [
         .target(
-            name: "XCSnapshotTesting"
+            name: "XCSnapshotTesting",
+            dependencies: [
+                .product(name: "SwiftAsyncStream", package: "swift-async-stream")
+            ]
         ),
         .target(
             name: "XCSnapshotTestingCustomDump",

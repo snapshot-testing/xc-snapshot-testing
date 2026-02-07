@@ -4,6 +4,8 @@
 import UIKit
 #endif
 
+import SwiftAsyncStream
+
 #if os(iOS) || os(tvOS) || os(visionOS) || os(macOS)
 @MainActor
 class WindowLease {
@@ -18,14 +20,14 @@ class WindowLease {
         window.windowLease = self
     }
 
-    func lock() async throws {
+    func lock() async {
         pendingTasks += 1
-        try await _lock.lock()
+        await _lock.lock()
         pendingTasks -= 1
     }
 
-    func unlock() async {
-        await _lock.unlock()
+    func unlock() {
+        _lock.unlock()
     }
 }
 

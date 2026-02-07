@@ -46,7 +46,7 @@ final class WindowPool {
             let lease = leases.sorted(by: {
                 $0.pendingTasks >= $1.pendingTasks
             }).first!
-            try await lease.lock()
+            await lease.lock()
             #if !os(macOS)
             lease.window.windowScene = windowScene
             #endif
@@ -65,14 +65,14 @@ final class WindowPool {
 
         let WindowLease = WindowLease(window: window)
         leases.append(WindowLease)
-        try await WindowLease.lock()
+        await WindowLease.lock()
         return window
     }
 
-    func release(_ window: SDKWindow) async {
+    func release(_ window: SDKWindow) {
         defer { display(window, visible: false) }
 
-        await window.windowLease?.unlock()
+        window.windowLease?.unlock()
     }
 
     // MARK: - Private methods
