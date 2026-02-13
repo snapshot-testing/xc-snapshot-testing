@@ -96,6 +96,18 @@ public struct DeviceDynamicInterfaceSizeClass: Sendable {
 // MARK: - iPhone
 extension DeviceDynamicInterfaceSizeClass {
 
+    // MARK: - iPhone 17
+
+    public static let iPhone17ProMax = withRegularLandscape
+
+    public static let iPhone17Pro = withCompactLandscape
+
+    public static let iPhone17 = withCompactLandscape
+
+    // MARK: - iPhone Air
+
+    public static let iPhoneAir = withRegularLandscape
+
     // MARK: - iPhone 16
 
     public static let iPhone16ProMax = withRegularLandscape

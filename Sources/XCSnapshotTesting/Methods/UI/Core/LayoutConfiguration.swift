@@ -168,6 +168,66 @@ extension LayoutConfiguration {
     }
 }
 
+// MARK: - iPhone 17
+extension LayoutConfiguration {
+
+    public static let iPhone17ProMax: LayoutConfiguration = .iPhone17ProMax(.portrait)
+
+    public static func iPhone17ProMax(_ orientation: DeviceOrientation) -> LayoutConfiguration {
+        iPhone(
+            size: .screen6_9,
+            portraitSafeArea: EdgeInsets(top: 62, bottom: 34, right: 0),
+            landscapeSafeArea: EdgeInsets(top: 20, left: 62, bottom: 20, right: 62),
+            orientation: orientation,
+            displayScale: 3,
+            deviceInterfaceSizeClass: .iPhone17ProMax
+        )
+    }
+
+    public static let iPhone17Pro: LayoutConfiguration = .iPhone17Pro(.portrait)
+
+    public static func iPhone17Pro(_ orientation: DeviceOrientation) -> LayoutConfiguration {
+        iPhone(
+            size: .screen6_3,
+            portraitSafeArea: EdgeInsets(top: 62, bottom: 34, right: 0),
+            landscapeSafeArea: EdgeInsets(top: 20, left: 62, bottom: 20, right: 62),
+            orientation: orientation,
+            displayScale: 3,
+            deviceInterfaceSizeClass: .iPhone17Pro
+        )
+    }
+
+    public static let iPhone17: LayoutConfiguration = .iPhone17(.portrait)
+
+    public static func iPhone17(_ orientation: DeviceOrientation) -> LayoutConfiguration {
+        iPhone(
+            size: .screen6_3,
+            portraitSafeArea: EdgeInsets(top: 62, bottom: 34, right: 0),
+            landscapeSafeArea: EdgeInsets(top: 20, left: 62, bottom: 20, right: 62),
+            orientation: orientation,
+            displayScale: 3,
+            deviceInterfaceSizeClass: .iPhone17
+        )
+    }
+}
+
+// MARK: - iPhone Air
+extension LayoutConfiguration {
+
+    public static let iPhoneAir: LayoutConfiguration = .iPhone16ProMax(.portrait)
+
+    public static func iPhoneAir(_ orientation: DeviceOrientation) -> LayoutConfiguration {
+        iPhone(
+            size: .screen6_5v2,
+            portraitSafeArea: EdgeInsets(top: 68, bottom: 34, right: 0),
+            landscapeSafeArea: EdgeInsets(top: 20, left: 68, bottom: 29, right: 68),
+            orientation: orientation,
+            displayScale: 3,
+            deviceInterfaceSizeClass: .iPhoneAir
+        )
+    }
+}
+
 // MARK: - iPhone 16
 extension LayoutConfiguration {
 
@@ -216,6 +276,18 @@ extension LayoutConfiguration {
             orientation: orientation,
             displayScale: 3,
             deviceInterfaceSizeClass: .iPhone16
+        )
+    }
+
+    public static let iPhone16e: LayoutConfiguration = .iPhone16e(.portrait)
+
+    public static func iPhone16e(_ orientation: DeviceOrientation) -> LayoutConfiguration {
+        iPhone(
+            size: .screen6_1v1,
+            portraitSafeArea: EdgeInsets(top: 59, bottom: 34, right: 0),
+            orientation: orientation,
+            displayScale: 3,
+            deviceInterfaceSizeClass: .iPhone16e
         )
     }
 }

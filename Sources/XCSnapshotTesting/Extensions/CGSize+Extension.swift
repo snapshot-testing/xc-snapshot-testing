@@ -61,6 +61,9 @@ extension CGSize {
     /// 414 x 896
     static let screen6_5 = CGSize(width: 414, height: 896)
 
+    /// 414 x 896
+    static let screen6_5v2 = CGSize(width: 420, height: 912)
+
     /// 402 x 874
     static let screen6_3 = CGSize(width: 402, height: 874)
 
