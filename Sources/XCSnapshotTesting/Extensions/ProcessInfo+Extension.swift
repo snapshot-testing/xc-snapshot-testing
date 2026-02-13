@@ -10,10 +10,4 @@ extension ProcessInfo {
             isDirectory: true
         )
     }
-
-    static var isXcode: Bool {
-        ProcessInfo.processInfo.environment.keys.contains(
-            "__XCODE_BUILT_PRODUCTS_DIR_PATHS"
-        )
-    }
 }

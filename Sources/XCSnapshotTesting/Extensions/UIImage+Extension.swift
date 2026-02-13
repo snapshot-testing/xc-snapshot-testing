@@ -1,7 +1,9 @@
 #if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
 import UIKit
+import Accelerate.vImage
 #elseif os(macOS)
 @preconcurrency import AppKit
+import Accelerate.vImage
 #endif
 
 #if os(iOS) || os(tvOS) || os(visionOS)
@@ -97,36 +99,7 @@ extension SDKImage {
 
     @MainActor
     func substract(_ image: SDKImage) -> SDKImage {
-        #if os(macOS)
-        guard let lhsImage = cgImage, let rhsImage = image.cgImage else {
-            return SDKImage()
-        }
-
-        let oldCiImage = CIImage(cgImage: lhsImage)
-        let newCiImage = CIImage(cgImage: rhsImage)
-        let differenceFilter = CIFilter(name: "CIDifferenceBlendMode")!
-        differenceFilter.setValue(oldCiImage, forKey: kCIInputImageKey)
-        differenceFilter.setValue(newCiImage, forKey: kCIInputBackgroundImageKey)
-        let maxSize = CGSize(
-            width: max(size.width, image.size.width),
-            height: max(size.height, image.size.height)
-        )
-        let rep = NSCIImageRep(ciImage: differenceFilter.outputImage!)
-        let difference = NSImage(size: maxSize)
-        difference.addRepresentation(rep)
-        return difference
-        #else
-        let width = max(self.size.width, image.size.width)
-        let height = max(self.size.height, image.size.height)
-        let scale = max(self.scale, image.scale)
-        let size = CGSize(width: width, height: height)
-        UIGraphicsBeginImageContextWithOptions(CGSize(width: width, height: height), true, scale)
-        image.draw(in: .init(origin: .zero, size: size))
-        self.draw(in: .init(origin: .zero, size: size), blendMode: .difference, alpha: 1)
-        let differenceImage = UIGraphicsGetImageFromCurrentImageContext()!
-        UIGraphicsEndImageContext()
-        return differenceImage
-        #endif
+        normalizedComponentDiff(image) ?? blendModeDiff(image)
     }
 
     @MainActor
@@ -194,6 +167,148 @@ extension SDKImage {
         }
 
         return nil
+    }
+}
+
+extension SDKImage {
+
+    private func normalizedComponentDiff(_ image: SDKImage) -> SDKImage? {
+        #if os(macOS)
+        guard
+            let oldCg = self.cgImage,
+            let newCg = image.cgImage,
+            oldCg.width == newCg.width,
+            oldCg.height == newCg.height
+        else { return nil }
+
+        return nil
+        #else
+        guard
+            let oldCgImage = self.cgImage,
+            let pngData = image.pngData(),
+            let newCgImage = SDKImage(data: pngData)?.cgImage,
+            oldCgImage.width == newCgImage.width,
+            oldCgImage.height == newCgImage.height,
+            let oldData = oldCgImage.dataProvider?.data,
+            let newData = newCgImage.dataProvider?.data
+        else {
+            return nil
+        }
+
+        guard
+            let outputColorSpace = CGColorSpace(name: CGColorSpace.linearGray),
+            let outputFormat = vImage_CGImageFormat(
+                bitsPerComponent: ImageContext.bitsPerComponent,
+                bitsPerPixel: ImageContext.bitsPerComponent,
+                colorSpace: outputColorSpace,
+                bitmapInfo: .init()
+            )
+        else {
+            return nil
+        }
+
+        let width = oldCgImage.width
+        let height = oldCgImage.height
+        let pixelCount = width * height
+        let scale = self.scale
+
+        let oldBytes = CFDataGetBytePtr(oldData)!
+        let newBytes = CFDataGetBytePtr(newData)!
+
+        var diffBytes = [UInt8](repeating: 0, count: pixelCount)
+        var index = 0
+        while index < pixelCount {
+            defer { index += 1 }
+            let pixelOffset = index * ImageContext.bytesPerPixel
+            let rOld = Int16(oldBytes[pixelOffset])
+            let gOld = Int16(oldBytes[pixelOffset + 1])
+            let bOld = Int16(oldBytes[pixelOffset + 2])
+            let aOld = Int16(oldBytes[pixelOffset + 3])
+
+            let rNew = Int16(newBytes[pixelOffset])
+            let gNew = Int16(newBytes[pixelOffset + 1])
+            let bNew = Int16(newBytes[pixelOffset + 2])
+            let aNew = Int16(newBytes[pixelOffset + 3])
+
+            let rDiff = abs(rOld - rNew)
+            let gDiff = abs(gOld - gNew)
+            let bDiff = abs(bOld - bNew)
+            let aDiff = abs(aOld - aNew)
+
+            let maxDiff = max(rDiff, gDiff, bDiff, aDiff)
+            diffBytes[index] = UInt8(maxDiff)
+        }
+
+        let outputCgImage: CGImage? = diffBytes.withUnsafeMutableBytes { diffPtr in
+            var diffBuffer = vImage_Buffer(
+                data: diffPtr.baseAddress,
+                height: vImagePixelCount(height),
+                width: vImagePixelCount(width),
+                rowBytes: width
+            )
+            do {
+                var normalizedBuffer = try vImage_Buffer(
+                    width: width,
+                    height: height,
+                    bitsPerPixel: UInt32(ImageContext.bitsPerComponent)
+                )
+                defer { normalizedBuffer.free() }
+
+                let error = vImageContrastStretch_Planar8(
+                    &diffBuffer,
+                    &normalizedBuffer,
+                    vImage_Flags(kvImageNoFlags)
+                )
+
+                let buffer = error == kvImageNoError ? normalizedBuffer : diffBuffer
+                return try buffer.createCGImage(format: outputFormat)
+            } catch {
+                return nil
+            }
+        }
+
+        guard let outputCgImage else { return nil }
+        return SDKImage(cgImage: outputCgImage, scale: scale, orientation: .up)
+        #endif
+    }
+
+    // MARK: - Fallback: blend mode tradicional
+    private func blendModeDiff(_ image: SDKImage) -> SDKImage {
+        #if os(macOS)
+        guard
+            let lhsImage = self.cgImage,
+            let rhsImage = image.cgImage
+        else {
+            return SDKImage(size: .zero)
+        }
+
+        let oldCiImage = CIImage(cgImage: lhsImage)
+        let newCiImage = CIImage(cgImage: rhsImage)
+        let differenceFilter = CIFilter(name: "CIDifferenceBlendMode")!
+        differenceFilter.setValue(oldCiImage, forKey: kCIInputImageKey)
+        differenceFilter.setValue(newCiImage, forKey: kCIInputBackgroundImageKey)
+
+        let maxSize = CGSize(
+            width: max(self.size.width, image.size.width),
+            height: max(self.size.height, image.size.height)
+        )
+        let rep = NSCIImageRep(ciImage: differenceFilter.outputImage!)
+        let difference = NSImage(size: maxSize)
+        difference.addRepresentation(rep)
+        return difference
+        #else
+        let width = max(self.size.width, image.size.width)
+        let height = max(self.size.height, image.size.height)
+        let scale = max(self.scale, image.scale)
+        let size = CGSize(width: width, height: height)
+
+        UIGraphicsBeginImageContextWithOptions(size, true, scale)
+        image.draw(in: CGRect(origin: .zero, size: size))
+        self.draw(in: CGRect(origin: .zero, size: size), blendMode: .difference, alpha: 1)
+        let differenceImage = UIGraphicsGetImageFromCurrentImageContext()!
+        UIGraphicsEndImageContext()
+        return differenceImage
+        #endif
     }
 }
 #endif
