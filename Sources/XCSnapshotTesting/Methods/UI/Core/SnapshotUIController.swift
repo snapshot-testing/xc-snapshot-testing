@@ -140,7 +140,7 @@ class SnapshotUIController: SDKViewController {
             isWaitingSnapshotSignal = false
 
             Task {
-                await snapshotSignal.signal()
+                snapshotSignal.signal()
             }
         }
     }
