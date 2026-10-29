@@ -476,5 +476,12 @@ func CGContextCreateBitmapContext(size: CGSize, opaque: Bool, scale: CGFloat) ->
     return context
 }
 
-struct RenderingError: Error {}
+struct RenderingError: Error, CustomStringConvertible, LocalizedError {
+
+    var description: String {
+        "No image could be generated for this view as its size was zero. Please set an explicit size in the test."
+    }
+
+    var errorDescription: String? { description }
+}
 #endif

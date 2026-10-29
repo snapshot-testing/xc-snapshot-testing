@@ -41,6 +41,18 @@ private final class TraitRecorder: UIView {
     }
 }
 
+/// Remembers the trait collection it received once it was laid out as a child of another controller.
+@MainActor
+private final class TraitRecordingViewController: UIViewController {
+
+    private(set) var recorded: UITraitCollection?
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        recorded = traitCollection
+    }
+}
+
 /// Changes color with the interface style, so the style shows up in the pixels.
 @MainActor
 private final class DynamicColorView: UIView {
@@ -238,6 +250,30 @@ struct TraitsTests {
         #expect(traits.userInterfaceStyle == .unspecified)
         #expect(traits.layoutDirection == .unspecified)
         #expect(traits.displayScale == 1)
+    }
+
+    @Test func traitsReachControllersEmbeddedInATabBarController() async throws {
+        let child = TraitRecordingViewController()
+        let tabs = UITabBarController()
+        tabs.viewControllers = [child]
+
+        _ = try await render(
+            AsyncSnapshot<UITabBarController, ImageBytes>.image(
+                layout: .fixed(width: 200, height: 300),
+                traits: Traits(userInterfaceStyle: .dark)
+            ),
+            tabs
+        )
+
+        #expect(child.recorded?.userInterfaceStyle == .dark)
+    }
+
+    @Test func theHierarchyDescribesTheViewControllerTree() async throws {
+        let description = try await AsyncSnapshot<ColorViewController, StringBytes>.hierarchy
+            .executor(ColorViewController(.red)).rawValue
+
+        #expect(description.contains("ColorViewController"))
+        #expect(!description.contains("0x"))
     }
 }
 #endif
