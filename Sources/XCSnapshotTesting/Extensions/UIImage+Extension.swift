@@ -119,7 +119,7 @@ extension SDKImage {
         let pixelCount = oldCgImage.width * oldCgImage.height
         let byteCount = ImageContext.bytesPerPixel * pixelCount
         var oldBytes = [UInt8](repeating: 0, count: byteCount)
-        guard let oldData = oldCgImage.context(with: &oldBytes)?.data else {
+        guard let oldContext = oldCgImage.context(with: &oldBytes), let oldData = oldContext.data else {
             return "Reference image's data could not be loaded."
         }
         if let newContext = newCgImage.context(), let newData = newContext.data {
@@ -140,8 +140,17 @@ extension SDKImage {
         }
         #if os(iOS) || os(tvOS) || os(macOS)
         if perceptualPrecision < 1 {
-            return CIImage(cgImage: oldCgImage).perceptuallyCompare(
-                CIImage(cgImage: newCgImage),
+            // Compare the images remapped to the common color space above. Passing the originals
+            // would compare, for example, a Display P3 reference against an extended sRGB snapshot,
+            // which reports a difference on every pixel even when they are perceptually identical.
+            guard
+                let oldNormalized = oldContext.makeImage(),
+                let newNormalized = newerContext.makeImage()
+            else {
+                return "Newly-taken snapshot's data could not be loaded."
+            }
+            return CIImage(cgImage: oldNormalized).perceptuallyCompare(
+                CIImage(cgImage: newNormalized),
                 pixelPrecision: precision,
                 perceptualPrecision: perceptualPrecision
             )
@@ -188,9 +197,7 @@ extension SDKImage {
             let pngData = image.pngData(),
             let newCgImage = SDKImage(data: pngData)?.cgImage,
             oldCgImage.width == newCgImage.width,
-            oldCgImage.height == newCgImage.height,
-            let oldData = oldCgImage.dataProvider?.data,
-            let newData = newCgImage.dataProvider?.data
+            oldCgImage.height == newCgImage.height
         else {
             return nil
         }
@@ -212,8 +219,18 @@ extension SDKImage {
         let pixelCount = width * height
         let scale = self.scale
 
-        let oldBytes = CFDataGetBytePtr(oldData)!
-        let newBytes = CFDataGetBytePtr(newData)!
+        // NB: Redraw both images into the same 8-bit RGBA context `compare` uses. Reading the raw
+        //     provider bytes assumes that layout, which reads out of bounds on grayscale or 24-bit
+        //     images and points at the wrong pixels for 16-bit ones.
+        let byteCount = ImageContext.bytesPerPixel * pixelCount
+        var oldBytes = [UInt8](repeating: 0, count: byteCount)
+        var newBytes = [UInt8](repeating: 0, count: byteCount)
+        guard
+            oldCgImage.context(with: &oldBytes) != nil,
+            newCgImage.context(with: &newBytes) != nil
+        else {
+            return nil
+        }
 
         var diffBytes = [UInt8](repeating: 0, count: pixelCount)
         var index = 0
