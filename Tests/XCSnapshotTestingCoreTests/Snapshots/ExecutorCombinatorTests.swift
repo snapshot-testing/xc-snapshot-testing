@@ -192,6 +192,7 @@ struct ExecutorCombinatorTests {
         #expect(try await SnapshotRunner.run(snapshot, 3) == "n=3")
     }
 
+    #if canImport(Darwin)
     // MARK: - Main thread
 
     @Test func performOnMainThreadRunsOnTheMainThreadFromAnyThread() async {
@@ -199,4 +200,5 @@ struct ExecutorCombinatorTests {
 
         #expect(isMain)
     }
+    #endif
 }

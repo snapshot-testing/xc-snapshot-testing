@@ -1,3 +1,4 @@
+#if canImport(Darwin)
 import Foundation
 @preconcurrency import XCTest
 
@@ -269,3 +270,4 @@ final class AssertTests: XCTestCase {
         }
     }
 }
+#endif

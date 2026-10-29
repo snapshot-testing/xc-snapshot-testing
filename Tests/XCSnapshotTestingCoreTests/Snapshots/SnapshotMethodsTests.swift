@@ -3,6 +3,10 @@ import Testing
 
 @_spi(Internals) @testable import XCSnapshotTesting
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 @Suite("Snapshot methods")
 struct SnapshotMethodsTests {
 

@@ -50,12 +50,18 @@ jobs:
       force-skip-breaking-changes: ${{ contains(github.event.pull_request.labels.*.name, 'force-skip-ci') }}
 
       # Step 4 – Apple
+      enable-apple-tests: true
+      package-name: "xc-snapshot-testing-Package"
       xcode-version: '27.1'
+      apple-tests-max-parallelization-width: '2'
+      apple-tests-parallel-testing-worker-count: '2'
+      apple-tests-timeout-minutes: 45
+
+      # Step 4 – Third Party
+      enable-third-party-tests: true
 
       # Step 4 – Release Builds (build only)
       enable-release-builds: true
 
-      # Apple / third-party tests are intentionally disabled until the test
-      # suites are rewritten; re-enable enable-apple-tests and
-      # enable-third-party-tests (plus enable-coverage-upload) then.
+      # Coverage is not uploaded yet: it needs a CODECOV_TOKEN secret for this repository.
     secrets: inherit

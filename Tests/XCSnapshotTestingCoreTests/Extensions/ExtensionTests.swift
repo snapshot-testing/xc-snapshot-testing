@@ -1,8 +1,11 @@
-import CoreGraphics
 import Foundation
 import Testing
 
 @_spi(Internals) @testable import XCSnapshotTesting
+
+#if canImport(CoreGraphics)
+import CoreGraphics
+#endif
 
 @Suite("Extensions")
 struct ExtensionTests {
@@ -25,6 +28,7 @@ struct ExtensionTests {
         #expect("keeps spaces".sanitizingPathComponent() == "keeps spaces")
     }
 
+    #if canImport(Darwin)
     @Test func uniformTypeIdentifierIsResolvedFromTheExtension() {
         #expect("png".uniformTypeIdentifier() == "public.png")
         #expect("txt".uniformTypeIdentifier() == "public.plain-text")
@@ -61,6 +65,7 @@ struct ExtensionTests {
         #expect(scaled.midY == rect.midY)
         #expect(rect.scale(by: 1) == rect)
     }
+    #endif
 
     // MARK: - ProcessInfo
 
