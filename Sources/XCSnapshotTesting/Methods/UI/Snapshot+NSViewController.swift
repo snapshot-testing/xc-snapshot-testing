@@ -26,6 +26,7 @@ extension AsyncSnapshot where Input: NSViewController & Sendable, Output == Imag
     ///   - perceptualPrecision: Tolerance for color and tonal differences (values closer to 1 require more exact matches).
     ///   - layout: Specifies how the view should be sized during rendering (e.g., specific device simulation).
     ///   - delay: Delay before capturing the image (useful for waiting for animations or dynamic content).
+    ///   - prepare: An asynchronous closure that runs on the main actor after the layout, the `delay` and the web view loading, and right before the snapshot is taken. Use it to wait for conditions such as `onAppear` having run or background tasks having finished.
     ///   - application: The `NSApplication` instance to render the windows.
     ///
     /// Example usage:
@@ -47,6 +48,7 @@ extension AsyncSnapshot where Input: NSViewController & Sendable, Output == Imag
         perceptualPrecision: Float = 1,
         layout: SnapshotLayout = .sizeThatFits,
         delay: Double = .zero,
+        prepare: (@MainActor @Sendable () async throws -> Void)? = nil,
         application: NSApplication? = nil
     ) -> AsyncSnapshot<Input, Output> {
         let config = LayoutConfiguration.resolve(layout)
@@ -66,6 +68,7 @@ extension AsyncSnapshot where Input: NSViewController & Sendable, Output == Imag
                 .layoutIfNeeded()
                 .sleep(nanoseconds: UInt64(delay * 1_000_000_000))
                 .waitLoadingStateIfNeeded(tolerance: SnapshotEnvironment.current.webViewTolerance)
+                .prepare(prepare)
                 .snapshot(executor)
             }
         )

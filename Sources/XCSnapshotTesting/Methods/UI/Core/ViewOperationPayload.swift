@@ -45,6 +45,19 @@ extension Async where Output == ViewOperationPayload {
         }
     }
 
+    func prepare(
+        _ operation: (@MainActor @Sendable () async throws -> Void)?
+    ) -> Async<Input, Output> {
+        guard let operation else {
+            return self
+        }
+
+        return map { @MainActor payload in
+            try await operation()
+            return payload
+        }
+    }
+
     func snapshot(
         _ executor: Sync<SDKImage, ImageBytes>
     ) -> Async<Input, ImageBytes> {

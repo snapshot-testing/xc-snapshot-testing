@@ -59,7 +59,11 @@ class SnapshotUIController: SDKViewController {
         super.init(nibName: nil, bundle: nil)
     }
 
-    init<Content: View>(_ content: Content, with configuration: LayoutConfiguration) {
+    init<Content: View>(
+        _ content: Content,
+        with configuration: LayoutConfiguration,
+        isOpaque: Bool = true
+    ) {
         func size(_ keyPath: KeyPath<CGSize, CGFloat>) -> CGFloat? {
             guard let size = configuration.size else {
                 return nil
@@ -78,6 +82,11 @@ class SnapshotUIController: SDKViewController {
         let viewController = NSHostingController(rootView: rootView)
         #else
         let viewController = UIHostingController(rootView: rootView)
+        if !isOpaque {
+            // `UIHostingController` paints the system background by default, which would turn
+            // every transparent region of the content into an opaque one.
+            viewController.view.backgroundColor = .clear
+        }
         #endif
         self.childController = viewController
         self.childSizeListener = sizeListener

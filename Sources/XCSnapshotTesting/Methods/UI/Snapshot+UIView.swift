@@ -31,6 +31,7 @@ extension AsyncSnapshot where Input: UIKit.UIView, Output == ImageBytes {
     ///   - layout: Specifies how the view should be sized during rendering (e.g., specific device simulation).
     ///   - traits: Collection of UI traits (e.g., accessibility features, display characteristics).
     ///   - delay: Delay before capturing the image (useful for waiting for animations or dynamic content).
+    ///   - prepare: An asynchronous closure that runs on the main actor after the layout, the `delay` and the web view loading, and right before the snapshot is taken. Use it to wait for conditions such as `onAppear` having run or background tasks having finished.
     ///   - application: The `UIApplication` instance to render the windows.
     ///
     /// - Example:
@@ -54,6 +55,7 @@ extension AsyncSnapshot where Input: UIKit.UIView, Output == ImageBytes {
         layout: SnapshotLayout = .sizeThatFits,
         traits: Traits = .init(),
         delay: Double = .zero,
+        prepare: (@MainActor @Sendable () async throws -> Void)? = nil,
         application: UIKit.UIApplication? = nil
     ) -> AsyncSnapshot<Input, Output> {
         let config = LayoutConfiguration.resolve(
@@ -78,6 +80,7 @@ extension AsyncSnapshot where Input: UIKit.UIView, Output == ImageBytes {
                 #if !os(tvOS)
                 .waitLoadingStateIfNeeded(tolerance: SnapshotEnvironment.current.webViewTolerance)
                 #endif
+                .prepare(prepare)
                 .snapshot(executor)
             }
         )
