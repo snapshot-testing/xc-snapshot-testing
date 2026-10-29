@@ -1,5 +1,5 @@
-import XCSnapshotTestingCustomDump
 import XCSnapshotTesting
+import XCSnapshotTestingCustomDump
 
 #if canImport(XCTest)
 import XCTest

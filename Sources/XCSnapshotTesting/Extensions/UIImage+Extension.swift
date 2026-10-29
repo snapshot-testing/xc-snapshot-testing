@@ -139,7 +139,7 @@ extension SDKImage {
             return "Newly-taken snapshot does not match reference."
         }
         #if os(iOS) || os(tvOS) || os(macOS)
-        if perceptualPrecision < 1, #available(iOS 11.0, tvOS 11.0, *) {
+        if perceptualPrecision < 1 {
             return CIImage(cgImage: oldCgImage).perceptuallyCompare(
                 CIImage(cgImage: newCgImage),
                 pixelPrecision: precision,

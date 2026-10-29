@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Package.swift'
+      - 'Sources/**'
+      - 'Tests/**'
+      - '.swift-format'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Package.swift'
+      - 'Sources/**'
+      - 'Tests/**'
+      - '.swift-format'
+      - '.github/workflows/swift-ci.yaml'
+
+# Cancel any in-progress or queued run for the same ref when a new run is
+# triggered (e.g. new push), so stale xcodebuild/swift test processes don't
+# keep running and don't sit blocking the queue. Pushes to main use
+# github.run_id so each run gets its own group instead of sharing one by
+# ref — sharing by ref there can make cancel-in-progress try to cancel a
+# run against itself while it's inside the reusable "Swift CI" workflow,
+# which GitHub Actions reports as a concurrency deadlock.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: "Swift CI"
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    uses: request-dl/.github/.github/workflows/swift-ci.yaml@main
+    with:
+      name: xc-snapshot-testing
+      product-name: XCSnapshotTesting
+      swift-version: '6.4'
+      platform: macos-26
+
+      # Step 2 – Format
+      enable-format: true
+      format-swift-version: '6.4'
+
+      # Step 3 – Breaking Changes
+      enable-breaking-changes: true
+      skip-on-major-update: true
+      force-skip-breaking-changes: ${{ contains(github.event.pull_request.labels.*.name, 'force-skip-ci') }}
+
+      # Step 4 – Release Builds (build only)
+      enable-release-builds: true
+
+      # Apple / third-party tests are intentionally disabled until the test
+      # suites are rewritten; re-enable enable-apple-tests and
+      # enable-third-party-tests (plus enable-coverage-upload) then.
+    secrets: inherit

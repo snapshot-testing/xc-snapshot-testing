@@ -159,7 +159,6 @@ extension Snapshot where Input: SwiftUI.View & Sendable, Output == ImageBytes {
     }
 }
 #elseif os(watchOS)
-@available(watchOS, introduced: 9.0)
 extension Snapshot where Input: SwiftUI.View & Sendable, Output == ImageBytes {
 
     /// Default configuration for capturing SwiftUI `View` as image snapshots on watchOS.

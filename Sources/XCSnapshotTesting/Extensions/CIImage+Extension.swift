@@ -104,11 +104,11 @@ extension CIImage {
     }
 
     fileprivate func applyingAreaAverage() -> CIImage {
-        applyingFilter("CIAreaAverage", parameters: [kCIInputExtentKey: extent])
+        applyingFilter("CIAreaAverage", parameters: [kCIInputExtentKey: CIVector(cgRect: extent)])
     }
 
     fileprivate func applyingAreaMaximum() -> CIImage {
-        applyingFilter("CIAreaMaximum", parameters: [kCIInputExtentKey: extent])
+        applyingFilter("CIAreaMaximum", parameters: [kCIInputExtentKey: CIVector(cgRect: extent)])
     }
 
     fileprivate func renderSingleValue(in context: CIContext) -> Float? {
@@ -157,13 +157,6 @@ private final class ThresholdImageProcessorKernel: CIImageProcessorKernel {
         guard let device = device else {
             return false
         }
-
-        #if targetEnvironment(simulator)
-        guard #available(iOS 14.0, tvOS 14.0, *) else {
-            // The MPSSupportsMTLDevice method throws an exception on iOS/tvOS simulators < 14.0
-            return false
-        }
-        #endif
 
         return MPSSupportsMTLDevice(device)
     }

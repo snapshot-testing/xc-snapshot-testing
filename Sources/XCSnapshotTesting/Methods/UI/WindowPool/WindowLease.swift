@@ -1,10 +1,10 @@
+import SwiftAsyncStream
+
 #if os(macOS)
 @preconcurrency import AppKit
 #elseif os(iOS) || os(tvOS) || os(visionOS)
 import UIKit
 #endif
-
-import SwiftAsyncStream
 
 #if os(iOS) || os(tvOS) || os(visionOS) || os(macOS)
 @MainActor

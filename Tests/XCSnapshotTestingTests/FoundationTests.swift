@@ -10,7 +10,6 @@ import FoundationNetworking
 
 final class FoundationTests: BaseTestCase {
 
-    @available(macOS 10.13, tvOS 11.0, *)
     func testAnyAsJson() throws {
         struct User: Encodable { let id: Int, name: String, bio: String }
         let user = User(id: 1, name: "Blobby", bio: "Blobbed around the world.")
@@ -50,9 +49,7 @@ final class FoundationTests: BaseTestCase {
         struct User: Encodable { let id: Int, name: String, bio: String }
         let user = User(id: 1, name: "Blobby", bio: "Blobbed around the world.")
 
-        if #available(iOS 11.0, macOS 10.13, tvOS 11.0, *) {
-            try assert(of: user, as: .json)
-        }
+        try assert(of: user, as: .json)
         try assert(of: user, as: .plist)
     }
 

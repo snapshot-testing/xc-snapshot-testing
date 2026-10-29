@@ -26,12 +26,7 @@ extension SyncSnapshot where Input: UIBezierPath, Output == ImageBytes {
             perceptualPrecision: perceptualPrecision
         ).pullback { path in
             let bounds = path.bounds
-            let format: UIGraphicsImageRendererFormat
-            if #available(iOS 11.0, tvOS 11.0, *) {
-                format = UIGraphicsImageRendererFormat.preferred()
-            } else {
-                format = UIGraphicsImageRendererFormat.default()
-            }
+            let format = UIGraphicsImageRendererFormat.preferred()
             format.scale = scale
             let renderer = UIGraphicsImageRenderer(bounds: bounds, format: format)
             return renderer.image { ctx in

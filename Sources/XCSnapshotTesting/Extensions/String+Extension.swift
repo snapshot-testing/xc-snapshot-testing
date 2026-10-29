@@ -1,7 +1,6 @@
 import Foundation
 
 #if os(iOS) || os(macOS) || os(tvOS) || os(watchOS) || os(visionOS)
-import CoreServices
 import UniformTypeIdentifiers
 #endif
 
@@ -33,21 +32,7 @@ extension String {
 
     #if os(iOS) || os(macOS) || os(tvOS) || os(watchOS) || os(visionOS)
     func uniformTypeIdentifier() -> String? {
-        #if os(visionOS)
-        return UTType(filenameExtension: self)?.identifier
-        #else
-        if #available(iOS 14, macOS 11, tvOS 14, watchOS 7, *) {
-            return UTType(filenameExtension: self)?.identifier
-        }
-
-        let unmanagedString = UTTypeCreatePreferredIdentifierForTag(
-            kUTTagClassFilenameExtension as CFString,
-            self as CFString,
-            nil
-        )
-
-        return unmanagedString?.takeRetainedValue() as String?
-        #endif
+        UTType(filenameExtension: self)?.identifier
     }
     #endif
 }

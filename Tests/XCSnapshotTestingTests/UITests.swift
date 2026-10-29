@@ -142,16 +142,16 @@ final class UITests: BaseTestCase {
                 trailingLabel.font = .preferredFont(forTextStyle: .body)
                 bottomLabel.font = .preferredFont(forTextStyle: .subheadline)
 
-                [topLabel, leadingLabel, trailingLabel, bottomLabel].forEach {
-                    $0.translatesAutoresizingMaskIntoConstraints = false
-                    $0.adjustsFontForContentSizeCategory = true
+                for label in [topLabel, leadingLabel, trailingLabel, bottomLabel] {
+                    label.translatesAutoresizingMaskIntoConstraints = false
+                    label.adjustsFontForContentSizeCategory = true
 
-                    self.view.addSubview($0)
+                    self.view.addSubview(label)
 
-                    $0.setContentHuggingPriority(.required, for: .vertical)
-                    $0.setContentHuggingPriority(.required, for: .horizontal)
-                    $0.setContentCompressionResistancePriority(.required, for: .vertical)
-                    $0.setContentCompressionResistancePriority(.required, for: .horizontal)
+                    label.setContentHuggingPriority(.required, for: .vertical)
+                    label.setContentHuggingPriority(.required, for: .horizontal)
+                    label.setContentCompressionResistancePriority(.required, for: .vertical)
+                    label.setContentCompressionResistancePriority(.required, for: .horizontal)
                 }
 
                 NSLayoutConstraint.activate([
@@ -650,12 +650,12 @@ final class UITests: BaseTestCase {
                 trailingLabel.text = "point"
                 bottomLabel.text = "?"
 
-                [topLabel, leadingLabel, trailingLabel, bottomLabel].forEach {
-                    $0.translatesAutoresizingMaskIntoConstraints = false
-                    view.addSubview($0)
+                for label in [topLabel, leadingLabel, trailingLabel, bottomLabel] {
+                    label.translatesAutoresizingMaskIntoConstraints = false
+                    view.addSubview(label)
 
-                    $0.setContentHuggingPriority(.required, for: .vertical)
-                    $0.setContentHuggingPriority(.required, for: .horizontal)
+                    label.setContentHuggingPriority(.required, for: .vertical)
+                    label.setContentHuggingPriority(.required, for: .horizontal)
                 }
 
                 NSLayoutConstraint.activate([
@@ -1370,9 +1370,7 @@ final class UITests: BaseTestCase {
             try assert(of: path, as: .image)
         }
 
-        if #available(iOS 11.0, OSX 10.13, tvOS 11.0, *) {
-            try assert(of: path, as: .elementsDescription)
-        }
+        try assert(of: path, as: .elementsDescription)
     }
 
     @MainActor
@@ -1412,9 +1410,7 @@ final class UITests: BaseTestCase {
         #endif
 
         try assert(of: image, as: .image(precision: 0.995), named: "exact")
-        if #available(iOS 11.0, tvOS 11.0, macOS 10.13, *) {
-            try assert(of: image, as: .image(perceptualPrecision: 0.98), named: "perceptual")
-        }
+        try assert(of: image, as: .image(perceptualPrecision: 0.98), named: "perceptual")
     }
     @MainActor
     func testSCNView() async throws {
@@ -1517,7 +1513,6 @@ final class UITests: BaseTestCase {
     #endif
 
     #if os(iOS) || os(tvOS) || os(macOS) || os(visionOS) || os(watchOS)
-    @available(watchOS 9.0, *)
     @MainActor
     func testSwiftUIView_iOS() async throws {
         @MainActor
