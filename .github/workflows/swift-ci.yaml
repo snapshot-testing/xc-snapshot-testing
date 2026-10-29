@@ -37,16 +37,20 @@ jobs:
       name: xc-snapshot-testing
       product-name: XCSnapshotTesting
       swift-version: '6.4'
-      platform: macos-26
+      platform: xcode-27
 
       # Step 2 – Format
       enable-format: true
       format-swift-version: '6.4'
 
       # Step 3 – Breaking Changes
-      enable-breaking-changes: true
+      # Off until `swift package diagnose-api-breaking-changes` works on the xcode-27 image.
+      enable-breaking-changes: false
       skip-on-major-update: true
       force-skip-breaking-changes: ${{ contains(github.event.pull_request.labels.*.name, 'force-skip-ci') }}
+
+      # Step 4 – Apple
+      xcode-version: '27.1'
 
       # Step 4 – Release Builds (build only)
       enable-release-builds: true
