@@ -51,6 +51,10 @@ let package = Package(
             dependencies: ["XCSnapshotTesting"]
         ),
         .testTarget(
+            name: "XCSnapshotTestingUITests",
+            dependencies: ["XCSnapshotTesting"]
+        ),
+        .testTarget(
             name: "XCSnapshotTestingCustomDumpTests",
             dependencies: [
                 "XCSnapshotTestingCustomDump"
