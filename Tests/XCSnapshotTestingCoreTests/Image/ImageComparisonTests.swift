@@ -6,6 +6,16 @@ import Testing
 
 @_spi(Internals) @testable import XCSnapshotTesting
 
+/// The perceptual comparison needs a working Core Image renderer. The visionOS simulator of a virtual machine without
+/// a GPU does not have one: there, comparing images fails with "could not be processed" instead of measuring them.
+private let perceptualComparisonIsAvailable: Bool = {
+    #if os(visionOS) && targetEnvironment(simulator)
+    false
+    #else
+    true
+    #endif
+}()
+
 /// Image comparison is tested with generated pixels, so the expectations are exact and independent of
 /// how the system renders text, controls or symbols.
 @MainActor
@@ -69,18 +79,21 @@ struct ImageComparisonTests {
 
     // MARK: - Perceptual comparison
 
-    @Test func perceptuallyImperceptibleDifferencesPass() {
+    @Test(.enabled(if: perceptualComparisonIsAvailable, "Core Image cannot render on this simulator"))
+    func perceptuallyImperceptibleDifferencesPass() {
         #expect(solid(120).compare(solid(121), precision: 1, perceptualPrecision: 0.99) == nil)
     }
 
-    @Test func perceptualComparisonFailsOnRealDifferences() throws {
+    @Test(.enabled(if: perceptualComparisonIsAvailable, "Core Image cannot render on this simulator"))
+    func perceptualComparisonFailsOnRealDifferences() throws {
         let message = try #require(solid(100).compare(solid(200), precision: 1, perceptualPrecision: 0.99))
 
         #expect(message.contains("The percentage of pixels that match"))
         #expect(message.contains("The lowest perceptual color precision"))
     }
 
-    @Test func aSingleStepInDarkTonesIsWithinTheDefaultPerceptualTolerance() {
+    @Test(.enabled(if: perceptualComparisonIsAvailable, "Core Image cannot render on this simulator"))
+    func aSingleStepInDarkTonesIsWithinTheDefaultPerceptualTolerance() {
         // Regression: with color management disabled, one 8-bit step at black measured a delta of 3.54
         // instead of 0.27, failing `perceptualPrecision: 0.99` on imperceptible anti-aliasing.
         for base in [UInt8(0), 4, 16, 24, 128, 215] {
@@ -91,11 +104,13 @@ struct ImageComparisonTests {
         }
     }
 
-    @Test func largerStepsAreStillDetected() {
+    @Test(.enabled(if: perceptualComparisonIsAvailable, "Core Image cannot render on this simulator"))
+    func largerStepsAreStillDetected() {
         #expect(solid(128).compare(solid(136), precision: 1, perceptualPrecision: 0.99) != nil)
     }
 
-    @Test func imagesInDifferentColorSpacesAreComparedByTheirColors() {
+    @Test(.enabled(if: perceptualComparisonIsAvailable, "Core Image cannot render on this simulator"))
+    func imagesInDifferentColorSpacesAreComparedByTheirColors() {
         // Regression: a Display P3 reference against an sRGB snapshot used to report a difference on
         // every pixel, even for the same colors, because the originals were compared unconverted.
         let reference = Factory.image(gradient(in: Factory.displayP3))
@@ -105,7 +120,8 @@ struct ImageComparisonTests {
         #expect(reference.compare(snapshot, precision: 0.98, perceptualPrecision: 0.98) == nil)
     }
 
-    @Test func aRealChangeIsStillDetectedAcrossColorSpaces() {
+    @Test(.enabled(if: perceptualComparisonIsAvailable, "Core Image cannot render on this simulator"))
+    func aRealChangeIsStillDetectedAcrossColorSpaces() {
         let reference = Factory.image(gradient(in: Factory.displayP3))
         let snapshot = Factory.image(redrawn(gradient(in: Factory.displayP3), into: Factory.sRGB, fillingTopLeft: 8))
 
@@ -116,7 +132,10 @@ struct ImageComparisonTests {
 
     /// Machines without a GPU (virtual machines, simulators on CI) cannot use Metal, so the comparison
     /// falls back to reading the difference pixel by pixel on the CPU. Both ways must agree.
-    @Test(arguments: [true, false])
+    @Test(
+        .enabled(if: perceptualComparisonIsAvailable, "Core Image cannot render on this simulator"),
+        arguments: [true, false]
+    )
     func oneStepAtAnyToneIsWithinTheToleranceWhetherOrNotMetalIsUsed(usesMetal: Bool) {
         for base in [UInt8(0), 4, 16, 24, 128, 215] {
             let reference = CIImage(cgImage: Factory.flat(base))
@@ -134,7 +153,10 @@ struct ImageComparisonTests {
         }
     }
 
-    @Test(arguments: [true, false])
+    @Test(
+        .enabled(if: perceptualComparisonIsAvailable, "Core Image cannot render on this simulator"),
+        arguments: [true, false]
+    )
     func aRealDifferenceIsReportedWhetherOrNotMetalIsUsed(usesMetal: Bool) throws {
         let reference = CIImage(cgImage: Factory.flat(100))
         let snapshot = CIImage(cgImage: Factory.flat(200))
@@ -152,7 +174,10 @@ struct ImageComparisonTests {
         #expect(message.contains("The lowest perceptual color precision"))
     }
 
-    @Test(arguments: [true, false])
+    @Test(
+        .enabled(if: perceptualComparisonIsAvailable, "Core Image cannot render on this simulator"),
+        arguments: [true, false]
+    )
     func theShareOfDifferentPixelsIsMeasuredWhetherOrNotMetalIsUsed(usesMetal: Bool) throws {
         let reference = CIImage(cgImage: Factory.rgba8(width: 10, height: 10) { _, _ in (100, 100, 100) })
         let snapshot = CIImage(

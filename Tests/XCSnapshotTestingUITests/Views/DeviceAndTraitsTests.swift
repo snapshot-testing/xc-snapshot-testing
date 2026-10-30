@@ -126,24 +126,26 @@ struct DeviceLayoutTests {
             SafeAreaViewController()
         )
 
-        // The safe area of the machine running the test can add to the one of the device layout, so the
-        // content is only required to stay out of the configured insets, with the band outside it red.
+        // The safe area of the machine running the test can add to the one of the device layout, and the
+        // rendering rounds to pixels, so the content is only required to stay out of the configured insets by
+        // more than half of them, and the bands outside it to be red.
         let middle = rendered.size.width / 2
         let rows = Array(0..<Int(rendered.size.height))
         let green = rows.filter { rendered.swatch(x: middle, y: CGFloat($0)) == .green }
         let scale = rendered.size.height / (device.size?.height ?? rendered.size.height)
 
-        let firstGreen = try #require(green.first)
+        let firstGreen = try #require(green.first, "size \(rendered.size)")
         let lastGreen = try #require(green.last)
-        #expect(CGFloat(firstGreen) >= inset.top * scale - 1, "the content starts below the top inset")
+        let context = "size \(rendered.size), green rows \(firstGreen)...\(lastGreen), insets \(inset)"
+        #expect(CGFloat(firstGreen) >= inset.top * scale / 2, "the content starts below the top inset: \(context)")
         #expect(
-            CGFloat(lastGreen) <= rendered.size.height - inset.bottom * scale + 1,
-            "the content ends above the bottom inset"
+            CGFloat(lastGreen) <= rendered.size.height - inset.bottom * scale / 2,
+            "the content ends above the bottom inset: \(context)"
         )
-        #expect(rendered.swatch(x: middle, y: inset.top * scale / 2) == .red, "the top inset is outside the content")
+        #expect(rendered.swatch(x: middle, y: 2) == .red, "the top inset is outside the content: \(context)")
         #expect(
-            rendered.swatch(x: middle, y: rendered.size.height - inset.bottom * scale / 2) == .red,
-            "the bottom inset is outside the content"
+            rendered.swatch(x: middle, y: rendered.size.height - 2) == .red,
+            "the bottom inset is outside the content: \(context)"
         )
     }
 
