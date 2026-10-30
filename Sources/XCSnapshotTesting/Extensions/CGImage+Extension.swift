@@ -6,18 +6,16 @@ import CoreGraphics
 
 extension CGImage {
 
-    func context(with data: UnsafeMutableRawPointer? = nil) -> CGContext? {
-        let bytesPerRow = self.width * ImageContext.bytesPerPixel
+    func context(format: ImageFormat = .sRGB, with data: UnsafeMutableRawPointer? = nil) -> CGContext? {
         guard
-            let colorSpace = ImageContext.colorSpace,
             let context = CGContext(
                 data: data,
                 width: self.width,
                 height: self.height,
-                bitsPerComponent: ImageContext.bitsPerComponent,
-                bytesPerRow: bytesPerRow,
-                space: colorSpace,
-                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+                bitsPerComponent: format.bitsPerComponent,
+                bytesPerRow: self.width * format.bytesPerPixel,
+                space: format.cgColorSpace,
+                bitmapInfo: format.bitmapInfo
             )
         else { return nil }
 
