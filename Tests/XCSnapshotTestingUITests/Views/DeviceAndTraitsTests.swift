@@ -120,7 +120,7 @@ struct DeviceLayoutTests {
     }
 
     @Test func theSafeAreaOfTheDeviceInsetsTheContent() async throws {
-        let device = LayoutConfiguration.iPhoneX
+        let device = LayoutConfiguration.iPhoneXS
         let inset = device.safeArea
         #expect(inset.top > 0 && inset.bottom > 0, "this device has a notch and a home indicator")
 
