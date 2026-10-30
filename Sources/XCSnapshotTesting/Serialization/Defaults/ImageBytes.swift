@@ -25,6 +25,11 @@ public struct ImageBytes: BytesRepresentable {
     public let rawValue: UIKit.UIImage
     #endif
 
+    /// The format the image is stored in.
+    ///
+    /// When `nil`, the format comes from ``SnapshotEnvironmentValues/imageFormat``.
+    public let format: ImageFormat?
+
     /// Initializes an instance from image data in a `BytesContainer`.
     ///
     /// - Parameter container: Container holding the binary image data.
@@ -45,6 +50,7 @@ public struct ImageBytes: BytesRepresentable {
         }
         #endif
         self.rawValue = image
+        self.format = nil
     }
 
     #if os(macOS)
@@ -52,23 +58,48 @@ public struct ImageBytes: BytesRepresentable {
     ///
     /// - Parameter rawValue: Image to convert to bytes for snapshot testing.
     public init(rawValue: NSImage) {
+        self.init(rawValue: rawValue, format: nil)
+    }
+
+    /// Initializes from a `NSImage` that is stored in a specific format.
+    ///
+    /// - Parameters:
+    ///   - rawValue: Image to convert to bytes for snapshot testing.
+    ///   - format: The format the image is stored in, or `nil` to follow the environment.
+    public init(rawValue: NSImage, format: ImageFormat?) {
         self.rawValue = rawValue
+        self.format = format
     }
     #else
     /// Initializes from a `UIImage`.
     ///
     /// - Parameter rawValue: Image to convert to bytes for snapshot testing.
     public init(rawValue: UIKit.UIImage) {
+        self.init(rawValue: rawValue, format: nil)
+    }
+
+    /// Initializes from a `UIImage` that is stored in a specific format.
+    ///
+    /// - Parameters:
+    ///   - rawValue: Image to convert to bytes for snapshot testing.
+    ///   - format: The format the image is stored in, or `nil` to follow the environment.
+    public init(rawValue: UIKit.UIImage, format: ImageFormat?) {
         self.rawValue = rawValue
+        self.format = format
     }
     #endif
+
+    /// The format used to store the image: its own, or else the one of the environment.
+    var effectiveFormat: ImageFormat? {
+        format ?? SnapshotEnvironment.current.imageFormat
+    }
 
     /// Serializes the image to binary data and writes it to the container.
     ///
     /// - Parameter container: Destination container for the image data.
     /// - Throws: Error if serialization fails (e.g., failed image-to-data conversion).
     public func serialize(to container: BytesContainer) throws {
-        guard let data = rawValue.pngData() else {
+        guard let data = rawValue.encodedPNG(format: effectiveFormat) else {
             return
         }
 

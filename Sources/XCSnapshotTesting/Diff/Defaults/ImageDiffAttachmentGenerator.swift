@@ -74,12 +74,16 @@ public struct ImageDiffAttachmentGenerator: DiffAttachmentGenerator {
         from reference: ImageBytes,
         with diffable: ImageBytes
     ) -> DiffAttachment? {
-        performOnMainThread {
+        // Resolved here because the environment is not available on the main thread queue.
+        let format = diffable.effectiveFormat
+
+        return performOnMainThread {
             guard
                 let message = reference.rawValue.compare(
                     diffable.rawValue,
                     precision: precision,
-                    perceptualPrecision: perceptualPrecision
+                    perceptualPrecision: perceptualPrecision,
+                    storedFormat: format
                 )
             else { return nil }
 

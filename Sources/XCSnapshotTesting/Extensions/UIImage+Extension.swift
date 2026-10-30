@@ -77,6 +77,45 @@ extension SDKImage {
     }
     #endif
 
+    /// The PNG that is stored for this image: in `format` when there is one, and as the platform
+    /// encodes it otherwise.
+    func encodedPNG(format: ImageFormat?) -> Data? {
+        guard let format, let source = pixels(in: format) else { return pngData() }
+        return format.pngData(source) ?? pngData()
+    }
+
+    /// The pixels of the image in `format`, at the same size `pngData()` uses.
+    private func pixels(in format: ImageFormat) -> CGImage? {
+        #if os(macOS)
+        let width = Int(size.width)
+        let height = Int(size.height)
+
+        guard
+            width > 0, height > 0,
+            let context = CGContext(
+                data: nil,
+                width: width,
+                height: height,
+                bitsPerComponent: format.bitsPerComponent,
+                bytesPerRow: 0,
+                space: format.cgColorSpace,
+                bitmapInfo: format.bitmapInfo
+            )
+        else { return nil }
+
+        performOnMainThread {
+            NSGraphicsContext.saveGraphicsState()
+            NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: false)
+            draw(in: NSRect(origin: .zero, size: size))
+            NSGraphicsContext.restoreGraphicsState()
+        }
+
+        return context.makeImage()
+        #else
+        return cgImage
+        #endif
+    }
+
     /// Used when the image size has no width or no height to generated the default empty image
     @MainActor
     static var empty: SDKImage {
@@ -106,7 +145,12 @@ extension SDKImage {
     }
 
     @MainActor
-    func compare(_ newValue: SDKImage, precision: Float, perceptualPrecision: Float) -> String? {
+    func compare(
+        _ newValue: SDKImage,
+        precision: Float,
+        perceptualPrecision: Float,
+        storedFormat: ImageFormat? = nil
+    ) -> String? {
         guard let oldCgImage = self.cgImage else {
             return "Reference image could not be loaded."
         }
@@ -119,20 +163,23 @@ extension SDKImage {
         guard oldCgImage.width == newCgImage.width, oldCgImage.height == newCgImage.height else {
             return "Newly-taken snapshot@\(newValue.size) does not match reference@\(self.size)."
         }
+        // Both sides are compared in the format of the reference, so a reference recorded in
+        // Display P3 or with 16 bits keeps every difference that an sRGB 8-bit comparison would hide.
+        let format = ImageFormat(describing: oldCgImage)
         let pixelCount = oldCgImage.width * oldCgImage.height
-        let byteCount = ImageContext.bytesPerPixel * pixelCount
+        let byteCount = format.bytesPerPixel * pixelCount
         var oldBytes = [UInt8](repeating: 0, count: byteCount)
-        guard let oldContext = oldCgImage.context(with: &oldBytes), let oldData = oldContext.data else {
+        guard let oldContext = oldCgImage.context(format: format, with: &oldBytes), let oldData = oldContext.data else {
             return "Reference image's data could not be loaded."
         }
-        if let newContext = newCgImage.context(), let newData = newContext.data {
+        if let newContext = newCgImage.context(format: format), let newData = newContext.data {
             if memcmp(oldData, newData, byteCount) == 0 { return nil }
         }
         var newerBytes = [UInt8](repeating: 0, count: byteCount)
         guard
-            let pngData = newValue.pngData(),
+            let pngData = newValue.encodedPNG(format: storedFormat),
             let newerCgImage = SDKImage(data: pngData)?.cgImage,
-            let newerContext = newerCgImage.context(with: &newerBytes),
+            let newerContext = newerCgImage.context(format: format, with: &newerBytes),
             let newerData = newerContext.data
         else {
             return "Newly-taken snapshot's data could not be loaded."
