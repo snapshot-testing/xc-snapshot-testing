@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Package.swift'
+      - 'Sources/**'
+      - 'Tests/**'
+      - '.swift-format'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Package.swift'
+      - 'Sources/**'
+      - 'Tests/**'
+      - '.swift-format'
+      - '.github/workflows/swift-ci.yaml'
+
+# Cancel any in-progress or queued run for the same ref when a new run is
+# triggered (e.g. new push), so stale xcodebuild/swift test processes don't
+# keep running and don't sit blocking the queue. Pushes to main use
+# github.run_id so each run gets its own group instead of sharing one by
+# ref — sharing by ref there can make cancel-in-progress try to cancel a
+# run against itself while it's inside the reusable "Swift CI" workflow,
+# which GitHub Actions reports as a concurrency deadlock.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: "Swift CI"
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    uses: request-dl/.github/.github/workflows/swift-ci.yaml@main
+    with:
+      name: xc-snapshot-testing
+      product-name: XCSnapshotTesting
+      swift-version: '6.4'
+      platform: xcode-27
+
+      # Step 1 – Header
+      enable-header-validation: true
+      header-template: |
+        // Copyright (c) Snapshot Testing
+        // SPDX-License-Identifier: MIT
+
+      # Step 2 – Format
+      enable-format: true
+      format-swift-version: '6.4'
+
+      # Step 3 – Breaking Changes
+      # Off until `swift package diagnose-api-breaking-changes` works on the xcode-27 image.
+      enable-breaking-changes: false
+      skip-on-major-update: true
+      force-skip-breaking-changes: ${{ contains(github.event.pull_request.labels.*.name, 'force-skip-ci') }}
+
+      # Step 4 – Apple
+      enable-apple-tests: true
+      package-name: "xc-snapshot-testing-Package"
+      xcode-version: '27.1'
+      apple-tests-max-parallelization-width: '2'
+      apple-tests-parallel-testing-worker-count: '2'
+      apple-tests-timeout-minutes: 45
+      apple-coverage-enabled: true
+
+      # Step 4 – Third Party
+      enable-third-party-tests: true
+      third-party-coverage-enabled: true
+
+      # Step 4 – Release Builds (build only)
+      enable-release-builds: true
+
+      # Step 4 – Android Build
+      enable-android-build: true
+
+      # Step 4 – Static SDK
+      enable-static-sdk: true
+
+      # Step 4 – Linkage Test (FoundationEssentials) stays off: it requires a package that links
+      # FoundationEssentials only, and this one needs the full Foundation (JSONSerialization,
+      # NumberFormatter, FileManager) and XCTest.
+
+      # Step 5 – Coverage Upload (uses the CODECOV_TOKEN secret of the repository)
+      enable-coverage-upload: true
+    secrets: inherit

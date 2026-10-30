@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 import Foundation
 
 /// A collection of values that configure the snapshot testing environment.
@@ -49,7 +52,6 @@ public struct SnapshotEnvironmentValues: Sendable {
 /// - Parameters:
 ///   - mutating: A closure that takes a mutable reference to `SnapshotEnvironmentValues` and modifies it as needed.
 ///   - operation: The asynchronous operation to perform within the modified environment.
-///   - isolation: An optional actor used to isolate the operation. Defaults to the current isolation context.
 ///   - file: The file name for diagnostic purposes. Defaults to the current file.
 ///   - line: The line number for diagnostic purposes. Defaults to the current line.
 ///
@@ -58,10 +60,9 @@ public struct SnapshotEnvironmentValues: Sendable {
 /// - Throws: Any error thrown by the operation closure.
 ///
 /// - Note: The changes made to the environment are only in effect for the duration of the operation.
-public func withTestingEnvironment<R: Sendable>(
+public nonisolated(nonsending) func withTestingEnvironment<R: Sendable>(
     _ mutating: @Sendable (inout SnapshotEnvironmentValues) -> Void,
-    operation: () async throws -> R,
-    isolation: isolated Actor? = #isolation,
+    operation: nonisolated(nonsending) () async throws -> R,
     file: String = #file,
     line: UInt = #line
 ) async rethrows -> R {
@@ -70,7 +71,6 @@ public func withTestingEnvironment<R: Sendable>(
     return try await SnapshotEnvironmentValues.$current.withValue(
         argumentValues,
         operation: operation,
-        isolation: isolation,
         file: file,
         line: line
     )
@@ -118,7 +118,6 @@ public func withTestingEnvironment<R>(
 ///   - platform: Optionally overrides the platform identifier for snapshot paths.
 ///   - mutating: A closure that can further modify the `SnapshotEnvironmentValues`.
 ///   - operation: The asynchronous operation to perform within the modified environment.
-///   - isolation: An optional actor used to isolate the operation. Defaults to the current isolation context.
 ///   - file: The file name for diagnostic purposes. Defaults to the current file.
 ///   - line: The line number for diagnostic purposes. Defaults to the current line.
 ///
@@ -126,14 +125,13 @@ public func withTestingEnvironment<R>(
 /// - Throws: Any error thrown by the operation closure.
 ///
 /// - Note: The environment changes are only effective for the duration of the operation.
-public func withTestingEnvironment<R: Sendable>(
+public nonisolated(nonsending) func withTestingEnvironment<R: Sendable>(
     record: RecordMode? = nil,
     diffTool: DiffTool? = nil,
     maxConcurrentTests: Int? = nil,
     platform: String? = nil,
     environment mutating: (@Sendable (inout SnapshotEnvironmentValues) -> Void),
-    operation: () async throws -> R,
-    isolation: isolated Actor? = #isolation,
+    operation: nonisolated(nonsending) () async throws -> R,
     file: String = #file,
     line: UInt = #line
 ) async rethrows -> R {
@@ -149,7 +147,6 @@ public func withTestingEnvironment<R: Sendable>(
             mutating(&$0)
         },
         operation: operation,
-        isolation: isolation,
         file: file,
         line: line
     )
@@ -165,7 +162,6 @@ public func withTestingEnvironment<R: Sendable>(
 ///   - maxConcurrentTests: Optionally limits the number of concurrent tests.
 ///   - platform: Optionally overrides the platform identifier for snapshot paths.
 ///   - operation: The asynchronous operation to perform within the modified environment.
-///   - isolation: An optional actor used to isolate the operation. Defaults to the current isolation context.
 ///   - file: The file name for diagnostic purposes. Defaults to the current file.
 ///   - line: The line number for diagnostic purposes. Defaults to the current line.
 ///
@@ -173,13 +169,12 @@ public func withTestingEnvironment<R: Sendable>(
 /// - Throws: Any error thrown by the operation closure.
 ///
 /// - Note: The environment changes are only effective for the duration of the operation.
-public func withTestingEnvironment<R: Sendable>(
+public nonisolated(nonsending) func withTestingEnvironment<R: Sendable>(
     record: RecordMode? = nil,
     diffTool: DiffTool? = nil,
     maxConcurrentTests: Int? = nil,
     platform: String? = nil,
-    operation: () async throws -> R,
-    isolation: isolated Actor? = #isolation,
+    operation: nonisolated(nonsending) () async throws -> R,
     file: String = #file,
     line: UInt = #line
 ) async rethrows -> R {
@@ -194,7 +189,6 @@ public func withTestingEnvironment<R: Sendable>(
             )
         },
         operation: operation,
-        isolation: isolation,
         file: file,
         line: line
     )

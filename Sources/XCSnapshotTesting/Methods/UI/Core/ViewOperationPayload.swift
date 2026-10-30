@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 #if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
 import UIKit
 #elseif os(macOS)
@@ -42,6 +45,19 @@ extension Async where Output == ViewOperationPayload {
         map { @MainActor in
             $0.input.layoutIfNeeded()
             return $0
+        }
+    }
+
+    func prepare(
+        _ operation: (@MainActor @Sendable () async throws -> Void)?
+    ) -> Async<Input, Output> {
+        guard let operation else {
+            return self
+        }
+
+        return map { @MainActor payload in
+            try await operation()
+            return payload
         }
     }
 

@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 import Foundation
 
 /// A wrapper for string data in a bytes container, supporting UTF-8 encoding/decoding.

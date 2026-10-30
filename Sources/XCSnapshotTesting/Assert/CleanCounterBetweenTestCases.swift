@@ -1,3 +1,8 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
+import Foundation
+
 #if canImport(XCTest)
 import XCTest
 

@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 #if canImport(SwiftUI)
 @preconcurrency import SwiftUI
 
@@ -26,6 +29,7 @@ extension AsyncSnapshot where Input: SwiftUI.View & Sendable, Output == ImageByt
     ///   - perceptualPrecision: Tolerance for color and tonal differences (values closer to 1 require more exact matches).
     ///   - layout: Specifies how the view should be sized during rendering (e.g., specific device simulation).
     ///   - delay: Delay before capturing the image (useful for waiting for animations or dynamic content).
+    ///   - prepare: An asynchronous closure that runs on the main actor after the layout, the `delay` and the web view loading, and right before the snapshot is taken. Use it to wait for conditions such as `onAppear` having run or background tasks having finished.
     ///   - application: The `NSApplication` instance to render the windows.
     ///
     /// Example usage:
@@ -51,6 +55,7 @@ extension AsyncSnapshot where Input: SwiftUI.View & Sendable, Output == ImageByt
         perceptualPrecision: Float = 1,
         layout: SnapshotLayout = .sizeThatFits,
         delay: Double = .zero,
+        prepare: (@MainActor @Sendable () async throws -> Void)? = nil,
         application: NSApplication? = nil
     ) -> AsyncSnapshot<Input, Output> {
         let config = LayoutConfiguration.resolve(layout)
@@ -70,6 +75,7 @@ extension AsyncSnapshot where Input: SwiftUI.View & Sendable, Output == ImageByt
                 .layoutIfNeeded()
                 .sleep(nanoseconds: UInt64(delay * 1_000_000_000))
                 .waitLoadingStateIfNeeded(tolerance: SnapshotEnvironment.current.webViewTolerance)
+                .prepare(prepare)
                 .snapshot(executor)
             }
         )
@@ -101,7 +107,9 @@ extension Snapshot where Input: SwiftUI.View & Sendable, Output == ImageBytes {
     ///   - perceptualPrecision: Tolerance for color and tonal differences (values closer to 1 require more exact matches).
     ///   - layout: Specifies how the view should be sized during rendering (e.g., specific device simulation).
     ///   - traits: Collection of UI traits (e.g., accessibility features, display characteristics).
+    ///   - isOpaque: Whether the SwiftUI hosting view keeps its default system background. Pass `false` to keep transparent regions of the view transparent in the recorded image. Defaults to `true`.
     ///   - delay: Delay before capturing the image (useful for waiting for animations or dynamic content).
+    ///   - prepare: An asynchronous closure that runs on the main actor after the layout, the `delay` and the web view loading, and right before the snapshot is taken. Use it to wait for conditions such as `onAppear` having run or background tasks having finished.
     ///   - application: The `UIApplication` instance to render the windows.
     ///
     /// Example usage:
@@ -128,7 +136,9 @@ extension Snapshot where Input: SwiftUI.View & Sendable, Output == ImageBytes {
         perceptualPrecision: Float = 1,
         layout: SnapshotLayout = .sizeThatFits,
         traits: Traits = .init(),
+        isOpaque: Bool = true,
         delay: Double = .zero,
+        prepare: (@MainActor @Sendable () async throws -> Void)? = nil,
         application: UIKit.UIApplication? = nil
     ) -> AsyncSnapshot<Input, Output> {
         let config = LayoutConfiguration.resolve(
@@ -145,7 +155,7 @@ extension Snapshot where Input: SwiftUI.View & Sendable, Output == ImageBytes {
             application: application,
             operation: { windowConfiguration, executor in
                 Async(Input.self) { @MainActor in
-                    SnapshotUIController($0, with: config)
+                    SnapshotUIController($0, with: config, isOpaque: isOpaque)
                 }
                 .connectToWindow(windowConfiguration)
                 .layoutIfNeeded()
@@ -153,13 +163,13 @@ extension Snapshot where Input: SwiftUI.View & Sendable, Output == ImageBytes {
                 #if !os(tvOS)
                 .waitLoadingStateIfNeeded(tolerance: SnapshotEnvironment.current.webViewTolerance)
                 #endif
+                .prepare(prepare)
                 .snapshot(executor)
             }
         )
     }
 }
 #elseif os(watchOS)
-@available(watchOS, introduced: 9.0)
 extension Snapshot where Input: SwiftUI.View & Sendable, Output == ImageBytes {
 
     /// Default configuration for capturing SwiftUI `View` as image snapshots on watchOS.

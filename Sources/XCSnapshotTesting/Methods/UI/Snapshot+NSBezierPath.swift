@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 #if os(macOS)
 @preconcurrency import AppKit
 import Cocoa
@@ -59,7 +62,6 @@ extension SyncSnapshot where Input: NSBezierPath, Output == ImageBytes {
 
 extension SyncSnapshot where Input: NSBezierPath, Output == StringBytes {
     /// A snapshot strategy for comparing bezier paths based on pixel equality.
-    @available(macOS 11.0, *)
     public static var elementsDescription: SyncSnapshot<Input, Output> {
         .elementsDescription(numberFormatter: defaultNumberFormatter)
     }
@@ -67,7 +69,6 @@ extension SyncSnapshot where Input: NSBezierPath, Output == StringBytes {
     /// A snapshot strategy for comparing bezier paths based on pixel equality.
     ///
     /// - Parameter numberFormatter: The number formatter used for formatting points.
-    @available(macOS 11.0, *)
     public static func elementsDescription(
         numberFormatter: NumberFormatter
     ) -> SyncSnapshot<

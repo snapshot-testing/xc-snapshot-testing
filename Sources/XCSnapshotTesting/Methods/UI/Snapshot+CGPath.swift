@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 #if os(macOS)
 import AppKit
 import Cocoa
@@ -90,12 +93,7 @@ extension SyncSnapshot where Input: CGPath, Output == ImageBytes {
             perceptualPrecision: perceptualPrecision
         ).pullback { path in
             let bounds = path.boundingBoxOfPath
-            let format: UIGraphicsImageRendererFormat
-            if #available(iOS 11.0, tvOS 11.0, *) {
-                format = UIGraphicsImageRendererFormat.preferred()
-            } else {
-                format = UIGraphicsImageRendererFormat.default()
-            }
+            let format = UIGraphicsImageRendererFormat.preferred()
             format.scale = scale
             let renderer = UIGraphicsImageRenderer(bounds: bounds, format: format)
             return renderer.image { ctx in

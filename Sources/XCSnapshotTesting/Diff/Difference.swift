@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 import Foundation
 
 // MARK: - Difference Structure
@@ -31,31 +34,35 @@ extension Array where Element: Hashable {
             elementIndices[element, default: []].append(index)
         }
 
-        // 2. Finds Longest Common Subsequence (LCS)
+        // 2. Finds the longest run of elements shared by both collections
         var longestSubsequence = (
-            overlap: [Int: Int](),  // Overlap table
             firstIndex: 0,  // Start index in first collection
             secondIndex: 0,  // Start index in second collection
             length: 0  // Subsequence length
         )
 
+        // Length of the common run ending at each index of the first collection, for the previous
+        // element of the second collection. It must be rebuilt for every element, so that an
+        // element without a match breaks the run.
+        var overlap = [Int: Int]()
+
         // Iterates through second collection to find matches
         for pair in other.enumerated() {
-            guard let indices = elementIndices[pair.element] else { continue }
+            var currentOverlap = [Int: Int]()
 
-            for firstIndex in indices {
-                let currentLength = (longestSubsequence.overlap[firstIndex - 1] ?? 0) + 1
-                var newOverlap = longestSubsequence.overlap
-                newOverlap[firstIndex] = currentLength
+            for firstIndex in elementIndices[pair.element] ?? [] {
+                let currentLength = (overlap[firstIndex - 1] ?? 0) + 1
+                currentOverlap[firstIndex] = currentLength
 
                 // Updates longest subsequence found
                 if currentLength > longestSubsequence.length {
-                    longestSubsequence.overlap = newOverlap
                     longestSubsequence.firstIndex = firstIndex - currentLength + 1
                     longestSubsequence.secondIndex = pair.offset - currentLength + 1
                     longestSubsequence.length = currentLength
                 }
             }
+
+            overlap = currentOverlap
         }
 
         // 3. No common subsequence case

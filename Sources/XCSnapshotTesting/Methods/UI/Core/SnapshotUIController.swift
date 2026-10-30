@@ -1,3 +1,8 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
+import SwiftAsyncStream
+
 #if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
 import UIKit
 import SwiftUI
@@ -9,8 +14,6 @@ import SwiftUI
 import SceneKit
 import SpriteKit
 #endif
-
-import SwiftAsyncStream
 
 #if os(iOS) || os(tvOS) || os(macOS) || os(visionOS)
 @MainActor
@@ -59,7 +62,11 @@ class SnapshotUIController: SDKViewController {
         super.init(nibName: nil, bundle: nil)
     }
 
-    init<Content: View>(_ content: Content, with configuration: LayoutConfiguration) {
+    init<Content: View>(
+        _ content: Content,
+        with configuration: LayoutConfiguration,
+        isOpaque: Bool = true
+    ) {
         func size(_ keyPath: KeyPath<CGSize, CGFloat>) -> CGFloat? {
             guard let size = configuration.size else {
                 return nil
@@ -78,6 +85,11 @@ class SnapshotUIController: SDKViewController {
         let viewController = NSHostingController(rootView: rootView)
         #else
         let viewController = UIHostingController(rootView: rootView)
+        if !isOpaque {
+            // `UIHostingController` paints the system background by default, which would turn
+            // every transparent region of the content into an opaque one.
+            viewController.view.backgroundColor = .clear
+        }
         #endif
         self.childController = viewController
         self.childSizeListener = sizeListener
@@ -188,7 +200,7 @@ class SnapshotUIController: SDKViewController {
         view.layoutIfNeeded()
         #endif
 
-        await snapshotSignal.wait()
+        try await snapshotSignal.wait()
         snapshotSignal.lock()
 
         if let sceneView = childController.view as? SCNView {
@@ -264,7 +276,7 @@ class SnapshotUIController: SDKViewController {
         view.layoutIfNeeded()
         #endif
 
-        await snapshotSignal.wait()
+        try await snapshotSignal.wait()
         snapshotSignal.lock()
 
         return method(childController)
@@ -467,5 +479,12 @@ func CGContextCreateBitmapContext(size: CGSize, opaque: Bool, scale: CGFloat) ->
     return context
 }
 
-struct RenderingError: Error {}
+struct RenderingError: Error, CustomStringConvertible, LocalizedError {
+
+    var description: String {
+        "No image could be generated for this view as its size was zero. Please set an explicit size in the test."
+    }
+
+    var errorDescription: String? { description }
+}
 #endif

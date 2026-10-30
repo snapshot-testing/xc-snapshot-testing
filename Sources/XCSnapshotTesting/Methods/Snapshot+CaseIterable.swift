@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 extension SyncSnapshot where Input: CaseIterable & Sendable, Output == StringBytes, Input.AllCases: Sendable {
     /// A strategy for snapshot the output for every input of a function. The format of the
     /// snapshot is a comma-separated value (CSV) file that shows the mapping of inputs to outputs.
@@ -53,8 +56,8 @@ extension SyncSnapshot where Input: CaseIterable & Sendable, Output == StringByt
                 .sequence()
                 .map {
                     $0
-                    .map { "\"\($0)\",\"\($1)\"" }
-                    .joined(separator: "\n")
+                        .map { "\"\($0)\",\"\($1.rawValue)\"" }
+                        .joined(separator: "\n")
                 }
                 .callAsFunction(f) {
                     continuation.resume(with: $0)

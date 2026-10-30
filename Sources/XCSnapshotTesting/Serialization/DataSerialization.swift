@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 import Foundation
 
 /// Manager for data serialization and deserialization based on a specific configuration.

@@ -1,5 +1,8 @@
-import XCSnapshotTestingCustomDump
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 import XCSnapshotTesting
+import XCSnapshotTestingCustomDump
 
 #if canImport(XCTest)
 import XCTest

@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 import Foundation
 
 #if canImport(XCTest)
@@ -306,17 +309,17 @@ extension SnapshotTester {
         let sourceURL = try engine.sourceURL(for: filePath, using: self)
         let function = String(describing: function).sanitizingPathComponent()
 
-        let uniqueID: String
+        let pathComponent: String
 
         if let name {
-            uniqueID = name.sanitizingPathComponent()
+            pathComponent = function + "." + name.sanitizingPathComponent()
+        } else if SnapshotEnvironment.current.addsCounterSuffix {
+            pathComponent = function + "." + self.uniqueID(function, at: sourceURL)
         } else {
-            uniqueID = self.uniqueID(function, at: sourceURL)
+            pathComponent = function
         }
 
-        let snapshotURL = sourceURL.appendingPathComponent(
-            function + "." + uniqueID
-        )
+        let snapshotURL = sourceURL.appendingPathComponent(pathComponent)
 
         guard let pathExtension else {
             return snapshotURL

@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 import Foundation
 
 // MARK: - Assert snapshot
@@ -352,7 +355,7 @@ public func assert<Input, Output: BytesRepresentable>(
     column: UInt = #column
 ) throws {
     for (name, configuration) in strategies {
-        try? assert(
+        try assert(
             of: input,
             as: configuration,
             serialization: serialization,
@@ -416,11 +419,20 @@ public func assert<Input, Output: BytesRepresentable>(
     line: UInt = #line,
     column: UInt = #column
 ) async throws {
-    for strategy in strategies {
-        try? assert(
+    let uniqueID = TestingSession.shared.forLoop(
+        fileID: fileID,
+        filePath: filePath,
+        function: String(describing: testName),
+        line: line,
+        column: column
+    )
+
+    for (index, strategy) in strategies.enumerated() {
+        try assert(
             of: input,
             as: strategy,
             serialization: serialization,
+            named: "\(uniqueID)@\(index + 1)",
             record: recording,
             snapshotDirectory: snapshotDirectory,
             timeout: timeout,

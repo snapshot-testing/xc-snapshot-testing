@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 #if os(iOS) || os(tvOS) || os(visionOS)
 import UIKit
 #elseif os(macOS)
@@ -144,16 +147,10 @@ class SnapshotView: SDKView {
             return 1
         }
 
-        let proposedSize: CGSize
-
-        if #available(macOS 11, *) {
-            proposedSize = CGSize(
-                width: frame.size.width - (safeAreaInsets.left + safeAreaInsets.right),
-                height: frame.size.height - (safeAreaInsets.top + safeAreaInsets.bottom)
-            )
-        } else {
-            proposedSize = frame.size
-        }
+        let proposedSize = CGSize(
+            width: frame.size.width - (safeAreaInsets.left + safeAreaInsets.right),
+            height: frame.size.height - (safeAreaInsets.top + safeAreaInsets.bottom)
+        )
 
         return proposedSize.scaleThatFits(size)
     }

@@ -1,7 +1,9 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 #if os(iOS) || os(tvOS) || os(visionOS)
 import UIKit
 
-@available(iOS 14, tvOS 14, *)
 private struct UserInterfaceActiveAppearanceTraitKey: TraitKey {
 
     static let defaultValue = UIUserInterfaceActiveAppearance.unspecified
@@ -34,7 +36,6 @@ private struct UserInterfaceActiveAppearanceTraitKey: TraitKey {
     }
 }
 
-@available(iOS 14, tvOS 14, *)
 extension Traits {
 
     /// Specifies the active appearance of the interface.

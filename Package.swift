@@ -1,14 +1,14 @@
-// swift-tools-version: 6.1
+// swift-tools-version: 6.4
 
 import PackageDescription
 
 let package = Package(
     name: "xc-snapshot-testing",
     platforms: [
-        .iOS(.v13),
-        .macOS(.v10_15),
-        .tvOS(.v13),
-        .watchOS(.v6),
+        .iOS(.v15),
+        .macOS(.v12),
+        .tvOS(.v15),
+        .watchOS(.v9),
     ],
     products: [
         .library(
@@ -21,36 +21,42 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/o-nnerb/swift-async-stream", from: "1.3.2"),
-        .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.4.1"),
+        .package(url: "https://github.com/o-nnerb/swift-async-stream", from: "3.0.0"),
+        .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.7.3"),
     ],
     targets: [
         .target(
             name: "XCSnapshotTesting",
             dependencies: [
                 .product(name: "SwiftAsyncStream", package: "swift-async-stream")
-            ]
+            ],
+            swiftSettings: [.defaultIsolation(nil)]
         ),
         .target(
             name: "XCSnapshotTestingCustomDump",
             dependencies: [
                 "XCSnapshotTesting",
                 .product(name: "CustomDump", package: "swift-custom-dump"),
-            ]
+            ],
+            swiftSettings: [.defaultIsolation(nil)]
         ),
         .testTarget(
-            name: "XCSnapshotTestingTests",
+            name: "XCSnapshotTestingCoreTests",
             dependencies: ["XCSnapshotTesting"],
-            exclude: [
-                "__Fixtures__",
-                "__Snapshots__",
-            ]
+            swiftSettings: [.defaultIsolation(nil)]
+        ),
+        .testTarget(
+            name: "XCSnapshotTestingUITests",
+            dependencies: ["XCSnapshotTesting"],
+            swiftSettings: [.defaultIsolation(nil)]
         ),
         .testTarget(
             name: "XCSnapshotTestingCustomDumpTests",
             dependencies: [
                 "XCSnapshotTestingCustomDump"
-            ]
+            ],
+            exclude: ["__Snapshots__"],
+            swiftSettings: [.defaultIsolation(nil)]
         ),
     ]
 )

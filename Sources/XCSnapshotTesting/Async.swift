@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 import Foundation
 
 /// A wrapper for asynchronous operations that allows composing and transforming asynchronous workflows with input and output values.
@@ -86,7 +89,7 @@ extension Async {
     ///   - tolerance: The allowed tolerance for the deadline.
     ///   - clock: The clock to use for measuring time.
     /// - Returns: A new `Async` instance with the delay applied.
-    @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
+    @available(macOS 13.0, iOS 16.0, tvOS 16.0, *)
     public func sleep<C>(
         until deadline: C.Instant,
         tolerance: C.Instant.Duration? = nil,
@@ -109,7 +112,7 @@ extension Async {
     ///   - tolerance: The allowed tolerance for the duration.
     ///   - clock: The clock to use for measuring time.
     /// - Returns: A new `Async` instance with the delay applied.
-    @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
+    @available(macOS 13.0, iOS 16.0, tvOS 16.0, *)
     public func sleep<C>(
         for duration: C.Instant.Duration,
         tolerance: C.Instant.Duration? = nil,

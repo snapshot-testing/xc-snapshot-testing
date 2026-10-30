@@ -1,9 +1,13 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
+import SwiftAsyncStream
+
 #if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
 import UIKit
 #elseif os(macOS)
 @preconcurrency import AppKit
 #endif
-import SwiftAsyncStream
 
 #if os(iOS) || os(tvOS) || os(macOS) || os(visionOS)
 @MainActor

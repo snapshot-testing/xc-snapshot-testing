@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 #if os(macOS)
 @preconcurrency import AppKit
 #elseif os(iOS) || os(tvOS) || os(visionOS)
@@ -9,7 +12,8 @@ extension Snapshot {
     func withWindow<NewInput>(
         sessionRole: UISceneSession.Role,
         application: SDKApplication?,
-        operation: @escaping @Sendable (SnapshotWindowConfiguration<NewInput>, Executor) async throws
+        operation:
+            @escaping @Sendable (SnapshotWindowConfiguration<NewInput>, Executor) async throws
             -> Async<NewInput, Output>
     ) -> AsyncSnapshot<NewInput, Output> {
         map { executor in

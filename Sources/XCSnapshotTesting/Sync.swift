@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 import Foundation
 
 /// A continuation that allows resuming a synchronous operation with a value or error.
@@ -292,7 +295,7 @@ extension Sync where Input: Sendable, Output: Sendable {
     ///   - clock: The clock to use for measuring time. Defaults to `.continuous`.
     ///
     /// - Returns: An `Async` instance that represents the delayed operation, preserving the original input and output types.
-    @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
+    @available(macOS 13.0, iOS 16.0, tvOS 16.0, *)
     public func sleep<C>(
         until deadline: C.Instant,
         tolerance: C.Instant.Duration? = nil,
@@ -320,7 +323,7 @@ extension Sync where Input: Sendable, Output: Sendable {
     ///
     /// - Returns: An `Async` instance that represents the delayed operation, preserving
     ///           the original input and output types.
-    @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
+    @available(macOS 13.0, iOS 16.0, tvOS 16.0, *)
     public func sleep<C>(
         for duration: C.Instant.Duration,
         tolerance: C.Instant.Duration? = nil,
