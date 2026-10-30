@@ -87,6 +87,60 @@ struct ExecutorCombinatorTests {
         #expect(try SnapshotRunner.run(executors.sequence(), ()) == [10, 20, 30])
     }
 
+    @Test func aSequenceStopsAtTheFirstFailureAndReportsIt() {
+        let ran = Counter()
+        let executors: [Sync<Void, Int>] = [
+            Sync { _ in ran.increment(); return 1 },
+            Sync { _ in ran.increment(); throw Failure() },
+            Sync { _ in ran.increment(); return 3 },
+        ]
+
+        #expect(throws: Failure.self) { try SnapshotRunner.run(executors.sequence(), ()) }
+        #expect(ran.value == 2, "the executors after the failure do not run")
+    }
+
+    @Test func aSequenceKeepsTheOrderOfExecutorsThatCompleteLater() throws {
+        let executors = (1...5).map { number in
+            Sync<Void, Int> { _, continuation in
+                DispatchQueue.global().asyncAfter(deadline: .now() + .milliseconds(10 * (6 - number))) {
+                    continuation.resume(returning: number)
+                }
+            }
+        }
+
+        #expect(try SnapshotRunner.run(executors.sequence(), ()) == [1, 2, 3, 4, 5])
+    }
+
+    @Test func aSequenceReportsFailuresOfExecutorsThatCompleteLater() {
+        let executors: [Sync<Void, Int>] = [
+            Sync { _ in 1 },
+            Sync { _, continuation in
+                DispatchQueue.global().async { continuation.resume(throwing: Failure()) }
+            },
+        ]
+
+        #expect(throws: Failure.self) { try SnapshotRunner.run(executors.sequence(), ()) }
+    }
+
+    @Test func aSequenceDoesNotBlockOnAnExecutorThatNeverCompletes() {
+        let executors: [Sync<Void, Int>] = [
+            Sync { _ in 1 },
+            Sync { _, _ in },
+        ]
+
+        let completed = Counter()
+        executors.sequence()((), callback: { _ in completed.increment() })
+
+        // Returning at all is the point: the caller owns the timeout, and a wait in here would bypass it.
+        #expect(completed.value == 0)
+    }
+
+    @Test func aLongSequenceOfImmediateExecutorsDoesNotGrowTheStack() throws {
+        let executors = (0..<100_000).map { number in Sync<Void, Int> { _ in number } }
+
+        #expect(try SnapshotRunner.run(executors.sequence(), ()).count == 100_000)
+    }
+
     // MARK: - Sync as Async
 
     @Test func syncCanBeMappedIntoAnAsyncExecutor() async throws {
@@ -204,4 +258,16 @@ struct ExecutorCombinatorTests {
         #expect(isMain)
     }
     #endif
+}
+
+private final class Counter: @unchecked Sendable {
+
+    private let lock = NSLock()
+    private var _value = 0
+
+    var value: Int { lock.withLock { _value } }
+
+    func increment() {
+        lock.withLock { _value += 1 }
+    }
 }

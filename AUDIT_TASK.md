@@ -13,7 +13,8 @@ Legenda de estado: `[ ]` pendente · `[~]` em andamento · `[x]` concluído (com
 - [x] **A2** — Identidade do snapshot depende da ordem de execução e ignora a classe/suíte (`TestingSession`) — `717456a`
   - Sufixo agora é a posição do call site (`<função>.L<linha>C<coluna>`), via `SnapshotCallSite`; `TestingSession` removido. Overloads de array: `L<l>C<c>@<i>`.
   - **Quebra nomes existentes:** referências `.N` precisam ser renomeadas/re-gravadas (as de `CustomDumpTests` foram renomeadas, conteúdo idêntico). Editar linhas acima de um `assert` também muda o nome; usar `named:` para estabilidade. Sem fallback de leitura do nome antigo.
-- [ ] **A3** — `Array.sequence()` engole erros e bloqueia sem timeout (`.func(into:)` de `CaseIterable`)
+- [x] **A3** — `Array.sequence()` engole erros e bloqueia sem timeout (`.func(into:)` de `CaseIterable`) — `HASH`
+  - Reescrito sem `DispatchGroup.wait()`: o primeiro `.failure` encerra a sequência e é propagado; executores síncronos rodam em laço (sem crescer a pilha) e os assíncronos continuam a partir do próprio callback. Só o primeiro resultado de cada executor conta.
 
 ## Médio
 

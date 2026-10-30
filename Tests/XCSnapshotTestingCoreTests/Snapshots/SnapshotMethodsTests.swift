@@ -131,6 +131,22 @@ struct SnapshotMethodsTests {
         #expect(snapshot.pathExtension == "csv")
     }
 
+    @Test func aFailingCaseOfACaseIterableFunctionFailsTheSnapshot() {
+        struct Boom: Error {}
+
+        let witness = SyncSnapshot<Direction, StringBytes>.description.pullback {
+            (direction: Direction) throws -> Direction in
+            if direction == .left { throw Boom() }
+            return direction
+        }
+
+        let snapshot = SyncSnapshot<Direction, StringBytes>.func(into: witness)
+        let identity: @Sendable (Direction) -> Direction = { $0 }
+
+        // The case that fails must not just disappear from the CSV.
+        #expect(throws: Boom.self) { try SnapshotRunner.run(snapshot, identity) }
+    }
+
     // MARK: - URLRequest
 
     private func request(
