@@ -29,29 +29,34 @@ let package = Package(
             name: "XCSnapshotTesting",
             dependencies: [
                 .product(name: "SwiftAsyncStream", package: "swift-async-stream")
-            ]
+            ],
+            swiftSettings: [.defaultIsolation(nil)]
         ),
         .target(
             name: "XCSnapshotTestingCustomDump",
             dependencies: [
                 "XCSnapshotTesting",
                 .product(name: "CustomDump", package: "swift-custom-dump"),
-            ]
+            ],
+            swiftSettings: [.defaultIsolation(nil)]
         ),
         .testTarget(
             name: "XCSnapshotTestingCoreTests",
-            dependencies: ["XCSnapshotTesting"]
+            dependencies: ["XCSnapshotTesting"],
+            swiftSettings: [.defaultIsolation(nil)]
         ),
         .testTarget(
             name: "XCSnapshotTestingUITests",
-            dependencies: ["XCSnapshotTesting"]
+            dependencies: ["XCSnapshotTesting"],
+            swiftSettings: [.defaultIsolation(nil)]
         ),
         .testTarget(
             name: "XCSnapshotTestingCustomDumpTests",
             dependencies: [
                 "XCSnapshotTestingCustomDump"
             ],
-            exclude: ["__Snapshots__"]
+            exclude: ["__Snapshots__"],
+            swiftSettings: [.defaultIsolation(nil)]
         ),
     ]
 )
