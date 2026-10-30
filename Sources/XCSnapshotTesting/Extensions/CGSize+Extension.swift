@@ -52,6 +52,12 @@ extension CGRect {
 
 extension CGSize {
 
+    /// 626 x 890
+    static let screen7_6 = CGSize(width: 626, height: 890)
+
+    /// 466 x 678
+    static let screen5_4v2 = CGSize(width: 466, height: 678)
+
     /// 440 x 956
     static let screen6_9 = CGSize(width: 440, height: 956)
 

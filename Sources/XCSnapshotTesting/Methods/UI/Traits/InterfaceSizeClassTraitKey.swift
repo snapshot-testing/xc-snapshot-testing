@@ -99,6 +99,18 @@ public struct DeviceDynamicInterfaceSizeClass: Sendable {
 // MARK: - iPhone
 extension DeviceDynamicInterfaceSizeClass {
 
+    // MARK: - iPhone Duo
+
+    public static let iPhoneDuo = withCompactLandscape
+
+    public static let iPhoneDuoUnfolded = iPadOS
+
+    // MARK: - iPhone 18
+
+    public static let iPhone18ProMax = withRegularLandscape
+
+    public static let iPhone18Pro = withCompactLandscape
+
     // MARK: - iPhone 17
 
     public static let iPhone17ProMax = withRegularLandscape
@@ -106,6 +118,8 @@ extension DeviceDynamicInterfaceSizeClass {
     public static let iPhone17Pro = withCompactLandscape
 
     public static let iPhone17 = withCompactLandscape
+
+    public static let iPhone17e = withCompactLandscape
 
     // MARK: - iPhone Air
 
@@ -183,12 +197,15 @@ extension DeviceDynamicInterfaceSizeClass {
 
     // MARK: - iPhone X
 
+    @available(*, deprecated, message: "iPhoneX is not supported by iOS 17 or later.")
     public static let iPhoneX = withCompactLandscape
 
     // MARK: - iPhone 8
 
+    @available(*, deprecated, message: "iPhone8Plus is not supported by iOS 17 or later.")
     public static let iPhone8Plus = withRegularLandscape
 
+    @available(*, deprecated, message: "iPhone8 is not supported by iOS 17 or later.")
     public static let iPhone8 = withCompactLandscape
 
     // MARK: - iPhone SE

@@ -171,8 +171,89 @@ extension LayoutConfiguration {
     }
 }
 
+// MARK: - iPhone Duo
+extension LayoutConfiguration {
+
+    /// The folded iPhone Duo, rendering its 5.4" outer display (466 x 678 pt).
+    ///
+    /// - Note: The size, scale, safe area and size classes were measured on the iPhone Duo simulator.
+    ///   Its status bar sits in a side column rather than at the top, so the portrait safe area is
+    ///   inset on the trailing edge (84 pt) and the landscape one on the leading edge.
+    public static let iPhoneDuo: LayoutConfiguration = .iPhoneDuo(.portrait)
+
+    public static func iPhoneDuo(_ orientation: DeviceOrientation) -> LayoutConfiguration {
+        iPhone(
+            size: .screen5_4v2,
+            portraitSafeArea: EdgeInsets(top: 0, bottom: 34, right: 84),
+            landscapeSafeArea: EdgeInsets(top: 0, left: 84, bottom: 34, right: 0),
+            orientation: orientation,
+            displayScale: 3,
+            deviceInterfaceSizeClass: .iPhoneDuo
+        )
+    }
+
+    /// The unfolded iPhone Duo, rendering its 7.6" inner display (626 x 890 pt in portrait).
+    ///
+    /// - Note: Defaults to landscape, the orientation the device is held in when opened. The screen size
+    ///   comes from the panel's published resolution at 3x. The simulator doesn't expose the inner display,
+    ///   so the safe-area insets and size classes are unverified.
+    public static let iPhoneDuoUnfolded: LayoutConfiguration = .iPhoneDuoUnfolded(.landscape)
+
+    public static func iPhoneDuoUnfolded(_ orientation: DeviceOrientation) -> LayoutConfiguration {
+        iPhone(
+            size: .screen7_6,
+            portraitSafeArea: EdgeInsets(top: 59, bottom: 34, right: 0),
+            orientation: orientation,
+            displayScale: 3,
+            deviceInterfaceSizeClass: .iPhoneDuoUnfolded
+        )
+    }
+}
+
+// MARK: - iPhone 18
+extension LayoutConfiguration {
+
+    public static let iPhone18ProMax: LayoutConfiguration = .iPhone18ProMax(.portrait)
+
+    public static func iPhone18ProMax(_ orientation: DeviceOrientation) -> LayoutConfiguration {
+        iPhone(
+            size: .screen6_9,
+            portraitSafeArea: EdgeInsets(top: 62, bottom: 34, right: 0),
+            landscapeSafeArea: EdgeInsets(top: 20, left: 62, bottom: 20, right: 62),
+            orientation: orientation,
+            displayScale: 3,
+            deviceInterfaceSizeClass: .iPhone18ProMax
+        )
+    }
+
+    public static let iPhone18Pro: LayoutConfiguration = .iPhone18Pro(.portrait)
+
+    public static func iPhone18Pro(_ orientation: DeviceOrientation) -> LayoutConfiguration {
+        iPhone(
+            size: .screen6_3,
+            portraitSafeArea: EdgeInsets(top: 62, bottom: 34, right: 0),
+            landscapeSafeArea: EdgeInsets(top: 20, left: 62, bottom: 20, right: 62),
+            orientation: orientation,
+            displayScale: 3,
+            deviceInterfaceSizeClass: .iPhone18Pro
+        )
+    }
+}
+
 // MARK: - iPhone 17
 extension LayoutConfiguration {
+
+    public static let iPhone17e: LayoutConfiguration = .iPhone17e(.portrait)
+
+    public static func iPhone17e(_ orientation: DeviceOrientation) -> LayoutConfiguration {
+        iPhone(
+            size: .screen6_1v1,
+            portraitSafeArea: EdgeInsets(top: 47, bottom: 34, right: 0),
+            orientation: orientation,
+            displayScale: 3,
+            deviceInterfaceSizeClass: .iPhone17e
+        )
+    }
 
     public static let iPhone17ProMax: LayoutConfiguration = .iPhone17ProMax(.portrait)
 
@@ -217,7 +298,7 @@ extension LayoutConfiguration {
 // MARK: - iPhone Air
 extension LayoutConfiguration {
 
-    public static let iPhoneAir: LayoutConfiguration = .iPhone16ProMax(.portrait)
+    public static let iPhoneAir: LayoutConfiguration = .iPhoneAir(.portrait)
 
     public static func iPhoneAir(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
@@ -538,7 +619,7 @@ extension LayoutConfiguration {
             portraitSafeArea: EdgeInsets(top: 47, bottom: 34, right: 0),
             orientation: orientation,
             displayScale: 2,
-            deviceInterfaceSizeClass: .iPhone11ProMax
+            deviceInterfaceSizeClass: .iPhone11
         )
     }
 }
@@ -553,7 +634,7 @@ extension LayoutConfiguration {
             size: .screen6_1v3,
             portraitSafeArea: EdgeInsets(top: 44, bottom: 34, right: 0),
             orientation: orientation,
-            displayScale: 3,
+            displayScale: 2,
             deviceInterfaceSizeClass: .iPhoneXR
         )
     }
@@ -582,14 +663,16 @@ extension LayoutConfiguration {
         )
     }
 
+    @available(*, deprecated, message: "iPhoneX is not supported by iOS 17 or later.")
     public static let iPhoneX: LayoutConfiguration = .iPhoneX(.portrait)
 
+    @available(*, deprecated, message: "iPhoneX is not supported by iOS 17 or later.")
     public static func iPhoneX(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen5_8,
             portraitSafeArea: EdgeInsets(top: 44, bottom: 34, right: 0),
             orientation: orientation,
-            displayScale: 2,
+            displayScale: 3,
             deviceInterfaceSizeClass: .iPhoneX
         )
     }
@@ -598,8 +681,10 @@ extension LayoutConfiguration {
 // MARK: - iPhone 8
 extension LayoutConfiguration {
 
+    @available(*, deprecated, message: "iPhone8 is not supported by iOS 17 or later.")
     public static let iPhone8: LayoutConfiguration = .iPhone8(.portrait)
 
+    @available(*, deprecated, message: "iPhone8 is not supported by iOS 17 or later.")
     public static func iPhone8(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen4_7,
@@ -611,8 +696,10 @@ extension LayoutConfiguration {
         )
     }
 
+    @available(*, deprecated, message: "iPhone8Plus is not supported by iOS 17 or later.")
     public static let iPhone8Plus: LayoutConfiguration = .iPhone8Plus(.portrait)
 
+    @available(*, deprecated, message: "iPhone8Plus is not supported by iOS 17 or later.")
     public static func iPhone8Plus(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen5_5,
@@ -722,8 +809,10 @@ extension LayoutConfiguration {
         )
     }
 
+    @available(*, deprecated, message: "iPadPro10_5 is not supported by iPadOS 17 or later.")
     public static let iPadPro10_5 = iPadPro10_5(.landscape)
 
+    @available(*, deprecated, message: "iPadPro10_5 is not supported by iPadOS 17 or later.")
     public static func iPadPro10_5(
         _ orientation: DeviceOrientation
     ) -> LayoutConfiguration {
@@ -735,14 +824,46 @@ extension LayoutConfiguration {
         )
     }
 
+    @available(*, deprecated, message: "iPadPro9_7 is not supported by iPadOS 17 or later.")
     public static let iPadPro9_7 = iPadPro9_7(.landscape)
 
+    @available(*, deprecated, message: "iPadPro9_7 is not supported by iPadOS 17 or later.")
     public static func iPadPro9_7(
         _ orientation: DeviceOrientation
     ) -> LayoutConfiguration {
         iPad(
             orientation: orientation,
             size: CGSize(width: 768, height: 1_024),
+            displayScale: 2,
+            deviceInterfaceSizeClass: .iPadOS
+        )
+    }
+}
+
+// MARK: - iPad Pro (M4, M5)
+extension LayoutConfiguration {
+
+    public static let iPadPro13 = iPadPro13(.landscape)
+
+    public static func iPadPro13(
+        _ orientation: DeviceOrientation
+    ) -> LayoutConfiguration {
+        iPad(
+            orientation: orientation,
+            size: CGSize(width: 1_032, height: 1_376),
+            displayScale: 2,
+            deviceInterfaceSizeClass: .iPadOS
+        )
+    }
+
+    public static let iPadPro11v2 = iPadPro11v2(.landscape)
+
+    public static func iPadPro11v2(
+        _ orientation: DeviceOrientation
+    ) -> LayoutConfiguration {
+        iPad(
+            orientation: orientation,
+            size: CGSize(width: 834, height: 1_210),
             displayScale: 2,
             deviceInterfaceSizeClass: .iPadOS
         )
@@ -804,8 +925,10 @@ extension LayoutConfiguration {
         )
     }
 
+    @available(*, deprecated, message: "iPadAir9_7 is not supported by iPadOS 17 or later.")
     public static let iPadAir9_7 = iPadAir9_7(.landscape)
 
+    @available(*, deprecated, message: "iPadAir9_7 is not supported by iPadOS 17 or later.")
     public static func iPadAir9_7(
         _ orientation: DeviceOrientation
     ) -> LayoutConfiguration {
@@ -847,8 +970,10 @@ extension LayoutConfiguration {
         )
     }
 
+    @available(*, deprecated, message: "iPad9_7 is not supported by iPadOS 17 or later.")
     public static let iPad9_7 = iPad9_7(.landscape)
 
+    @available(*, deprecated, message: "iPad9_7 is not supported by iPadOS 17 or later.")
     public static func iPad9_7(
         _ orientation: DeviceOrientation
     ) -> LayoutConfiguration {
