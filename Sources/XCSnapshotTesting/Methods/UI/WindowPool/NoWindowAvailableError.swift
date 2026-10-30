@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 #if os(macOS)
 @preconcurrency import AppKit
 #elseif os(iOS) || os(tvOS) || os(visionOS)

@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 import Foundation
 
 extension SyncSnapshot where Input: Encodable & Sendable, Output == StringBytes {

@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 import Foundation
 
 /// A wrapper type for `Data` that conforms to `BytesRepresentable`, enabling serialization and deserialization of byte-based data.

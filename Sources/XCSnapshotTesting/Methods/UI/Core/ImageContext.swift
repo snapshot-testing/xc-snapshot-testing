@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
 import CoreGraphics
 

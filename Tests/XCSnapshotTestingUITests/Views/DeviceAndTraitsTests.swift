@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 #if os(iOS) && !targetEnvironment(macCatalyst)
 import CoreGraphics
 import Testing

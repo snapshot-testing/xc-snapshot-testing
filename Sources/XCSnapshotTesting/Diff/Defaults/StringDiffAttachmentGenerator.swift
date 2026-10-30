@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 import Foundation
 
 /// A diff attachment generator that compares two UTF-8 strings line-by-line and produces a patch-style text diff

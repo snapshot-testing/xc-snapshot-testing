@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 #if os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
 import UIKit
 #elseif os(macOS)

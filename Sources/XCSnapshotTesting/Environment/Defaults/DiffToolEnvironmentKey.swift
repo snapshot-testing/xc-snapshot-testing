@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 import Foundation
 
 private struct DiffToolEnvironmentKey: SnapshotEnvironmentKey {

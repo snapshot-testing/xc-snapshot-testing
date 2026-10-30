@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 import Foundation
 
 #if os(iOS) || os(macOS) || os(tvOS) || os(watchOS) || os(visionOS)

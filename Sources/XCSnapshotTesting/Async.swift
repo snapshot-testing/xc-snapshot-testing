@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 import Foundation
 
 /// A wrapper for asynchronous operations that allows composing and transforming asynchronous workflows with input and output values.

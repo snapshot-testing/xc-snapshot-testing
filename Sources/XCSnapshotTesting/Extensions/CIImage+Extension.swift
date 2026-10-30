@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 #if os(iOS) || os(tvOS) || os(macOS) || os(visionOS)
 import Accelerate.vImage
 import CoreImage.CIKernel

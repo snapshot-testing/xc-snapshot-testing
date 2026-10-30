@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 #if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
 import UIKit
 import Accelerate.vImage

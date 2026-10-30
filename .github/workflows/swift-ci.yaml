@@ -39,6 +39,12 @@ jobs:
       swift-version: '6.4'
       platform: xcode-27
 
+      # Step 1 – Header
+      enable-header-validation: true
+      header-template: |
+        // Copyright (c) Snapshot Testing
+        // SPDX-License-Identifier: MIT
+
       # Step 2 – Format
       enable-format: true
       format-swift-version: '6.4'
@@ -62,6 +68,16 @@ jobs:
 
       # Step 4 – Release Builds (build only)
       enable-release-builds: true
+
+      # Step 4 – Android Build
+      enable-android-build: true
+
+      # Step 4 – Static SDK
+      enable-static-sdk: true
+
+      # Step 4 – Linkage Test (FoundationEssentials) stays off: it requires a package that links
+      # FoundationEssentials only, and this one needs the full Foundation (JSONSerialization,
+      # NumberFormatter, FileManager) and XCTest.
 
       # Coverage is not uploaded yet: it needs a CODECOV_TOKEN secret for this repository.
     secrets: inherit

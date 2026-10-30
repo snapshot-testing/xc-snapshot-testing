@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 import Foundation
 
 /// A protocol for defining keys that can be used with `SnapshotEnvironmentValues`.

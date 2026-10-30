@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 #if os(iOS) || os(macOS) || os(tvOS) || os(visionOS)
 import SpriteKit
 #if os(macOS)

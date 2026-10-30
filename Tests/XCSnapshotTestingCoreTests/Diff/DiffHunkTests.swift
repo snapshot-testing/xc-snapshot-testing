@@ -1,3 +1,6 @@
+// Copyright (c) Snapshot Testing
+// SPDX-License-Identifier: MIT
+
 import Testing
 
 @_spi(Internals) @testable import XCSnapshotTesting
