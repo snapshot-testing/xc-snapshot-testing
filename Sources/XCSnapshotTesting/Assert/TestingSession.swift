@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT
 
 import Foundation
-import Testing
 
 final class TestingSession: Sendable {
 
