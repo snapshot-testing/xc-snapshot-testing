@@ -62,9 +62,11 @@ jobs:
       apple-tests-max-parallelization-width: '2'
       apple-tests-parallel-testing-worker-count: '2'
       apple-tests-timeout-minutes: 45
+      apple-coverage-enabled: true
 
       # Step 4 – Third Party
       enable-third-party-tests: true
+      third-party-coverage-enabled: true
 
       # Step 4 – Release Builds (build only)
       enable-release-builds: true
@@ -79,5 +81,6 @@ jobs:
       # FoundationEssentials only, and this one needs the full Foundation (JSONSerialization,
       # NumberFormatter, FileManager) and XCTest.
 
-      # Coverage is not uploaded yet: it needs a CODECOV_TOKEN secret for this repository.
+      # Step 5 – Coverage Upload (uses the CODECOV_TOKEN secret of the repository)
+      enable-coverage-upload: true
     secrets: inherit
