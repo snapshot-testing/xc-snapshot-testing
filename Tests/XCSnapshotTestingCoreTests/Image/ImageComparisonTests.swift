@@ -1,5 +1,6 @@
 #if os(iOS) || os(tvOS) || os(visionOS) || os(macOS)
 import CoreGraphics
+import CoreImage
 import Foundation
 import Testing
 
@@ -109,6 +110,66 @@ struct ImageComparisonTests {
         let snapshot = Factory.image(redrawn(gradient(in: Factory.displayP3), into: Factory.sRGB, fillingTopLeft: 8))
 
         #expect(reference.compare(snapshot, precision: 0.98, perceptualPrecision: 0.98) != nil)
+    }
+
+    // MARK: - The two ways to measure the difference
+
+    /// Machines without a GPU (virtual machines, simulators on CI) cannot use Metal, so the comparison
+    /// falls back to reading the difference pixel by pixel on the CPU. Both ways must agree.
+    @Test(arguments: [true, false])
+    func oneStepAtAnyToneIsWithinTheToleranceWhetherOrNotMetalIsUsed(usesMetal: Bool) {
+        for base in [UInt8(0), 4, 16, 24, 128, 215] {
+            let reference = CIImage(cgImage: Factory.flat(base))
+            let snapshot = CIImage(cgImage: Factory.flat(base + 1))
+
+            #expect(
+                reference.perceptuallyCompare(
+                    snapshot,
+                    pixelPrecision: 1,
+                    perceptualPrecision: 0.99,
+                    usesMetal: usesMetal
+                ) == nil,
+                "base \(base), metal: \(usesMetal)"
+            )
+        }
+    }
+
+    @Test(arguments: [true, false])
+    func aRealDifferenceIsReportedWhetherOrNotMetalIsUsed(usesMetal: Bool) throws {
+        let reference = CIImage(cgImage: Factory.flat(100))
+        let snapshot = CIImage(cgImage: Factory.flat(200))
+
+        let message = try #require(
+            reference.perceptuallyCompare(
+                snapshot,
+                pixelPrecision: 1,
+                perceptualPrecision: 0.99,
+                usesMetal: usesMetal
+            )
+        )
+
+        #expect(message.contains("The percentage of pixels that match"))
+        #expect(message.contains("The lowest perceptual color precision"))
+    }
+
+    @Test(arguments: [true, false])
+    func theShareOfDifferentPixelsIsMeasuredWhetherOrNotMetalIsUsed(usesMetal: Bool) throws {
+        let reference = CIImage(cgImage: Factory.rgba8(width: 10, height: 10) { _, _ in (100, 100, 100) })
+        let snapshot = CIImage(
+            cgImage: Factory.rgba8(width: 10, height: 10) { x, _ in x < 3 ? (250, 40, 40) : (100, 100, 100) }
+        )
+
+        let message = try #require(
+            reference.perceptuallyCompare(
+                snapshot,
+                pixelPrecision: 0.9,
+                perceptualPrecision: 0.99,
+                usesMetal: usesMetal
+            )
+        )
+
+        // Three of the ten columns changed, so about 70% of the pixels still match.
+        #expect(message.contains("The percentage of pixels that match 0.7"), "metal: \(usesMetal), \(message)")
     }
 
     // MARK: - Pixel formats

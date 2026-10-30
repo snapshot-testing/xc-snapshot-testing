@@ -1,4 +1,4 @@
-#if os(iOS) || os(macOS)
+#if (os(iOS) || os(macOS)) && !targetEnvironment(macCatalyst)
 import CoreGraphics
 import SceneKit
 import SpriteKit

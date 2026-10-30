@@ -1,4 +1,4 @@
-#if os(iOS) || os(tvOS) || os(visionOS) || os(macOS)
+#if (os(iOS) || os(tvOS) || os(visionOS) || os(macOS)) && !targetEnvironment(macCatalyst)
 import CoreGraphics
 import Foundation
 

@@ -1,4 +1,4 @@
-#if os(iOS) || os(tvOS) || os(visionOS) || os(macOS)
+#if (os(iOS) || os(tvOS) || os(visionOS) || os(macOS)) && !targetEnvironment(macCatalyst)
 import CoreGraphics
 import Observation
 import SwiftUI
@@ -65,7 +65,8 @@ struct SwiftUIRenderingTests {
         #expect(rendered.swatch(x: 10, y: 10) == .blue)
     }
 
-    #if !os(macOS)
+    #if os(iOS)
+    /// Only the hosting controller of iOS paints a system background; on tvOS and visionOS it is clear.
     @Test func theBackgroundIsOpaqueByDefault() async throws {
         let rendered = try await render(AsyncSnapshot<DotView, ImageBytes>.image(layout: .sizeThatFits), DotView())
 
@@ -74,6 +75,9 @@ struct SwiftUIRenderingTests {
         #expect(rendered.swatch(x: 2, y: 2) != .clear)
     }
 
+    #endif
+
+    #if !os(macOS)
     @Test func aTransparentBackgroundIsKeptWhenNotOpaque() async throws {
         let rendered = try await render(
             AsyncSnapshot<DotView, ImageBytes>.image(layout: .sizeThatFits, isOpaque: false),

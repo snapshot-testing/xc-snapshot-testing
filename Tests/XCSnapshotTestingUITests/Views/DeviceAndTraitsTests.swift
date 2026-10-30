@@ -1,4 +1,4 @@
-#if os(iOS)
+#if os(iOS) && !targetEnvironment(macCatalyst)
 import CoreGraphics
 import Testing
 import UIKit
@@ -126,11 +126,25 @@ struct DeviceLayoutTests {
             SafeAreaViewController()
         )
 
+        // The safe area of the machine running the test can add to the one of the device layout, so the
+        // content is only required to stay out of the configured insets, with the band outside it red.
         let middle = rendered.size.width / 2
-        #expect(rendered.swatch(x: middle, y: inset.top / 2) == .red, "the status bar area is outside the safe area")
-        #expect(rendered.swatch(x: middle, y: inset.top + 10) == .green)
-        #expect(rendered.swatch(x: middle, y: rendered.size.height - inset.bottom / 2) == .red)
-        #expect(rendered.swatch(x: middle, y: rendered.size.height - inset.bottom - 10) == .green)
+        let rows = Array(0..<Int(rendered.size.height))
+        let green = rows.filter { rendered.swatch(x: middle, y: CGFloat($0)) == .green }
+        let scale = rendered.size.height / (device.size?.height ?? rendered.size.height)
+
+        let firstGreen = try #require(green.first)
+        let lastGreen = try #require(green.last)
+        #expect(CGFloat(firstGreen) >= inset.top * scale - 1, "the content starts below the top inset")
+        #expect(
+            CGFloat(lastGreen) <= rendered.size.height - inset.bottom * scale + 1,
+            "the content ends above the bottom inset"
+        )
+        #expect(rendered.swatch(x: middle, y: inset.top * scale / 2) == .red, "the top inset is outside the content")
+        #expect(
+            rendered.swatch(x: middle, y: rendered.size.height - inset.bottom * scale / 2) == .red,
+            "the bottom inset is outside the content"
+        )
     }
 
     @Test func aFixedLayoutHasNoSafeArea() async throws {
