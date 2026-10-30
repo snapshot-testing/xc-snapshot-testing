@@ -314,7 +314,7 @@ extension SnapshotTester {
         if let name {
             pathComponent = function + "." + name.sanitizingPathComponent()
         } else if SnapshotEnvironment.current.addsCounterSuffix {
-            pathComponent = function + "." + self.uniqueID(function, at: sourceURL)
+            pathComponent = function + "." + SnapshotCallSite(line: line, column: column).suffix
         } else {
             pathComponent = function
         }
@@ -326,18 +326,6 @@ extension SnapshotTester {
         }
 
         return snapshotURL.appendingPathExtension(pathExtension)
-    }
-
-    private func uniqueID(_ function: String, at url: URL) -> String {
-        String(
-            TestingSession.shared.functionPosition(
-                fileID: fileID,
-                filePath: filePath,
-                function: function,
-                line: line,
-                column: column
-            )
-        )
     }
 }
 
