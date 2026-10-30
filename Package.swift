@@ -21,7 +21,7 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/o-nnerb/swift-async-stream", from: "2.1.4"),
+        .package(url: "https://github.com/o-nnerb/swift-async-stream", from: "3.0.0"),
         .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.7.3"),
     ],
     targets: [
