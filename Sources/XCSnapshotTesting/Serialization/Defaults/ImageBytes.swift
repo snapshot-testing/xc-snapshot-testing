@@ -99,8 +99,10 @@ public struct ImageBytes: BytesRepresentable {
     /// - Parameter container: Destination container for the image data.
     /// - Throws: Error if serialization fails (e.g., failed image-to-data conversion).
     public func serialize(to container: BytesContainer) throws {
+        // Returning here would leave the container empty, and an empty file would then be recorded
+        // over the reference.
         guard let data = rawValue.encodedPNG(format: effectiveFormat) else {
-            return
+            throw BytesSerializationError()
         }
 
         try container.write(data)

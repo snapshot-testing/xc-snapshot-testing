@@ -65,6 +65,69 @@ struct ImageSerializationTests {
         )
     }
 
+    // MARK: - Images without a PNG
+
+    /// An image that has no pixels, so the platform cannot encode it.
+    private var imageWithoutPNG: SDKImage {
+        #if os(macOS)
+        SDKImage(size: .zero)
+        #else
+        SDKImage()
+        #endif
+    }
+
+    @Test func imagesThatCannotBeEncodedAreRejected() {
+        #expect(imageWithoutPNG.pngData() == nil)
+
+        #expect(throws: BytesSerializationError.self) {
+            try DataSerialization().serialize(ImageBytes(rawValue: imageWithoutPNG))
+        }
+    }
+
+    @Test(arguments: [RecordMode.missing, .failed, .all])
+    func imagesThatCannotBeEncodedNeverReplaceTheReference(mode: RecordMode) throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        func verify(_ image: SDKImage) throws -> String? {
+            try XCSnapshotTesting.verify(
+                of: image,
+                as: .image,
+                named: "a",
+                record: mode,
+                snapshotDirectory: directory.path,
+                testName: "snapshot"
+            )
+        }
+
+        // Nothing is recorded when there is no reference yet.
+        #expect(throws: BytesSerializationError.self) { try verify(imageWithoutPNG) }
+
+        let referenceURL = directory
+            .appendingPathComponent("ImageSerializationTests")
+            .appendingPathComponent("snapshot.a.png")
+        #expect(!FileManager.default.fileExists(atPath: referenceURL.path))
+
+        // And a reference that already exists is left untouched.
+        let original = try png(of: Factory.image(Factory.flat(100)))
+        try FileManager.default.createDirectory(
+            at: referenceURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try original.write(to: referenceURL)
+
+        #expect(throws: BytesSerializationError.self) { try verify(imageWithoutPNG) }
+        #expect(try Data(contentsOf: referenceURL) == original)
+    }
+
+    @Test func emptyTextAndDataSnapshotsAreStillSerialized() throws {
+        let serialization = DataSerialization()
+
+        #expect(try serialization.serialize(StringBytes(rawValue: "")).isEmpty)
+        #expect(try serialization.serialize(DataBytes(rawValue: Data())).isEmpty)
+    }
+
     // MARK: - Diff attachments
 
     @Test func equalImagesProduceNoAttachment() {
