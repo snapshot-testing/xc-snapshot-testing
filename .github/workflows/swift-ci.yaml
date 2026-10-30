@@ -62,6 +62,17 @@ jobs:
       apple-tests-max-parallelization-width: '2'
       apple-tests-parallel-testing-worker-count: '2'
       apple-tests-timeout-minutes: 45
+      # Same legs as the reusable workflow's default, except iOS: the iPhone 18 Pro simulator intermittently
+      # takes minutes to come up on the runner and then fails with "The test runner hung before establishing
+      # connection" while the next test bundle launches (the tests themselves all pass).
+      apple-tests-matrix: >-
+        [{"destination":"platform=iOS Simulator,arch=arm64,name=iPhone 17,OS=27.0","name":"iOS"},
+        {"destination":"platform=iOS Simulator,arch=arm64,name=iPad (A16),OS=27.0","name":"iPadOS"},
+        {"destination":"platform=watchOS Simulator,arch=arm64,name=Apple Watch Series 12 (42mm),OS=27.0","name":"watchOS"},
+        {"destination":"platform=tvOS Simulator,arch=arm64,name=Apple TV 4K (3rd generation) (at 1080p),OS=27.0","name":"tvOS"},
+        {"destination":"platform=visionOS Simulator,arch=arm64,name=Apple Vision Pro,OS=27.0","name":"visionOS"},
+        {"destination":"platform=macOS,arch=arm64,name=My Mac","name":"macOS"},
+        {"destination":"platform=macOS,arch=arm64,variant=Mac Catalyst,name=My Mac","name":"macOS Catalyst"}]
       apple-coverage-enabled: true
 
       # Step 4 – Third Party

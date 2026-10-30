@@ -415,6 +415,12 @@ class SnapshotUIController: SDKViewController {
         format.scale = view.window?.screen.scale ?? traits.displayScale
         #endif
 
+        if let imageFormat = SnapshotEnvironment.current.imageFormat {
+            // A wide gamut or 16-bit format is converted from the extended range. The standard
+            // range would clip the colors before the conversion gets a chance to keep them.
+            format.preferredRange = imageFormat.needsExtendedRange ? .extended : .standard
+        }
+
         let renderer = UIGraphicsImageRenderer(
             bounds: bounds,
             format: format

@@ -116,9 +116,14 @@ struct ImageComparisonTests {
     func imagesInDifferentColorSpacesAreComparedByTheirColors() {
         // Regression: a Display P3 reference against an sRGB snapshot used to report a difference on
         // every pixel, even for the same colors, because the originals were compared unconverted.
-        let reference = Factory.image(gradient(in: Factory.displayP3))
+        //
+        // The colors are close to neutral so they exist in both spaces. A saturated Display P3 color has no
+        // sRGB equivalent, and a reference in Display P3 is compared in it (see `ImageFormatTests`).
+        let mild = Factory.rgba8(colorSpace: Factory.displayP3) { x, y in (UInt8(110 + x * 2), UInt8(110 + y * 2), 120)
+        }
+        let reference = Factory.image(mild)
 
-        let snapshot = Factory.image(redrawn(gradient(in: Factory.displayP3), into: Factory.sRGB, nudging: (7, 7)))
+        let snapshot = Factory.image(redrawn(mild, into: Factory.sRGB, nudging: (7, 7)))
 
         #expect(reference.compare(snapshot, precision: 0.98, perceptualPrecision: 0.98) == nil)
     }

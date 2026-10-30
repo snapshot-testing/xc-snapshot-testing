@@ -4,6 +4,7 @@
 #if (os(iOS) || os(tvOS) || os(visionOS) || os(macOS)) && !targetEnvironment(macCatalyst)
 import CoreGraphics
 import Foundation
+import ImageIO
 import Testing
 
 @_spi(Internals) @testable import XCSnapshotTesting
@@ -118,6 +119,35 @@ struct ViewRenderingTests {
         #expect(rendered.size.height <= 3000.5)
         #expect(abs(rendered.size.width / rendered.size.height - 2.0 / 3.0) < 0.01)
         #expect(rendered.swatch(x: rendered.size.width / 2, y: rendered.size.height / 2) == .blue)
+    }
+
+    // MARK: - Image format
+
+    @Test func aRenderedViewIsStoredInTheFormatOfTheStrategy() async throws {
+        let strategy = Strategy.image(layout: .fixed(width: 40, height: 20)).imageFormat(.displayP3)
+
+        let bytes = try await strategy.executor(ColorView(.red))
+        let data = try DataSerialization().serialize(bytes)
+        let source = try #require(CGImageSourceCreateWithData(data as CFData, nil))
+        let stored = try #require(CGImageSourceCreateImageAtIndex(source, 0, nil))
+
+        #expect(ImageFormat(describing: stored) == .displayP3)
+        #expect(stored.bitsPerComponent == 8)
+    }
+
+    @Test func aRenderedViewIsStoredInTheFormatOfTheEnvironment() async throws {
+        let format = ImageFormat(colorSpace: .sRGB, bitDepth: .sixteen)
+
+        let data = try await withTestingEnvironment {
+            $0.imageFormat = format
+        } operation: {
+            let bytes = try await Strategy.image(layout: .fixed(width: 40, height: 20)).executor(ColorView(.blue))
+            return try DataSerialization().serialize(bytes)
+        }
+
+        let source = try #require(CGImageSourceCreateWithData(data as CFData, nil))
+        let stored = try #require(CGImageSourceCreateImageAtIndex(source, 0, nil))
+        #expect(ImageFormat(describing: stored) == format)
     }
 
     // MARK: - Descriptions
