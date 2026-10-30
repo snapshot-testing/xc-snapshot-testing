@@ -90,9 +90,18 @@ struct ExecutorCombinatorTests {
     @Test func aSequenceStopsAtTheFirstFailureAndReportsIt() {
         let ran = Counter()
         let executors: [Sync<Void, Int>] = [
-            Sync { _ in ran.increment(); return 1 },
-            Sync { _ in ran.increment(); throw Failure() },
-            Sync { _ in ran.increment(); return 3 },
+            Sync { _ in
+                ran.increment()
+                return 1
+            },
+            Sync { _ in
+                ran.increment()
+                throw Failure()
+            },
+            Sync { _ in
+                ran.increment()
+                return 3
+            },
         ]
 
         #expect(throws: Failure.self) { try SnapshotRunner.run(executors.sequence(), ()) }

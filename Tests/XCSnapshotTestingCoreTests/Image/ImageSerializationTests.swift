@@ -104,7 +104,8 @@ struct ImageSerializationTests {
         // Nothing is recorded when there is no reference yet.
         #expect(throws: BytesSerializationError.self) { try verify(imageWithoutPNG) }
 
-        let referenceURL = directory
+        let referenceURL =
+            directory
             .appendingPathComponent("ImageSerializationTests")
             .appendingPathComponent("snapshot.a.png")
         #expect(!FileManager.default.fileExists(atPath: referenceURL.path))
