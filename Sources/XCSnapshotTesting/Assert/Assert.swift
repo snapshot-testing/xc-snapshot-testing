@@ -159,7 +159,7 @@ public func assert<Input: Sendable, Output: BytesRepresentable>(
 ///
 /// For each strategy in the array, this function generates an input value asynchronously and compares it against a previously recorded
 /// reference snapshot using the corresponding `AsyncSnapshot` strategy. Each assertion is uniquely named using a combination of the
-/// test function and the zero-based index (e.g., `testName().1@1`, `testName().1@2`, ...), ensuring distinct snapshot identities per call site.
+/// call site position and the one-based index (e.g., `testName.L12C9@1`, `testName.L12C9@2`, ...), ensuring distinct snapshot identities per call site.
 ///
 /// - Parameters:
 ///   - input: An autoclosure that asynchronously produces the value to be snapshotted and compared. Evaluated once per strategy.
@@ -177,7 +177,7 @@ public func assert<Input: Sendable, Output: BytesRepresentable>(
 ///
 /// - Throws: An error if input evaluation, snapshotting, or comparison fails, or if writing fails in recording mode.
 ///
-/// - Important: Each snapshot uses a unique name based on the test function and its index (e.g., `testName().1@1`). This allows safe use in loops or repeated calls without naming collisions.
+/// - Important: Each snapshot uses a unique name based on the test function and its index (e.g., `testName.L12C9@1`). This allows safe use in loops or repeated calls without naming collisions.
 ///   If you require meaningful snapshot names, prefer the dictionary overload.
 ///
 /// - Example:
@@ -205,13 +205,7 @@ public func assert<Input: Sendable, Output: BytesRepresentable>(
     line: UInt = #line,
     column: UInt = #column
 ) async throws {
-    let uniqueID = TestingSession.shared.forLoop(
-        fileID: fileID,
-        filePath: filePath,
-        function: String(describing: testName),
-        line: line,
-        column: column
-    )
+    let uniqueID = SnapshotCallSite(line: line, column: column).suffix
 
     for (index, strategy) in strategies.enumerated() {
         try await assert(
@@ -376,7 +370,7 @@ public func assert<Input, Output: BytesRepresentable>(
 ///
 /// For each strategy in the array, this function compares the input value against a previously recorded reference snapshot using the
 /// corresponding `SyncSnapshot` strategy. Each assertion is uniquely named using a combination of the test function and the index
-/// (e.g., `testName().1@1`, `testName().1@2`, ...), ensuring distinct snapshot identities per call site.
+/// (e.g., `testName.L12C9@1`, `testName.L12C9@2`, ...), ensuring distinct snapshot identities per call site.
 ///
 /// - Parameters:
 ///   - input: The value to be snapshotted and compared. Used for all strategies.
@@ -393,7 +387,7 @@ public func assert<Input, Output: BytesRepresentable>(
 ///
 /// - Throws: An error if snapshotting or comparison fails, or if writing fails in recording mode.
 ///
-/// - Important: Each snapshot uses a unique name based on the test function and its index (e.g., `testName().1@1`). This allows safe use in loops or repeated calls without naming collisions. If you require meaningful snapshot names, prefer the dictionary overload.
+/// - Important: Each snapshot uses a unique name based on the test function and its index (e.g., `testName.L12C9@1`). This allows safe use in loops or repeated calls without naming collisions. If you require meaningful snapshot names, prefer the dictionary overload.
 ///
 /// - Example:
 ///   ```swift
@@ -419,13 +413,7 @@ public func assert<Input, Output: BytesRepresentable>(
     line: UInt = #line,
     column: UInt = #column
 ) async throws {
-    let uniqueID = TestingSession.shared.forLoop(
-        fileID: fileID,
-        filePath: filePath,
-        function: String(describing: testName),
-        line: line,
-        column: column
-    )
+    let uniqueID = SnapshotCallSite(line: line, column: column).suffix
 
     for (index, strategy) in strategies.enumerated() {
         try assert(

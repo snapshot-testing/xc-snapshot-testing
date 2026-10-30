@@ -49,7 +49,8 @@ final class SnapshotTesterTests: XCTestCase {
         _ value: String,
         named name: String? = "a",
         record: RecordMode,
-        line: UInt = 1
+        line: UInt = 1,
+        column: UInt = 1
     ) throws -> String? {
         try XCSnapshotTesting.verify(
             of: value,
@@ -58,7 +59,8 @@ final class SnapshotTesterTests: XCTestCase {
             record: record,
             snapshotDirectory: directory.path,
             testName: "snapshot",
-            line: line
+            line: line,
+            column: column
         )
     }
 
@@ -200,15 +202,30 @@ final class SnapshotTesterTests: XCTestCase {
 
     // MARK: - File names
 
-    func testUnnamedSnapshotsReceiveACounterSuffix() throws {
-        // The counter follows the position of the assertion in the test, so each call site gets its own.
+    func testUnnamedSnapshotsReceiveTheirPositionAsSuffix() throws {
         _ = try verify("first", named: nil, record: .missing, line: 10)
         _ = try verify("second", named: nil, record: .missing, line: 20)
         _ = try verify("first, again", named: nil, record: .missing, line: 10)
 
-        XCTAssertEqual(try contents(of: "1"), "first")
-        XCTAssertEqual(try contents(of: "2"), "second")
-        XCTAssertFalse(FileManager.default.fileExists(atPath: reference("3").path))
+        XCTAssertEqual(try contents(of: "L10C1"), "first")
+        XCTAssertEqual(try contents(of: "L20C1"), "second")
+        XCTAssertEqual(
+            try FileManager.default.contentsOfDirectory(
+                atPath: directory.appendingPathComponent("SnapshotTesterTests").path
+            ).count,
+            2
+        )
+    }
+
+    func testTheSuffixDoesNotDependOnTheOrderOfExecution() throws {
+        // Running the second assertion first, or alone, must not hand it the first one's file.
+        _ = try verify("second", named: nil, record: .missing, line: 20)
+        _ = try verify("first", named: nil, record: .missing, line: 10)
+
+        XCTAssertEqual(try contents(of: "L10C1"), "first")
+        XCTAssertEqual(try contents(of: "L20C1"), "second")
+        XCTAssertNil(try verify("first", named: nil, record: .never, line: 10))
+        XCTAssertNil(try verify("second", named: nil, record: .never, line: 20))
     }
 
     func testCounterSuffixCanBeDisabled() async throws {

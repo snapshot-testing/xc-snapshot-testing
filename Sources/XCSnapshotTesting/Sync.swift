@@ -350,50 +350,125 @@ extension Sync where Input: Sendable, Output: Sendable {
     }
 }
 
-private final class SyncSequence<Output>: @unchecked Sendable {
+/// Runs the executors one after the other without ever blocking the caller.
+///
+/// An executor that completes before it returns hands its result back to the loop, so any number of
+/// them run without growing the stack. One that completes later continues the loop from its own
+/// callback. Waiting here instead would hide the work from the timeout of the caller, and would
+/// deadlock when an executor needs the thread that is waiting.
+private final class SyncSequence<Input, Output>: @unchecked Sendable {
 
-    var items: [Output] {
-        lock.withLock { _items }
+    private enum Slot {
+        case pending
+        case completed(Result<Output, Error>)
+        case waiting
+        case consumed
     }
 
-    private let lock = NSLock()
-    private var _items: [Output] = []
+    private let syncs: [Sync<Input, Output>]
+    private let input: Input
+    private let continuation: SyncContinuation<[Output]>
 
-    init() {}
+    private var outputs: [Output] = []
+    private var index = 0
 
-    func append(_ item: Output) {
-        lock.withLock {
-            _items.append(item)
+    init(
+        _ syncs: [Sync<Input, Output>],
+        input: Input,
+        continuation: SyncContinuation<[Output]>
+    ) {
+        self.syncs = syncs
+        self.input = input
+        self.continuation = continuation
+        self.outputs.reserveCapacity(syncs.count)
+    }
+
+    func run() {
+        while index < syncs.count {
+            let slot = Locked(Slot.pending)
+
+            syncs[index](input) { [self] result in
+                // Only the first result of an executor counts.
+                let resumesTheLoop = slot.withLock { slot -> Bool in
+                    switch slot {
+                    case .pending:
+                        slot = .completed(result)
+                        return false
+                    case .waiting:
+                        slot = .consumed
+                        return true
+                    case .completed, .consumed:
+                        return false
+                    }
+                }
+
+                if resumesTheLoop, advance(with: result) {
+                    run()
+                }
+            }
+
+            let inline = slot.withLock { slot -> Result<Output, Error>? in
+                guard case .completed(let result) = slot else {
+                    slot = .waiting
+                    return nil
+                }
+
+                slot = .consumed
+                return result
+            }
+
+            guard let inline else {
+                return
+            }
+
+            guard advance(with: inline) else {
+                return
+            }
         }
+
+        continuation.resume(returning: outputs)
+    }
+
+    /// - Returns: `true` when the next executor has to run.
+    private func advance(with result: Result<Output, Error>) -> Bool {
+        switch result {
+        case .success(let output):
+            outputs.append(output)
+            index += 1
+            return true
+        case .failure(let error):
+            continuation.resume(throwing: error)
+            return false
+        }
+    }
+}
+
+private final class Locked<Value>: @unchecked Sendable {
+
+    private let lock = NSLock()
+    private var value: Value
+
+    init(_ value: Value) {
+        self.value = value
+    }
+
+    func withLock<R>(_ body: (inout Value) -> R) -> R {
+        lock.withLock { body(&value) }
     }
 }
 
 extension Array {
 
+    /// Runs the executors one after the other and collects their outputs in order.
+    ///
+    /// The first failure ends the sequence and is the failure of the result.
     func sequence<Input, Output>() -> Sync<Input, [Output]> where Element == Sync<Input, Output> {
         guard !isEmpty else {
             return Sync { _ in [] }
         }
 
         return .init { input, continuation in
-            let dispatchGroup = DispatchGroup()
-            let sequence = SyncSequence<Output>()
-
-            for sync in self {
-                dispatchGroup.enter()
-
-                sync(input) { result in
-                    if case .success(let output) = result {
-                        sequence.append(output)
-                    }
-
-                    dispatchGroup.leave()
-                }
-
-                dispatchGroup.wait()
-            }
-
-            continuation.resume(returning: sequence.items)
+            SyncSequence(self, input: input, continuation: continuation).run()
         }
     }
 }
