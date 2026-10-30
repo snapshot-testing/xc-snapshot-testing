@@ -10,7 +10,7 @@ Legenda de estado: `[ ]` pendente · `[~]` em andamento · `[x]` concluído (com
 - [x] **A1** — `ImageBytes.serialize` gravava arquivo de 0 bytes quando o PNG não podia ser gerado — `35ae019`
   - Corrigido na origem: lança `BytesSerializationError`. Regressão em `ImageSerializationTests`.
   - Decisão: **não** recusar conteúdo vazio em `SnapshotFileEngine.perform` (snapshots de texto/dados vazios são legítimos).
-- [x] **A2** — Identidade do snapshot depende da ordem de execução e ignora a classe/suíte (`TestingSession`) — `HASH`
+- [x] **A2** — Identidade do snapshot depende da ordem de execução e ignora a classe/suíte (`TestingSession`) — `717456a`
   - Sufixo agora é a posição do call site (`<função>.L<linha>C<coluna>`), via `SnapshotCallSite`; `TestingSession` removido. Overloads de array: `L<l>C<c>@<i>`.
   - **Quebra nomes existentes:** referências `.N` precisam ser renomeadas/re-gravadas (as de `CustomDumpTests` foram renomeadas, conteúdo idêntico). Editar linhas acima de um `assert` também muda o nome; usar `named:` para estabilidade. Sem fallback de leitura do nome antigo.
 - [ ] **A3** — `Array.sequence()` engole erros e bloqueia sem timeout (`.func(into:)` de `CaseIterable`)
