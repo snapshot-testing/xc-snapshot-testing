@@ -66,7 +66,7 @@ jobs:
       # takes minutes to come up on the runner and then fails with "The test runner hung before establishing
       # connection" while the next test bundle launches (the tests themselves all pass).
       apple-tests-matrix: >-
-        [{"destination":"platform=iOS Simulator,arch=arm64,name=iPhone 17 Pro Max,OS=27.0","name":"iOS"},
+        [{"destination":"platform=iOS Simulator,arch=arm64,name=iPhone 17,OS=27.0","name":"iOS"},
         {"destination":"platform=iOS Simulator,arch=arm64,name=iPad (A16),OS=27.0","name":"iPadOS"},
         {"destination":"platform=watchOS Simulator,arch=arm64,name=Apple Watch Series 12 (42mm),OS=27.0","name":"watchOS"},
         {"destination":"platform=tvOS Simulator,arch=arm64,name=Apple TV 4K (3rd generation) (at 1080p),OS=27.0","name":"tvOS"},
