@@ -15,6 +15,12 @@ class WindowLease {
 
     private let _lock = AsyncLock()
     private(set) var pendingTasks: Int = .zero
+    private(set) var isHeld = false
+
+    /// How many snapshots are using or waiting for the window, to tell which one is the least busy.
+    var load: Int {
+        pendingTasks + (isHeld ? 1 : 0)
+    }
 
     let window: SDKWindow
 
@@ -27,9 +33,11 @@ class WindowLease {
         pendingTasks += 1
         await _lock.lock()
         pendingTasks -= 1
+        isHeld = true
     }
 
     func unlock() {
+        isHeld = false
         _lock.unlock()
     }
 }

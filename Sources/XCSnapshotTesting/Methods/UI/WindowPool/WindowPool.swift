@@ -44,11 +44,10 @@ final class WindowPool {
         let windowScene = try windowScene(for: sessionRole)
         #endif
 
-        if leases.count >= maxConcurrentTests {
-            let leases = leases[0..<maxConcurrentTests]
-            let lease = leases.sorted(by: {
-                $0.pendingTasks >= $1.pendingTasks
-            }).first!
+        let limit = max(1, maxConcurrentTests)
+
+        if leases.count >= limit {
+            let lease = Self.leastBusy(of: leases.prefix(limit))
             await lease.lock()
             #if !os(macOS)
             lease.window.windowScene = windowScene
@@ -70,6 +69,13 @@ final class WindowPool {
         leases.append(WindowLease)
         await WindowLease.lock()
         return window
+    }
+
+    /// The window that frees up first: the one with the fewest snapshots using or waiting for it.
+    ///
+    /// Ties go to the earliest, so idle windows are reused in the order they were created.
+    static func leastBusy(of leases: some Collection<WindowLease>) -> WindowLease {
+        leases.min(by: { $0.load < $1.load })!
     }
 
     func release(_ window: SDKWindow) {

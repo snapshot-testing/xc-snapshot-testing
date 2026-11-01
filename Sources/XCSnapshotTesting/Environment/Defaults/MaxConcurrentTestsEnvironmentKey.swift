@@ -6,7 +6,7 @@ import Foundation
 private struct MaxConcurrentTestsEnvironmentKey: SnapshotEnvironmentKey {
 
     static var defaultValue: Int {
-        TestingSystem.shared.environment?.maxConcurrentTests ?? 3
+        max(1, TestingSystem.shared.environment?.maxConcurrentTests ?? 3)
     }
 }
 
