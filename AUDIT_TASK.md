@@ -18,7 +18,7 @@ Legenda de estado: `[ ]` pendente · `[~]` em andamento · `[x]` concluído (com
 
 ## Médio
 
-- [x] **M1** — Conversões `TimeInterval → inteiro` sem validação (timeout fracionário falha na hora; traps em ∞/NaN/negativo; `delay` em 11 pontos) — `HASH`
+- [x] **M1** — Conversões `TimeInterval → inteiro` sem validação (timeout fracionário falha na hora; traps em ∞/NaN/negativo; `delay` em 11 pontos) — `516f187`
   - Helper `TimeInterval.nanoseconds` (negativo/NaN → 0, fração arredonda para cima, excesso satura em `UInt64.max`) usado em `Task.timeout`, no tester síncrono, em todos os `delay` e no `WKWebView.waitLoadingState`.
 - [ ] **M2** — Limpeza (root VC, `detachChild`, `dispose`) só roda no caminho de sucesso
 - [ ] **M3** — Diff de texto por LCS super-linear e recursivo (183 s com 4000 linhas repetidas)
