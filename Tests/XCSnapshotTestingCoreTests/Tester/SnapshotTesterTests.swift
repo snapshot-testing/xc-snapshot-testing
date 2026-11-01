@@ -278,6 +278,22 @@ final class SnapshotTesterTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: reference("a").path))
     }
 
+    func testSyncSnapshotWithAnInfiniteTimeoutDoesNotTrap() throws {
+        // Regression: `Int(timeout * 1e9)` crashed the process for an interval that does not fit.
+        let message = try XCSnapshotTesting.verify(
+            of: "value",
+            as: .lines,
+            named: "a",
+            record: .missing,
+            snapshotDirectory: directory.path,
+            timeout: .infinity,
+            testName: "snapshot"
+        )
+
+        XCTAssertTrue(try XCTUnwrap(message).hasPrefix("No reference was found on disk."))
+        XCTAssertEqual(try contents(of: "a"), "value")
+    }
+
     func testAsyncSnapshotTimeout() async throws {
         let slow = AsyncSnapshot<String, StringBytes>(
             pathExtension: "txt",

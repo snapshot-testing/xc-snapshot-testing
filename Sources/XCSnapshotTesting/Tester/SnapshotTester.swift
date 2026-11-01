@@ -105,7 +105,7 @@ public struct SnapshotTester<Engine: SnapshotEngine>: Sendable {
         }
 
         let result = dispatchGroup.wait(
-            timeout: .now() + .nanoseconds(Int(timeout * 1_000_000_000))
+            timeout: .now() + .nanoseconds(Int(clamping: timeout.nanoseconds))
         )
 
         switch result {

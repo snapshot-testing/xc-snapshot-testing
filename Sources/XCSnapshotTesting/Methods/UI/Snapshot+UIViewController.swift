@@ -79,7 +79,7 @@ extension AsyncSnapshot where Input: UIKit.UIViewController, Output == ImageByte
                 }
                 .connectToWindow(windowConfiguration)
                 .layoutIfNeeded()
-                .sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                .sleep(nanoseconds: delay.nanoseconds)
                 #if !os(tvOS)
                 .waitLoadingStateIfNeeded(tolerance: SnapshotEnvironment.current.webViewTolerance)
                 #endif
@@ -244,7 +244,7 @@ extension AsyncSnapshot where Input: UIKit.UIViewController, Output == StringByt
                     }
                     .connectToWindow(windowConfiguration)
                     .layoutIfNeeded()
-                    .sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                    .sleep(nanoseconds: delay.nanoseconds)
                     #if !os(tvOS)
                     .waitLoadingStateIfNeeded(tolerance: SnapshotEnvironment.current.webViewTolerance)
                     #endif

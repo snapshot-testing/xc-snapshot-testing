@@ -73,7 +73,7 @@ extension AsyncSnapshot where Input: SwiftUI.View & Sendable, Output == ImageByt
                 }
                 .connectToWindow(windowConfiguration)
                 .layoutIfNeeded()
-                .sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                .sleep(nanoseconds: delay.nanoseconds)
                 .waitLoadingStateIfNeeded(tolerance: SnapshotEnvironment.current.webViewTolerance)
                 .prepare(prepare)
                 .snapshot(executor)
@@ -159,7 +159,7 @@ extension Snapshot where Input: SwiftUI.View & Sendable, Output == ImageBytes {
                 }
                 .connectToWindow(windowConfiguration)
                 .layoutIfNeeded()
-                .sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                .sleep(nanoseconds: delay.nanoseconds)
                 #if !os(tvOS)
                 .waitLoadingStateIfNeeded(tolerance: SnapshotEnvironment.current.webViewTolerance)
                 #endif
