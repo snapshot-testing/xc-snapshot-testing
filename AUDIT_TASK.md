@@ -23,7 +23,7 @@ Legenda de estado: `[ ]` pendente · `[~]` em andamento · `[x]` concluído (com
 - [x] **M2** — Limpeza (root VC, `detachChild`, `dispose`) só roda no caminho de sucesso — `f43f51c`
   - `ViewOperationRestoration` (guardado no `SnapshotWindowConfiguration`) desfaz tudo uma vez, num `defer` de `withWindow`, antes de liberar o lease; vale para sucesso, erro, timeout e cancelamento.
 - [ ] **M3** — Diff de texto por LCS super-linear e recursivo (183 s com 4000 linhas repetidas)
-- [x] **M4** — `WindowPool.acquire` escolhe o lease mais disputado; comparador inválido; `maxConcurrentTests` sem clamp — `HASH`
+- [x] **M4** — `WindowPool.acquire` escolhe o lease mais disputado; comparador inválido; `maxConcurrentTests` sem clamp — `357a494`
   - `WindowPool.leastBusy` escolhe o menor `load` (esperando + em uso), empate vai para a janela mais antiga; limite com `max(1, …)` em `acquire` e no valor padrão do ambiente.
 - [ ] **M5** — Esperas sem limite com `timeout` zero (`WKWebView.waitLoadingState`, `snapshotSignal.wait()`)
 - [ ] **M6** — Kernel Metal retorna sem erro e pode dar falso "passou"
