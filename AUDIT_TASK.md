@@ -20,7 +20,8 @@ Legenda de estado: `[ ]` pendente · `[~]` em andamento · `[x]` concluído (com
 
 - [x] **M1** — Conversões `TimeInterval → inteiro` sem validação (timeout fracionário falha na hora; traps em ∞/NaN/negativo; `delay` em 11 pontos) — `516f187`
   - Helper `TimeInterval.nanoseconds` (negativo/NaN → 0, fração arredonda para cima, excesso satura em `UInt64.max`) usado em `Task.timeout`, no tester síncrono, em todos os `delay` e no `WKWebView.waitLoadingState`.
-- [ ] **M2** — Limpeza (root VC, `detachChild`, `dispose`) só roda no caminho de sucesso
+- [x] **M2** — Limpeza (root VC, `detachChild`, `dispose`) só roda no caminho de sucesso — `HASH`
+  - `ViewOperationRestoration` (guardado no `SnapshotWindowConfiguration`) desfaz tudo uma vez, num `defer` de `withWindow`, antes de liberar o lease; vale para sucesso, erro, timeout e cancelamento.
 - [ ] **M3** — Diff de texto por LCS super-linear e recursivo (183 s com 4000 linhas repetidas)
 - [ ] **M4** — `WindowPool.acquire` escolhe o lease mais disputado; comparador inválido; `maxConcurrentTests` sem clamp
 - [ ] **M5** — Esperas sem limite com `timeout` zero (`WKWebView.waitLoadingState`, `snapshotSignal.wait()`)
