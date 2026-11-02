@@ -5,6 +5,14 @@ import Foundation
 
 extension TimeInterval {
 
+    /// Whether this interval is a limit to wait for.
+    ///
+    /// Zero, `.infinity` and anything that is not a positive number mean there is no limit, so the
+    /// same value behaves the same way whether the snapshot is synchronous or asynchronous.
+    var hasLimit: Bool {
+        self > 0 && self.isFinite
+    }
+
     /// The interval in whole nanoseconds, for the APIs that sleep or wait for an unsigned count.
     ///
     /// Converting with `UInt64(_:)` traps on a negative, `nan` or infinite interval and on one too long

@@ -94,6 +94,15 @@ struct ExtensionTests {
         #expect((0.0000000001 as TimeInterval).nanoseconds == 1, "a fraction is rounded up, not dropped")
     }
 
+    @Test func onlyAPositiveFiniteIntervalIsALimit() {
+        #expect((5 as TimeInterval).hasLimit)
+        #expect((0.001 as TimeInterval).hasLimit)
+        #expect(!(0 as TimeInterval).hasLimit)
+        #expect(!TimeInterval.infinity.hasLimit)
+        #expect(!(-1 as TimeInterval).hasLimit)
+        #expect(!TimeInterval.nan.hasLimit)
+    }
+
     @Test func intervalsThatCannotBeCountedDoNotTrap() {
         #expect((0 as TimeInterval).nanoseconds == 0)
         #expect((-1 as TimeInterval).nanoseconds == 0)
