@@ -173,6 +173,18 @@ struct ViewRenderingTests {
 
     // MARK: - Descriptions
 
+    @Test func theRecursiveDescriptionDoesNotListTheViewsAddedToMeasureTheView() async throws {
+        // Regression: the view that reports the size of the view under test was part of its description,
+        // so renaming its class changed every recorded reference.
+        let view = SplitView(.blue, .green)
+
+        let description = try await AsyncSnapshot<SplitView, StringBytes>.recursiveDescription
+            .executor(view).rawValue
+
+        #expect(!description.contains("SizeListener"))
+        #expect(description.contains("ColorView"), "the views of the test are still there")
+    }
+
     @Test func theRecursiveDescriptionListsTheViewHierarchyWithoutPointers() async throws {
         let view = SplitView(.blue, .green)
 

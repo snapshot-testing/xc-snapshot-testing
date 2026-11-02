@@ -24,11 +24,34 @@ struct ExtensionTests {
         #expect("no pointers here".sanitizingPointersReferences() == "no pointers here")
     }
 
-    @Test func pathComponentsDropInvalidCharactersAndEmptyParentheses() {
-        #expect("testExample()".sanitizingPathComponent() == "testExample")
-        #expect("a/b\\c:d*e?f\"g<h>i|j".sanitizingPathComponent() == "abcdefghij")
-        #expect("line\nbreak".sanitizingPathComponent() == "linebreak")
+    @Test func linesThatMentionATextAreRemoved() {
+        let text = "<A>\n   | <Helper: 1>\n   | <B>\n      | <C>"
+
+        #expect(text.removingLines(mentioning: "Helper") == "<A>\n   | <B>\n      | <C>")
+        #expect(text.removingLines(mentioning: "nothing here") == text)
+        #expect("only Helper".removingLines(mentioning: "Helper").isEmpty)
+    }
+
+    @Test func pathComponentsEncodeWhatAFileNameCannotHold() {
+        #expect("a/b\\c:d*e?f\"g<h>i|j".sanitizingPathComponent() == "a%2Fb%5Cc%3Ad%2Ae%3Ff%22g%3Ch%3Ei%7Cj")
+        #expect("line\nbreak".sanitizingPathComponent() == "line%0Abreak")
         #expect("keeps spaces".sanitizingPathComponent() == "keeps spaces")
+        #expect("100%".sanitizingPathComponent() == "100%25")
+        #expect("café".sanitizingPathComponent() == "café")
+    }
+
+    @Test func differentTextsNeverShareAPathComponent() {
+        let texts = ["a:b", "a/b", "ab", "a%3Ab", "a b", "a\\b", "a|b", "", "%", "%25"]
+
+        #expect(Set(texts.map { $0.sanitizingPathComponent() }).count == texts.count)
+    }
+
+    @Test func aPathComponentCannotLeaveItsFolder() {
+        #expect("..".sanitizingPathComponent() == "%2E%2E")
+        #expect(".".sanitizingPathComponent() == "%2E")
+        #expect("../..".sanitizingPathComponent() == "..%2F..")
+        #expect("../..".sanitizingPathComponent().contains("/") == false)
+        #expect("..a".sanitizingPathComponent() == "..a")
     }
 
     #if canImport(Darwin)

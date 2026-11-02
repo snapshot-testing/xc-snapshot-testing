@@ -76,11 +76,11 @@ extension SDKViewController {
 extension Snapshot {
 
     func inconsistentTraitsChecker<Input: SDKViewController, Output: BytesRepresentable>(
-        _ traits: Traits
+        _ traits: @escaping @Sendable () -> Traits
     ) -> AsyncSnapshot<Input, Output> where Executor == Async<Input, Output> {
         map { executor in
             Async(Input.self) { @MainActor in
-                $0.inconsistentTraitsChecker(for: traits)
+                $0.inconsistentTraitsChecker(for: traits())
                 return try await executor($0)
             }
         }

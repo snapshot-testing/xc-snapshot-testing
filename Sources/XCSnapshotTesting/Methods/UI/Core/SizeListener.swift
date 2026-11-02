@@ -48,7 +48,7 @@ class SizeListener {
 // MARK: - UIView Extensions
 
 @MainActor
-private class UIViewSizeListener: SDKView {
+class UIViewSizeListener: SDKView {
 
     let listener: SizeListener
 

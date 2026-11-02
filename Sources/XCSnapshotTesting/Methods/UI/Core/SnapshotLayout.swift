@@ -5,7 +5,7 @@
 import CoreGraphics
 
 /// Defines how a UI component's layout is configured during snapshot testing.
-public enum SnapshotLayout {
+public enum SnapshotLayout: Sendable {
 
     #if os(iOS) || os(tvOS) || os(visionOS)
     /// Renders the component using a specific device configuration.

@@ -310,7 +310,10 @@ extension SnapshotTester {
         pathExtension: String?
     ) throws -> URL {
         let sourceURL = try engine.sourceURL(for: filePath, using: self)
-        let function = String(describing: function).sanitizingPathComponent()
+        // Only a function without parameters ends in empty parentheses
+        let function = String(describing: function)
+            .replacingOccurrences(of: "()", with: "")
+            .sanitizingPathComponent()
 
         let pathComponent: String
 

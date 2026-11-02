@@ -322,14 +322,27 @@ final class SnapshotTesterTests: XCTestCase {
         XCTAssertEqual(String(decoding: try Data(contentsOf: url), as: UTF8.self), "only")
     }
 
-    func testNamedSnapshotsDropInvalidPathCharacters() throws {
+    func testNamedSnapshotsEncodeInvalidPathCharacters() throws {
         _ = try verify("value", named: "with spaces/and slash", record: .missing)
 
         let files = try FileManager.default.contentsOfDirectory(
             atPath: directory.appendingPathComponent("SnapshotTesterTests").path
         )
 
-        XCTAssertEqual(files, ["snapshot.with spacesand slash.txt"])
+        XCTAssertEqual(files, ["snapshot.with spaces%2Fand slash.txt"])
+    }
+
+    func testNamesThatOnlyDifferInInvalidCharactersGetTheirOwnFile() throws {
+        // Regression: the invalid characters were removed, so these three shared a file.
+        for (index, name) in ["a:b", "a/b", "ab"].enumerated() {
+            _ = try verify("value \(index)", named: name, record: .missing)
+        }
+
+        let files = try FileManager.default.contentsOfDirectory(
+            atPath: directory.appendingPathComponent("SnapshotTesterTests").path
+        )
+
+        XCTAssertEqual(files.sorted(), ["snapshot.a%2Fb.txt", "snapshot.a%3Ab.txt", "snapshot.ab.txt"])
     }
 
     // MARK: - Timeouts

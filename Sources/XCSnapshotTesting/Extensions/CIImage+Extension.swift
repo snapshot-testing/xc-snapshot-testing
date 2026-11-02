@@ -18,18 +18,7 @@ extension CIImage {
         // Calculate the deltaE values. Each pixel is a value between 0-100.
         // 0 means no difference, 100 means completely opposite.
         let deltaOutputImage = self.applyingLabDeltaE(newValue)
-        // Core Image runs filters in the working color space, and its kernels expect those values to be
-        // linear light. Disabling color management (NSNull) leaves gamma-encoded values untouched, so
-        // CILabDeltaE treats them as linear and inflates the difference in dark regions: a single 8-bit
-        // step at black reports 3.54 instead of 0.27. Ask for a linear working space so the sRGB
-        // transfer function is decoded before the delta is computed. The output stays unmanaged because
-        // it is a computed value rather than an image to display.
-        let context = CIContext(
-            options: [
-                .workingColorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB) as Any,
-                .outputColorSpace: NSNull(),
-            ]
-        )
+        let context = CIImage.comparisonContext
         let deltaThreshold = (1 - perceptualPrecision) * 100
 
         // Metal is supported by all iOS/tvOS devices (2013 models or later) and Macs (2012 models or later).
@@ -68,6 +57,23 @@ extension CIImage {
 }
 
 extension CIImage {
+
+    /// The context every perceptual comparison renders with.
+    ///
+    /// Creating one sets up a Metal device and its caches, which costs more than comparing small images.
+    /// The options never change, and a `CIContext` can render from any thread, so one is shared.
+    // Core Image runs filters in the working color space, and its kernels expect those values to be
+    // linear light. Disabling color management (NSNull) leaves gamma-encoded values untouched, so
+    // CILabDeltaE treats them as linear and inflates the difference in dark regions: a single 8-bit
+    // step at black reports 3.54 instead of 0.27. Ask for a linear working space so the sRGB
+    // transfer function is decoded before the delta is computed. The output stays unmanaged because
+    // it is a computed value rather than an image to display.
+    fileprivate static let comparisonContext = CIContext(
+        options: [
+            .workingColorSpace: CGColorSpace(name: CGColorSpace.extendedLinearSRGB) as Any,
+            .outputColorSpace: NSNull(),
+        ]
+    )
 
     /// Measures the share of pixels above the threshold, and the highest delta, with a Metal kernel.
     ///

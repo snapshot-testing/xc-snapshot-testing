@@ -141,10 +141,8 @@ extension Snapshot where Input: SwiftUI.View & Sendable, Output == ImageBytes {
         prepare: (@MainActor @Sendable () async throws -> Void)? = nil,
         application: UIKit.UIApplication? = nil
     ) -> AsyncSnapshot<Input, Output> {
-        let config = LayoutConfiguration.resolve(
-            layout,
-            with: SnapshotEnvironment.current.traits.merging(traits)
-        )
+        // Resolved when the snapshot runs, so it follows the environment of the test that runs it
+        let resolveConfig = LayoutConfiguration.resolver(layout, traits: traits)
 
         return IdentitySyncSnapshot.image(
             precision: precision,
@@ -154,7 +152,8 @@ extension Snapshot where Input: SwiftUI.View & Sendable, Output == ImageBytes {
             sessionRole: sessionRole,
             application: application,
             operation: { windowConfiguration, executor in
-                Async(Input.self) { @MainActor in
+                let config = resolveConfig()
+                return Async(Input.self) { @MainActor in
                     SnapshotUIController($0, with: config, isOpaque: isOpaque)
                 }
                 .connectToWindow(windowConfiguration)

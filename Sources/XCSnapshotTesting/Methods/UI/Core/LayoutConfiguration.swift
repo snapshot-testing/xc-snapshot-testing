@@ -56,6 +56,18 @@ public struct LayoutConfiguration: Sendable {
             return .init(safeArea: .zero, size: size, traits: traits)
         }
     }
+
+    /// The layout of a snapshot, to be resolved when the snapshot runs.
+    ///
+    /// The traits of the environment are part of it. Resolving them when the strategy is created would
+    /// fix the ones of whoever created it (a `static let` outside of any test), and a later
+    /// `withTestingEnvironment` would not reach the snapshot.
+    static func resolver(
+        _ snapshotLayout: SnapshotLayout,
+        traits: Traits
+    ) -> @Sendable () -> LayoutConfiguration {
+        { resolve(snapshotLayout, with: SnapshotEnvironment.current.traits.merging(traits)) }
+    }
     #else
     static func resolve(_ snapshotLayout: SnapshotLayout) -> LayoutConfiguration {
         switch snapshotLayout {
