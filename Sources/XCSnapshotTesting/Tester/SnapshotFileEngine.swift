@@ -32,11 +32,6 @@ where Executor.Output: BytesRepresentable {
 
         sourceURL.appendPathComponent(fileURL.deletingPathExtension().lastPathComponent)
 
-        try FileManager.default.createDirectory(
-            at: sourceURL,
-            withIntermediateDirectories: true
-        )
-
         return sourceURL
     }
 
@@ -56,11 +51,6 @@ where Executor.Output: BytesRepresentable {
         )
 
         snapshotURL.appendPathComponent(fileURL.deletingPathExtension().lastPathComponent)
-
-        try FileManager.default.createDirectory(
-            at: snapshotURL,
-            withIntermediateDirectories: true
-        )
 
         return snapshotURL
     }
@@ -88,6 +78,14 @@ where Executor.Output: BytesRepresentable {
         guard case .write = operation else {
             return
         }
+
+        // The folders are created when there is something to put in them. Doing it for every
+        // assertion left empty folders behind, and failed on a checkout that is read-only even
+        // when the assertion only compares.
+        try FileManager.default.createDirectory(
+            at: url.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
 
         try contents.write(to: url, options: .atomic)
     }
