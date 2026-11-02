@@ -33,7 +33,7 @@ extension SyncSnapshot where Input == URLRequest, Output == StringBytes {
     public static func raw(pretty: Bool) -> SyncSnapshot<Input, Output> {
         IdentitySyncSnapshot.lines.pullback { (request: URLRequest) in
             let method =
-                "\(request.httpMethod ?? "GET") \(request.url?.sortingQueryItems()?.absoluteString ?? "(null)")"
+                "\(request.httpMethod ?? "GET") \(request.url.map(\.sortedQueryDescription) ?? "(null)")"
 
             let headers = (request.allHTTPHeaderFields ?? [:])
                 .map { key, value in "\(key): \(value)" }
@@ -88,7 +88,7 @@ extension SyncSnapshot where Input == URLRequest, Output == StringBytes {
             var components = ["curl"]
 
             // HTTP Method
-            let httpMethod = request.httpMethod!
+            let httpMethod = request.httpMethod ?? "GET"
             switch httpMethod {
             case "GET": break
             case "HEAD": components.append("--head")
@@ -97,8 +97,8 @@ extension SyncSnapshot where Input == URLRequest, Output == StringBytes {
 
             // Headers
             if let headers = request.allHTTPHeaderFields {
-                for field in headers.keys.sorted() where field != "Cookie" {
-                    let escapedValue = headers[field]!.replacingOccurrences(of: "\"", with: "\\\"")
+                for (field, value) in headers.sorted(by: { $0.key < $1.key }) where field != "Cookie" {
+                    let escapedValue = value.replacingOccurrences(of: "\"", with: "\\\"")
                     components.append("--header \"\(field): \(escapedValue)\"")
                 }
             }
@@ -120,7 +120,7 @@ extension SyncSnapshot where Input == URLRequest, Output == StringBytes {
             }
 
             // URL
-            components.append("\"\(request.url!.sortingQueryItems()!.absoluteString)\"")
+            components.append("\"\(request.url.map(\.sortedQueryDescription) ?? "(null)")\"")
 
             return components.joined(separator: " \\\n\t")
         }
@@ -128,6 +128,11 @@ extension SyncSnapshot where Input == URLRequest, Output == StringBytes {
 }
 
 extension URL {
+
+    /// The URL with its query items sorted, or as it is when it can't be taken apart into components.
+    fileprivate var sortedQueryDescription: String {
+        sortingQueryItems()?.absoluteString ?? absoluteString
+    }
 
     fileprivate func sortingQueryItems() -> URL? {
         var components = URLComponents(url: self, resolvingAgainstBaseURL: false)

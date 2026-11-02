@@ -363,6 +363,12 @@ extension Sync where Input: Sendable, Output: Sendable {
     }
 }
 
+/// Runs `block` on the main thread and waits for it, whatever the thread that calls.
+///
+/// From another thread this is a synchronous hop to the main queue, so it can't be used by code that
+/// the main thread is itself waiting for (a `DispatchGroup` or a semaphore that is only released by
+/// the caller): both would wait for each other. The assertions only call it for short reads and
+/// renderings, from the thread of the test.
 @_spi(Internals) public func performOnMainThread<R: Sendable>(
     _ block: @MainActor () throws -> R
 ) rethrows -> R {
