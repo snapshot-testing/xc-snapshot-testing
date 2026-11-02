@@ -128,21 +128,35 @@ public struct DiffTool: Sendable, ExpressibleByStringLiteral {
 
     /// Initializes the tool from a string literal.
     ///
-    /// - Parameter value: Text or command formatted with file paths. `$0` and `$1` are replaced by the reference and failed file paths, respectively. If `$0` or `$0` aren't provided, it'll be added at the end of string separated with space.
+    /// - Parameter value: Text or command formatted with file paths. `$0` and `$1` are replaced by the reference and failed file paths, respectively. If neither `$0` nor `$1` is provided, both paths are added at the end of the string, separated with space and quoted for the shell when they need it.
     ///
     /// - Example: `DiffTool("open -a Kaleidoscope $0 $1")` generates `open -a Kaleidoscope /path1 /path2`.
     ///
     /// - Note: The string is evaluated as a command to be executed externally. Ensure proper formatting for your shell or environment.
     public init(stringLiteral value: StringLiteralType) {
-        self.tool = {
-            if value.contains("$0") || value.contains("$1") {
-                return
-                    value
-                    .replacingOccurrences(of: "$0", with: $0)
-                    .replacingOccurrences(of: "$1", with: $1)
-            } else {
-                return "\(value) \($0) \($1)"
+        self.tool = { current, failed in
+            guard value.contains("$0") || value.contains("$1") else {
+                return "\(value) \(current.quotedForShell) \(failed.quotedForShell)"
             }
+
+            // A single pass over the placeholders: replacing `$0` first and `$1` after would also
+            // replace a `$1` that happens to be written in the first path.
+            var output = ""
+            var index = value.startIndex
+
+            while index < value.endIndex {
+                let next = value.index(after: index)
+
+                if value[index] == "$", next < value.endIndex, value[next] == "0" || value[next] == "1" {
+                    output += value[next] == "0" ? current : failed
+                    index = value.index(after: next)
+                } else {
+                    output.append(value[index])
+                    index = next
+                }
+            }
+
+            return output
         }
     }
 
@@ -161,5 +175,22 @@ public struct DiffTool: Sendable, ExpressibleByStringLiteral {
     ///   execute the generated commands.
     public func callAsFunction(currentFilePath: String, failedFilePath: String) -> String {
         self.tool(currentFilePath, failedFilePath)
+    }
+}
+
+extension String {
+
+    /// The string as one argument of a shell command: unchanged when it holds only characters that
+    /// have no meaning to the shell, and otherwise in single quotes.
+    fileprivate var quotedForShell: String {
+        let safe = CharacterSet(
+            charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@%+=:,./-"
+        )
+
+        if !isEmpty, unicodeScalars.allSatisfy(safe.contains) {
+            return self
+        }
+
+        return "'" + replacingOccurrences(of: "'", with: "'\\''") + "'"
     }
 }
