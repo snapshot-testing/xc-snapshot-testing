@@ -449,6 +449,19 @@ class SnapshotUIController: SDKViewController {
     }
     #endif
 }
+
+struct DescriptorUnavailableError: Error, LocalizedError, CustomStringConvertible {
+
+    let selector: String
+    let type: Any.Type
+
+    var description: String {
+        "\(type) has no `\(selector)` that returns a description. It is a private method of the system, "
+            + "and this version of it may not have it."
+    }
+
+    var errorDescription: String? { description }
+}
 #endif
 
 #if os(macOS)
@@ -511,16 +524,3 @@ struct RenderingError: Error, CustomStringConvertible, LocalizedError {
     var errorDescription: String? { description }
 }
 #endif
-
-struct DescriptorUnavailableError: Error, LocalizedError, CustomStringConvertible {
-
-    let selector: String
-    let type: Any.Type
-
-    var description: String {
-        "\(type) has no `\(selector)` that returns a description. It is a private method of the system, "
-            + "and this version of it may not have it."
-    }
-
-    var errorDescription: String? { description }
-}
