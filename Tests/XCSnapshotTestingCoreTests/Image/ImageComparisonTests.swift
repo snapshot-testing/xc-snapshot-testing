@@ -182,6 +182,34 @@ struct ImageComparisonTests {
         #expect(message.contains("The lowest perceptual color precision"))
     }
 
+    @Test(.enabled(if: perceptualComparisonIsAvailable, "Core Image cannot render on this simulator"))
+    func aKernelThatCannotRunFallsBackToTheCPUInsteadOfMatchingEverything() throws {
+        // Regression: the kernel returned without drawing, the output was left as allocated, no pixel
+        // read as different and two images that have nothing in common matched.
+        let reference = CIImage(cgImage: Factory.flat(100))
+        let snapshot = CIImage(cgImage: Factory.flat(200))
+
+        let failuresBefore = ThresholdImageProcessorKernel.failures.count
+        ThresholdImageProcessorKernel.failsOnPurpose = true
+        defer { ThresholdImageProcessorKernel.failsOnPurpose = false }
+
+        let message = try #require(
+            reference.perceptuallyCompare(
+                snapshot,
+                pixelPrecision: 1,
+                perceptualPrecision: 0.99,
+                usesMetal: true
+            ),
+            "the difference is still found"
+        )
+
+        #expect(message.contains("The percentage of pixels that match 0.0"))
+
+        if ThresholdImageProcessorKernel.isSupported {
+            #expect(ThresholdImageProcessorKernel.failures.count > failuresBefore, "the kernel did fail")
+        }
+    }
+
     @Test(
         .enabled(if: perceptualComparisonIsAvailable, "Core Image cannot render on this simulator"),
         arguments: [true, false]
