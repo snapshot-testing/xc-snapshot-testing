@@ -236,6 +236,29 @@ struct SnapshotMethodsTests {
         #expect(output == "POST https://example.com\n\nnot json")
     }
 
+    @Test func aRequestWithoutURLIsWrittenInsteadOfCrashing() throws {
+        // Regression: the URL was force unwrapped.
+        var withoutURL = request("https://example.com", method: "GET")
+        withoutURL.url = nil
+
+        #expect(
+            try SnapshotRunner.run(SyncSnapshot<URLRequest, StringBytes>.curl, withoutURL)
+                == "curl \\\n\t\"(null)\""
+        )
+        #expect(try SnapshotRunner.run(SyncSnapshot<URLRequest, StringBytes>.raw, withoutURL) == "GET (null)")
+    }
+
+    @Test func aURLThatCannotBeTakenApartIsWrittenAsItIs() throws {
+        // A URL that is not an ordinary hierarchical one
+        let odd = try #require(URL(string: "mailto:someone@example.com"))
+        var odder = request("https://example.com", method: "GET")
+        odder.url = odd
+
+        let output = try SnapshotRunner.run(SyncSnapshot<URLRequest, StringBytes>.curl, odder)
+
+        #expect(output.hasSuffix("\"mailto:someone@example.com\""))
+    }
+
     @Test func curlOmitsTheMethodForGET() throws {
         let output = try SnapshotRunner.run(
             SyncSnapshot<URLRequest, StringBytes>.curl,
