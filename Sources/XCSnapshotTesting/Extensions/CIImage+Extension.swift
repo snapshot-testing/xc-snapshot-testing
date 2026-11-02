@@ -77,6 +77,11 @@ extension CIImage {
         pixelPrecision: Float,
         in context: CIContext
     ) -> (pixelPrecision: Float, maximumDeltaE: Float)? {
+        // Core Image runs the kernel while the image is rendered, and has no way to hand its failure
+        // back to the render. The kernel counts its failures, and a count that grew means that what
+        // was rendered is not a measurement.
+        let failuresBefore = ThresholdImageProcessorKernel.failures.count
+
         guard
             let thresholdOutputImage = try? applyingThreshold(deltaThreshold),
             let averagePixel = thresholdOutputImage.applyingAreaAverage().renderSingleValue(in: context)
@@ -87,6 +92,10 @@ extension CIImage {
 
         if actualPixelPrecision < pixelPrecision {
             maximumDeltaE = applyingAreaMaximum().renderSingleValue(in: context) ?? 0
+        }
+
+        guard ThresholdImageProcessorKernel.failures.count == failuresBefore else {
+            return nil
         }
 
         return (actualPixelPrecision, maximumDeltaE)
@@ -192,10 +201,30 @@ extension CIImage {
     }
 }
 
+/// The kernel could not run on this machine, so nothing was written to its output.
+struct ThresholdKernelError: Error {}
+
+/// How many times the kernel failed, across the process.
+final class ThresholdKernelFailures: @unchecked Sendable {
+
+    private let lock = NSLock()
+    private var failures = 0
+
+    var count: Int { lock.withLock { failures } }
+
+    func record() {
+        lock.withLock { failures += 1 }
+    }
+}
+
 // Copied from https://developer.apple.com/documentation/coreimage/ciimageprocessorkernel
-private final class ThresholdImageProcessorKernel: CIImageProcessorKernel {
+final class ThresholdImageProcessorKernel: CIImageProcessorKernel {
     static let inputThresholdKey = "thresholdValue"
     static let device = MTLCreateSystemDefaultDevice()
+    static let failures = ThresholdKernelFailures()
+
+    /// Makes the kernel fail as it would on a machine that can't run it. Only for the tests.
+    nonisolated(unsafe) static var failsOnPurpose = false
 
     static var isSupported: Bool {
         guard let device = device else {
@@ -210,7 +239,11 @@ private final class ThresholdImageProcessorKernel: CIImageProcessorKernel {
         arguments: [String: Any]?,
         output: CIImageProcessorOutput
     ) throws {
+        // Returning without drawing leaves the output as it was allocated, which reads as "no pixel
+        // is above the threshold" and makes any two images match. Fail loudly instead, so the
+        // measurement is made on the CPU.
         guard
+            !failsOnPurpose,
             let device = device,
             let commandBuffer = output.metalCommandBuffer,
             let input = inputs?.first,
@@ -218,7 +251,8 @@ private final class ThresholdImageProcessorKernel: CIImageProcessorKernel {
             let destinationTexture = output.metalTexture,
             let thresholdValue = arguments?[inputThresholdKey] as? Float
         else {
-            return
+            failures.record()
+            throw ThresholdKernelError()
         }
 
         let threshold = MPSImageThresholdBinary(
