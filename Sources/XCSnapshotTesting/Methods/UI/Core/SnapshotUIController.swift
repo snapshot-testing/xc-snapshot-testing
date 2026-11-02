@@ -200,8 +200,8 @@ class SnapshotUIController: SDKViewController {
         view.layoutIfNeeded()
         #endif
 
-        try await snapshotSignal.wait()
-        snapshotSignal.lock()
+        try await snapshotSignal.waitForLayout()
+        isWaitingSnapshotSignal = false
 
         if let sceneView = childController.view as? SCNView {
             return sceneView.snapshot()
@@ -276,8 +276,8 @@ class SnapshotUIController: SDKViewController {
         view.layoutIfNeeded()
         #endif
 
-        try await snapshotSignal.wait()
-        snapshotSignal.lock()
+        try await snapshotSignal.waitForLayout()
+        isWaitingSnapshotSignal = false
 
         return method(childController)
     }
