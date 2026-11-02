@@ -168,18 +168,26 @@ extension SDKImage {
         let format = ImageFormat(describing: oldCgImage)
         let pixelCount = oldCgImage.width * oldCgImage.height
         let byteCount = format.bytesPerPixel * pixelCount
-        var oldBytes = [UInt8](repeating: 0, count: byteCount)
-        guard let oldContext = oldCgImage.context(format: format, with: &oldBytes), let oldData = oldContext.data else {
+        // The contexts below draw into these buffers for as long as they are used, which is until the
+        // end of the function. A pointer to an array is only valid during the call that receives it,
+        // so the memory is allocated by hand and freed when the function ends.
+        let oldBytes = UnsafeMutableRawBufferPointer.zeroed(byteCount: byteCount)
+        defer { oldBytes.deallocate() }
+        guard
+            let oldContext = oldCgImage.context(format: format, with: oldBytes.baseAddress),
+            let oldData = oldContext.data
+        else {
             return "Reference image's data could not be loaded."
         }
         if let newContext = newCgImage.context(format: format), let newData = newContext.data {
             if memcmp(oldData, newData, byteCount) == 0 { return nil }
         }
-        var newerBytes = [UInt8](repeating: 0, count: byteCount)
+        let newerBytes = UnsafeMutableRawBufferPointer.zeroed(byteCount: byteCount)
+        defer { newerBytes.deallocate() }
         guard
             let pngData = newValue.encodedPNG(format: storedFormat),
             let newerCgImage = SDKImage(data: pngData)?.cgImage,
-            let newerContext = newerCgImage.context(format: format, with: &newerBytes),
+            let newerContext = newerCgImage.context(format: format, with: newerBytes.baseAddress),
             let newerData = newerContext.data
         else {
             return "Newly-taken snapshot's data could not be loaded."
@@ -273,11 +281,15 @@ extension SDKImage {
         //     provider bytes assumes that layout, which reads out of bounds on grayscale or 24-bit
         //     images and points at the wrong pixels for 16-bit ones.
         let byteCount = ImageContext.bytesPerPixel * pixelCount
-        var oldBytes = [UInt8](repeating: 0, count: byteCount)
-        var newBytes = [UInt8](repeating: 0, count: byteCount)
+        let oldBytes = UnsafeMutableRawBufferPointer.zeroed(byteCount: byteCount)
+        let newBytes = UnsafeMutableRawBufferPointer.zeroed(byteCount: byteCount)
+        defer {
+            oldBytes.deallocate()
+            newBytes.deallocate()
+        }
         guard
-            oldCgImage.context(with: &oldBytes) != nil,
-            newCgImage.context(with: &newBytes) != nil
+            oldCgImage.context(with: oldBytes.baseAddress) != nil,
+            newCgImage.context(with: newBytes.baseAddress) != nil
         else {
             return nil
         }
@@ -376,6 +388,19 @@ extension SDKImage {
         UIGraphicsEndImageContext()
         return differenceImage
         #endif
+    }
+}
+
+extension UnsafeMutableRawBufferPointer {
+
+    /// A buffer filled with zeros, that the caller has to deallocate.
+    fileprivate static func zeroed(byteCount: Int) -> UnsafeMutableRawBufferPointer {
+        let buffer = UnsafeMutableRawBufferPointer.allocate(
+            byteCount: byteCount,
+            alignment: MemoryLayout<UInt64>.alignment
+        )
+        buffer.initializeMemory(as: UInt8.self, repeating: 0)
+        return buffer
     }
 }
 #endif
