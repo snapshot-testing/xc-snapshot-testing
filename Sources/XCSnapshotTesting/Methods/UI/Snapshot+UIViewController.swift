@@ -61,10 +61,8 @@ extension AsyncSnapshot where Input: UIKit.UIViewController, Output == ImageByte
         prepare: (@MainActor @Sendable () async throws -> Void)? = nil,
         application: UIKit.UIApplication? = nil
     ) -> AsyncSnapshot<Input, Output> {
-        let config = LayoutConfiguration.resolve(
-            layout,
-            with: SnapshotEnvironment.current.traits.merging(traits)
-        )
+        // Resolved when the snapshot runs, so it follows the environment of the test that runs it
+        let resolveConfig = LayoutConfiguration.resolver(layout, traits: traits)
 
         return IdentitySyncSnapshot.image(
             precision: precision,
@@ -74,7 +72,8 @@ extension AsyncSnapshot where Input: UIKit.UIViewController, Output == ImageByte
             sessionRole: sessionRole,
             application: application,
             operation: { windowConfiguration, executor in
-                Async(Input.self) { @MainActor in
+                let config = resolveConfig()
+                return Async(Input.self) { @MainActor in
                     SnapshotUIController($0, with: config)
                 }
                 .connectToWindow(windowConfiguration)
@@ -87,7 +86,7 @@ extension AsyncSnapshot where Input: UIKit.UIViewController, Output == ImageByte
                 .snapshot(executor)
             }
         )
-        .inconsistentTraitsChecker(config.traits)
+        .inconsistentTraitsChecker { resolveConfig().traits }
         .withLock()
     }
 }
@@ -229,17 +228,16 @@ extension AsyncSnapshot where Input: UIKit.UIViewController, Output == StringByt
         delay: Double,
         application: UIKit.UIApplication?
     ) -> AsyncSnapshot<Input, Output> {
-        let config = LayoutConfiguration.resolve(
-            layout,
-            with: SnapshotEnvironment.current.traits.merging(traits)
-        )
+        // Resolved when the snapshot runs, so it follows the environment of the test that runs it
+        let resolveConfig = LayoutConfiguration.resolver(layout, traits: traits)
 
         return IdentitySyncSnapshot.lines
             .withWindow(
                 sessionRole: sessionRole,
                 application: application,
                 operation: { windowConfiguration, executor in
-                    Async(Input.self) { @MainActor in
+                    let config = resolveConfig()
+                    return Async(Input.self) { @MainActor in
                         SnapshotUIController($0, with: config)
                     }
                     .connectToWindow(windowConfiguration)

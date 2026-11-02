@@ -205,6 +205,25 @@ struct TraitsTests {
         #expect(dark.swatch(x: 20, y: 20) == .blue)
     }
 
+    @Test func theTraitsOfTheEnvironmentReachAStrategyCreatedOutsideOfIt() async throws {
+        // Regression: the traits of the environment were read when the strategy was created, so a
+        // strategy kept in a `static let` never saw the ones of the test that used it. Both styles are
+        // checked, as the system may already be in one of them.
+        let strategy = AsyncSnapshot<TraitRecorder, ImageBytes>.image(layout: .sizeThatFits)
+
+        for style in [UIUserInterfaceStyle.dark, .light] {
+            let view = TraitRecorder()
+
+            _ = try await withTestingEnvironment {
+                $0.traits = Traits(userInterfaceStyle: style)
+            } operation: {
+                try await render(strategy, view)
+            }
+
+            #expect(try #require(view.recorded).userInterfaceStyle == style)
+        }
+    }
+
     @Test func theLayoutDirectionReachesTheView() async throws {
         #expect(try await recordedTraits(Traits(layoutDirection: .rightToLeft)).layoutDirection == .rightToLeft)
     }
