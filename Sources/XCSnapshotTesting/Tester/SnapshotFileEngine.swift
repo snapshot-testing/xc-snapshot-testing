@@ -118,12 +118,13 @@ extension SnapshotFileEngine {
 
         snapshotsURL.appendPathComponent(componentPath)
 
+        // They come from the environment, so they are made safe to use as a folder name like the rest
         if !tester.platform.isEmpty {
-            snapshotsURL.appendPathComponent(tester.platform)
+            snapshotsURL.appendPathComponent(tester.platform.sanitizingPathComponent())
         }
 
         if let platformVersion = tester.platformVersion {
-            snapshotsURL.appendPathComponent(platformVersion)
+            snapshotsURL.appendPathComponent(platformVersion.sanitizingPathComponent())
         }
 
         return snapshotsURL
