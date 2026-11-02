@@ -234,8 +234,8 @@ extension SnapshotTester {
             snapshotURL: snapshotURL,
             diff: failedURL.map {
                 SnapshotEnvironment.current.diffTool(
-                    currentFilePath: snapshotURL.absoluteString,
-                    failedFilePath: $0.absoluteString
+                    currentFilePath: snapshotURL.path,
+                    failedFilePath: $0.path
                 )
             },
             additionalInformation: messageAttachment.message,

@@ -210,6 +210,32 @@ final class SnapshotTesterTests: XCTestCase {
         XCTAssertFalse(try XCTUnwrap(message).contains("@−"))
     }
 
+    func testTheDiffToolReceivesPathsAndNotURLs() async throws {
+        // Regression: the tool was given `file:///…` strings, percent-encoded, though it is documented
+        // to receive absolute file paths.
+        try write("old", named: "a")
+        let received = ReceivedPaths()
+        let recorder = DiffTool { current, failed in
+            received.set(current, failed)
+            return "diff"
+        }
+
+        _ = try await withTestingEnvironment {
+            $0.diffTool = recorder
+        } operation: {
+            try verify("new", record: .never)
+        }
+
+        let current = try XCTUnwrap(received.current)
+        let failed = try XCTUnwrap(received.failed)
+        XCTAssertEqual(current, reference("a").path)
+        XCTAssertTrue(current.hasPrefix("/"))
+        XCTAssertTrue(failed.hasPrefix("/"))
+        XCTAssertFalse(current.hasPrefix("file:"))
+        XCTAssertFalse(failed.hasPrefix("file:"))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: failed), "the failed file is where the path says")
+    }
+
     // MARK: - Data snapshots
 
     func testDataMismatchWithTheSameLength() throws {
@@ -493,5 +519,18 @@ final class SnapshotTesterTests: XCTestCase {
         ) {
             XCTAssertTrue($0 is Boom)
         }
+    }
+}
+
+private final class ReceivedPaths: @unchecked Sendable {
+
+    private let lock = NSLock()
+    private var paths: (current: String, failed: String)?
+
+    var current: String? { lock.withLock { paths?.current } }
+    var failed: String? { lock.withLock { paths?.failed } }
+
+    func set(_ current: String, _ failed: String) {
+        lock.withLock { paths = (current, failed) }
     }
 }

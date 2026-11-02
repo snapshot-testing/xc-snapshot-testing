@@ -240,7 +240,7 @@ class SnapshotUIController: SDKViewController {
         #endif
 
         @MainActor
-        fileprivate func callAsFunction(_ viewController: SDKViewController) -> String {
+        fileprivate func callAsFunction(_ viewController: SDKViewController) throws -> String {
             let reference: NSObject
 
             switch self {
@@ -255,11 +255,28 @@ class SnapshotUIController: SDKViewController {
             #endif
             }
 
-            return
-                (reference
-                .perform(Selector(rawValue))
-                .retain()
-                .takeUnretainedValue() as! String).sanitizingPointersReferences()
+            return try Self.description(of: reference, selector: rawValue).sanitizingPointersReferences()
+        }
+
+        /// The string that `reference` returns for `selector`.
+        ///
+        /// These are private methods of UIKit and AppKit, so a system update can rename or remove one,
+        /// or change what it returns. Sending the message anyway raises an Objective-C exception that
+        /// aborts the test process, and a force cast to `String` does the same.
+        @MainActor
+        static func description(of reference: NSObject, selector name: String) throws -> String {
+            let selector = Selector(name)
+
+            guard reference.responds(to: selector) else {
+                throw DescriptorUnavailableError(selector: name, type: type(of: reference))
+            }
+
+            // `perform` hands the result back unretained, so nothing has to be balanced here.
+            guard let description = reference.perform(selector)?.takeUnretainedValue() as? String else {
+                throw DescriptorUnavailableError(selector: name, type: type(of: reference))
+            }
+
+            return description
         }
     }
 
@@ -279,7 +296,7 @@ class SnapshotUIController: SDKViewController {
         try await snapshotSignal.waitForLayout()
         isWaitingSnapshotSignal = false
 
-        return method(childController)
+        return try method(childController)
     }
 
     func detachChild() {
@@ -431,6 +448,19 @@ class SnapshotUIController: SDKViewController {
         }
     }
     #endif
+}
+
+struct DescriptorUnavailableError: Error, LocalizedError, CustomStringConvertible {
+
+    let selector: String
+    let type: Any.Type
+
+    var description: String {
+        "\(type) has no `\(selector)` that returns a description. It is a private method of the system, "
+            + "and this version of it may not have it."
+    }
+
+    var errorDescription: String? { description }
 }
 #endif
 
