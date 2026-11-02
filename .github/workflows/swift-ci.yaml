@@ -17,6 +17,10 @@ on:
       - '.swift-format'
       - '.github/workflows/swift-ci.yaml'
 
+# The reusable workflow only reads the repository; it needs no other token scope.
+permissions:
+  contents: read
+
 # Cancel any in-progress or queued run for the same ref when a new run is
 # triggered (e.g. new push), so stale xcodebuild/swift test processes don't
 # keep running and don't sit blocking the queue. Pushes to main use
@@ -94,4 +98,5 @@ jobs:
 
       # Step 5 – Coverage Upload (uses the CODECOV_TOKEN secret of the repository)
       enable-coverage-upload: true
-    secrets: inherit
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
