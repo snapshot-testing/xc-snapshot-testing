@@ -1,6 +1,7 @@
 // Copyright (c) Snapshot Testing
 // SPDX-License-Identifier: MIT
 
+import Foundation
 import Testing
 
 @_spi(Internals) @testable import XCSnapshotTesting
@@ -93,5 +94,124 @@ struct DifferenceTests {
 
         #expect(rebuiltFirst == first)
         #expect(rebuiltSecond == second)
+    }
+
+    // MARK: - Size and performance
+
+    /// The number of elements in the longest common subsequence, by dynamic programming.
+    private func longestCommonSubsequence(_ first: [Int], _ second: [Int]) -> Int {
+        var row = [Int](repeating: 0, count: second.count + 1)
+
+        for a in first {
+            var diagonal = 0
+
+            for (index, b) in second.enumerated() {
+                let above = row[index + 1]
+                row[index + 1] = a == b ? diagonal + 1 : max(row[index + 1], row[index])
+                diagonal = above
+            }
+        }
+
+        return row[second.count]
+    }
+
+    private struct Generator {
+        var state: UInt64
+
+        mutating func next(below limit: Int) -> Int {
+            state = state &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
+            return Int((state >> 33) % UInt64(limit))
+        }
+    }
+
+    @Test func theDiffIsTheShortestOne() {
+        var generator = Generator(state: 42)
+
+        for _ in 0..<300 {
+            let alphabet = 1 + generator.next(below: 5)
+            let first = (0..<generator.next(below: 25)).map { _ in generator.next(below: alphabet) }
+            let second = (0..<generator.next(below: 25)).map { _ in generator.next(below: alphabet) }
+
+            let differences = first.diffing(second)
+
+            let removed = differences.filter { $0.origin == .first }.flatMap(\.elements).count
+            let added = differences.filter { $0.origin == .second }.flatMap(\.elements).count
+            let common = longestCommonSubsequence(first, second)
+
+            #expect(differences.filter { $0.origin != .second }.flatMap(\.elements) == first, "\(first) -> \(second)")
+            #expect(differences.filter { $0.origin != .first }.flatMap(\.elements) == second, "\(first) -> \(second)")
+            #expect(removed == first.count - common, "\(first) -> \(second)")
+            #expect(added == second.count - common, "\(first) -> \(second)")
+        }
+    }
+
+    @Test func aChangeBetweenMatchesNeverLeavesTwoRunsOfTheSameKindNextToEachOther() {
+        var generator = Generator(state: 7)
+
+        for _ in 0..<200 {
+            let first = (0..<generator.next(below: 20)).map { _ in generator.next(below: 3) }
+            let second = (0..<generator.next(below: 20)).map { _ in generator.next(below: 3) }
+
+            let origins = first.diffing(second).map(\.origin)
+
+            for (left, right) in zip(origins, origins.dropFirst()) {
+                #expect(left != right, "\(first) -> \(second)")
+            }
+        }
+    }
+
+    @Test func manyRepeatedLinesDoNotTakeMinutes() {
+        // Regression: 4000 identical lines with a change every seventh took 183 seconds.
+        let first = [String](repeating: "}", count: 4_000)
+        var second = first
+        for index in stride(from: 0, to: second.count, by: 7) {
+            second[index] = "x\(index)"
+        }
+
+        let start = Date()
+        let differences = first.diffing(second)
+        let elapsed = Date().timeIntervalSince(start)
+
+        #expect(elapsed < 30, "took \(elapsed)")
+        #expect(differences.filter { $0.origin != .second }.flatMap(\.elements) == first)
+        #expect(differences.filter { $0.origin != .first }.flatMap(\.elements) == second)
+    }
+
+    @Test func aLargeFileWithAFewChangesIsFast() {
+        let first = (0..<50_000).map { "line \($0)" }
+        var second = first
+        second[100] = "changed"
+        second.remove(at: 25_000)
+        second.insert("new", at: 40_000)
+
+        let start = Date()
+        let differences = first.diffing(second)
+        let elapsed = Date().timeIntervalSince(start)
+
+        #expect(elapsed < 30, "took \(elapsed)")
+        #expect(differences.filter { $0.origin == .first }.flatMap(\.elements) == ["line 100", "line 25000"])
+        #expect(differences.filter { $0.origin == .second }.flatMap(\.elements) == ["changed", "new"])
+    }
+
+    @Test func collectionsTooDifferentToSearchAreReportedAsReplaced() {
+        // More edits than the search allows: the answer is coarse, but it still accounts for everything.
+        let first = (0..<3_000).map { "a\($0)" }
+        let second = (0..<3_000).map { "b\($0)" }
+
+        let differences = first.diffing(second)
+
+        #expect(differences.map(\.origin) == [.first, .second])
+        #expect(differences.filter { $0.origin == .first }.flatMap(\.elements) == first)
+        #expect(differences.filter { $0.origin == .second }.flatMap(\.elements) == second)
+    }
+
+    @Test func aTextWithManyChangesStillProducesAReadablePatch() {
+        let first = (0..<5_000).map { "line \($0)" }
+        let second = (0..<5_000).map { $0.isMultiple(of: 3) ? "other \($0)" : "line \($0)" }
+
+        let hunks = first.diffing(second).groupping()
+
+        #expect(!hunks.isEmpty)
+        #expect(hunks.allSatisfy { $0.lines.contains { $0.hasPrefix("−") || $0.hasPrefix("+") } })
     }
 }
