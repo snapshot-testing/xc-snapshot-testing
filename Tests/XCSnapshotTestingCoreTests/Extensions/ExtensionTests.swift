@@ -142,6 +142,46 @@ struct ExtensionTests {
         }
     }
 
+    @Test func cancellingTheWaitingTaskCancelsTheOperationAndEndsTheWait() async throws {
+        // Regression: the tasks started by `timeout` are unstructured, so they never learned of it,
+        // and the wait lasted until the operation finished or the timeout came.
+        let observedCancellation = Flag()
+        let waiting = Task {
+            try await Task<Int, Error>.timeout(30) {
+                do {
+                    try await Task.sleep(nanoseconds: 60_000_000_000)
+                } catch {
+                    observedCancellation.set()
+                    throw error
+                }
+                return 1
+            }
+        }
+
+        try await Task.sleep(nanoseconds: 100_000_000)
+        waiting.cancel()
+
+        await #expect(throws: CancellationError.self) { try await waiting.value }
+
+        try await Task.sleep(nanoseconds: 200_000_000)
+        #expect(observedCancellation.isSet)
+    }
+
+    @Test func aTaskThatIsAlreadyCancelledDoesNotStartTheWait() async {
+        let waiting = Task {
+            // Let the cancellation arrive before the call
+            while !Task.isCancelled { await Task.yield() }
+            return try await Task<Int, Error>.timeout(30) {
+                try await Task.sleep(nanoseconds: 60_000_000_000)
+                return 1
+            }
+        }
+
+        waiting.cancel()
+
+        await #expect(throws: CancellationError.self) { try await waiting.value }
+    }
+
     @Test func timeoutRethrowsErrorsOfTheOperation() async {
         struct Failure: Error {}
 
