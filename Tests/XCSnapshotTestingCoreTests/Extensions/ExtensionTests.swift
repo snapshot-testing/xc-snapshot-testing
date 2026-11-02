@@ -24,6 +24,14 @@ struct ExtensionTests {
         #expect("no pointers here".sanitizingPointersReferences() == "no pointers here")
     }
 
+    @Test func linesThatMentionATextAreRemoved() {
+        let text = "<A>\n   | <Helper: 1>\n   | <B>\n      | <C>"
+
+        #expect(text.removingLines(mentioning: "Helper") == "<A>\n   | <B>\n      | <C>")
+        #expect(text.removingLines(mentioning: "nothing here") == text)
+        #expect("only Helper".removingLines(mentioning: "Helper").isEmpty)
+    }
+
     @Test func pathComponentsEncodeWhatAFileNameCannotHold() {
         #expect("a/b\\c:d*e?f\"g<h>i|j".sanitizingPathComponent() == "a%2Fb%5Cc%3Ad%2Ae%3Ff%22g%3Ch%3Ei%7Cj")
         #expect("line\nbreak".sanitizingPathComponent() == "line%0Abreak")

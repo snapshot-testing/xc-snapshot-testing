@@ -9,6 +9,16 @@ import UniformTypeIdentifiers
 
 extension String {
 
+    /// The text without the lines that mention `text`.
+    ///
+    /// The description of a view lists the views that are added to it only to measure it. They are
+    /// not part of what is being tested, and a reference would break if one were renamed.
+    func removingLines(mentioning text: String) -> String {
+        split(separator: "\n", omittingEmptySubsequences: false)
+            .filter { !$0.contains(text) }
+            .joined(separator: "\n")
+    }
+
     func sanitizingPointersReferences() -> String {
         replacingOccurrences(
             of: ":?\\s*0x[\\da-f]+(\\s*)",

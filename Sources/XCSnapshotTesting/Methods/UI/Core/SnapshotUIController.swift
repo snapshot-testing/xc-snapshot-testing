@@ -255,7 +255,9 @@ class SnapshotUIController: SDKViewController {
             #endif
             }
 
-            return try Self.description(of: reference, selector: rawValue).sanitizingPointersReferences()
+            return try Self.description(of: reference, selector: rawValue)
+                .removingLines(mentioning: NSStringFromClass(UIViewSizeListener.self))
+                .sanitizingPointersReferences()
         }
 
         /// The string that `reference` returns for `selector`.
