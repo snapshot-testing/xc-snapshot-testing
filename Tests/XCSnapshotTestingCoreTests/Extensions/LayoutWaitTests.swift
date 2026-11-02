@@ -24,12 +24,13 @@ struct LayoutWaitTests {
         let signal = AsyncSignal()
         let start = Date()
 
-        Task {
+        let layout = Task {
             try await Task.sleep(nanoseconds: 20_000_000)
             signal.signal()
         }
 
         try await signal.waitForLayout(timeout: 30)
+        try await layout.value
 
         #expect(Date().timeIntervalSince(start) < 25, "the signal ended the wait, not the 30 s fallback")
     }
