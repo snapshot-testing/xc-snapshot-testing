@@ -150,6 +150,55 @@ struct ExecutorCombinatorTests {
         #expect(try SnapshotRunner.run(executors.sequence(), ()).count == 100_000)
     }
 
+    // MARK: - Continuations
+
+    @Test func aContinuationReportsOnlyItsFirstResult() {
+        let results = Counter()
+        let executor = Sync<Void, Int> { _, continuation in
+            continuation.resume(returning: 1)
+            continuation.resume(returning: 2)
+            continuation.resume(throwing: Failure())
+        }
+
+        executor((), callback: { _ in results.increment() })
+
+        #expect(results.value == 1)
+    }
+
+    @Test func aBlockThatResumesAndThenThrowsKeepsItsResult() throws {
+        let executor = Sync<Void, Int> { _, continuation in
+            continuation.resume(returning: 7)
+            throw Failure()
+        }
+
+        #expect(try SnapshotRunner.run(executor, ()) == 7)
+    }
+
+    @Test func aContinuationResumedFromTwoThreadsReportsOnce() {
+        let results = Counter()
+        let group = DispatchGroup()
+        let executor = Sync<Void, Int> { _, continuation in
+            for value in 0..<8 {
+                DispatchQueue.global().async(group: group) { continuation.resume(returning: value) }
+            }
+        }
+
+        executor((), callback: { _ in results.increment() })
+        group.wait()
+
+        #expect(results.value == 1)
+    }
+
+    @Test func aContinuationResumedTwiceDoesNotResumeAnAsyncBridgeTwice() async throws {
+        let executor = Sync<Void, Int> { _, continuation in
+            continuation.resume(returning: 3)
+            continuation.resume(returning: 4)
+        }
+
+        // A second resume of the underlying continuation would be undefined behavior.
+        #expect(try await executor(()) == 3)
+    }
+
     // MARK: - Sync as Async
 
     @Test func syncCanBeMappedIntoAnAsyncExecutor() async throws {

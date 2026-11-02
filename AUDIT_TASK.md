@@ -33,7 +33,8 @@ Legenda de estado: `[ ]` pendente · `[~]` em andamento · `[x]` concluído (com
 - [ ] **M10** — Credenciais (`Authorization`, `Cookie`) gravadas em snapshots `.raw`/`.curl`
 - [ ] **M11** — Diretórios criados a cada asserção, inclusive em modo leitura / checkout somente leitura
 - [ ] **M12** — Ponteiros de `[UInt8]` escapam da chamada em `CGImage.context(with:)`
-- [ ] **M13** — `SyncContinuation` não é resume-once; resume duplo derruba o processo
+- [x] **M13** — `SyncContinuation` não é resume-once; resume duplo derruba o processo — `HASH`
+  - `SyncContinuation.resume` só aplica a primeira chamada (guarda atômica por continuação). Antes, resume + throw no mesmo executor desbalanceava o `DispatchGroup` e abortava o processo.
 
 ## Baixo
 

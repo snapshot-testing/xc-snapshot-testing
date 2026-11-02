@@ -294,6 +294,32 @@ final class SnapshotTesterTests: XCTestCase {
         XCTAssertEqual(try contents(of: "a"), "value")
     }
 
+    func testAnExecutorThatReportsTwiceDoesNotCrashTheSynchronousTester() throws {
+        // Regression: the second report left the dispatch group unbalanced and aborted the process.
+        struct Failure: Error {}
+
+        let chatty = SyncSnapshot<String, StringBytes>(
+            pathExtension: "txt",
+            attachmentGenerator: .lines,
+            executor: Sync { input, continuation in
+                continuation.resume(returning: StringBytes(rawValue: input))
+                throw Failure()
+            }
+        )
+
+        let message = try XCSnapshotTesting.verify(
+            of: "value",
+            as: chatty,
+            named: "a",
+            record: .missing,
+            snapshotDirectory: directory.path,
+            testName: "snapshot"
+        )
+
+        XCTAssertTrue(try XCTUnwrap(message).hasPrefix("No reference was found on disk."))
+        XCTAssertEqual(try contents(of: "a"), "value")
+    }
+
     func testAsyncSnapshotTimeout() async throws {
         let slow = AsyncSnapshot<String, StringBytes>(
             pathExtension: "txt",

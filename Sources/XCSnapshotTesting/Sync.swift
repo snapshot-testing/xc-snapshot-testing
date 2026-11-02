@@ -15,6 +15,7 @@ import Foundation
 public struct SyncContinuation<Output>: Sendable {
 
     fileprivate let block: @Sendable (Result<Output, Error>) -> Void
+    private let hasResumed = ResumeOnce()
 
     fileprivate init(
         block: @Sendable @escaping (Result<Output, Error>) -> Void
@@ -24,8 +25,16 @@ public struct SyncContinuation<Output>: Sendable {
 
     /// Resumes the continuation with a result.
     ///
+    /// Only the first call has an effect. A closure that resumes the continuation and then throws,
+    /// or one that calls back more than once, would otherwise report two results for one operation:
+    /// an unbalanced `DispatchGroup`, or a checked continuation resumed twice.
+    ///
     /// - Parameter result: The result to resume the continuation with.
     public func resume(with result: Result<Output, Error>) {
+        guard hasResumed.claim() else {
+            return
+        }
+
         block(result)
     }
 
@@ -41,6 +50,20 @@ public struct SyncContinuation<Output>: Sendable {
     /// - Parameter error: The error to resume the continuation with.
     public func resume(throwing error: Error) {
         resume(with: .failure(error))
+    }
+}
+
+private final class ResumeOnce: @unchecked Sendable {
+
+    private let lock = NSLock()
+    private var isClaimed = false
+
+    /// - Returns: `true` for the first caller only.
+    func claim() -> Bool {
+        lock.withLock {
+            defer { isClaimed = true }
+            return !isClaimed
+        }
     }
 }
 
