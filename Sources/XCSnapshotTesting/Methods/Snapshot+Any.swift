@@ -44,7 +44,14 @@ extension SyncSnapshot where Output == StringBytes {
         ]
 
         let snapshot = IdentitySyncSnapshot.lines.pullback { (data: Input) in
-            try String(
+            // Writing an object that is not JSON raises an Objective-C exception, which Swift cannot
+            // catch and which aborts the whole test process. The object is checked inside an array
+            // so that a fragment (a string, a number) is judged by its own value.
+            guard JSONSerialization.isValidJSONObject([data]) else {
+                throw InvalidJSONObjectError(type: type(of: data))
+            }
+
+            return try String(
                 decoding: JSONSerialization.data(
                     withJSONObject: data,
                     options: options
@@ -69,3 +76,15 @@ private let snapshotDateFormatter: DateFormatter = {
     formatter.timeZone = TimeZone(abbreviation: "UTC")
     return formatter
 }()
+
+struct InvalidJSONObjectError: Error, LocalizedError, CustomStringConvertible {
+
+    let type: Any.Type
+
+    var description: String {
+        "\(type) can't be written as JSON: it holds a value that JSON has no representation for, "
+            + "such as a date, NaN or infinity, a dictionary whose keys are not strings, or a custom type."
+    }
+
+    var errorDescription: String? { description }
+}

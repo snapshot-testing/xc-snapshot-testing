@@ -65,6 +65,41 @@ struct SnapshotMethodsTests {
 
     // MARK: - Encodable
 
+    @Test func jsonOfAnythingThatIsNotJSONFailsInsteadOfCrashing() {
+        // Regression: JSONSerialization raised an Objective-C exception for these, which aborted the process.
+        let notJSON: [Any] = [
+            Date(),
+            Double.nan,
+            Double.infinity,
+            ["key": Date()],
+            [1: "a"],
+            [User(id: 1, name: "A")],
+            NSObject(),
+        ]
+
+        for value in notJSON {
+            #expect(throws: InvalidJSONObjectError.self, "\(value)") {
+                try SnapshotRunner.run(SyncSnapshot<Any, StringBytes>.json, value)
+            }
+        }
+    }
+
+    @Test func jsonOfAnyValueStillAcceptsEveryKindOfJSON() throws {
+        let valid: [Any] = ["text", 1, 2.5, true, NSNull(), [1, 2], ["a": ["b": 1]]]
+
+        for value in valid {
+            #expect(throws: Never.self, "\(value)") {
+                try SnapshotRunner.run(SyncSnapshot<Any, StringBytes>.json, value)
+            }
+        }
+    }
+
+    @Test func theErrorForAnInvalidJSONObjectNamesTheType() {
+        let error = InvalidJSONObjectError(type: Date.self)
+
+        #expect(error.errorDescription?.contains("Date") == true)
+    }
+
     @Test func encodableJSONIsPrettyPrintedAndSorted() throws {
         let snapshot = SyncSnapshot<User, StringBytes>.json
 
