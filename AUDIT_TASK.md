@@ -25,7 +25,7 @@ Legenda de estado: `[ ]` pendente · `[~]` em andamento · `[x]` concluído (com
 - [ ] **M3** — Diff de texto por LCS super-linear e recursivo (183 s com 4000 linhas repetidas)
 - [x] **M4** — `WindowPool.acquire` escolhe o lease mais disputado; comparador inválido; `maxConcurrentTests` sem clamp — `357a494`
   - `WindowPool.leastBusy` escolhe o menor `load` (esperando + em uso), empate vai para a janela mais antiga; limite com `max(1, …)` em `acquire` e no valor padrão do ambiente.
-- [x] **M5** — Esperas sem limite com `timeout` zero (`WKWebView.waitLoadingState`, `snapshotSignal.wait()`) — `HASH`
+- [x] **M5** — Esperas sem limite com `timeout` zero (`WKWebView.waitLoadingState`, `snapshotSignal.wait()`) — `3ccea54`
   - `waitLoadingState` espera no máximo 30 s (passo mínimo de 10 ms, sem laço ocupado com tolerância 0); `AsyncSignal.waitForLayout` segue após 5 s se o layout pedido não acontecer, sem prender cancelamento.
 - [ ] **M6** — Kernel Metal retorna sem erro e pode dar falso "passou"
 - [ ] **M7** — `.json` de `Any` derruba o processo em objeto inválido (NSException)
