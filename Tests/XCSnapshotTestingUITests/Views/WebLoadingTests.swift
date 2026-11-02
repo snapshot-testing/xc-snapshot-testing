@@ -12,37 +12,50 @@ import WebKit
 @Suite("Web loading")
 struct WebLoadingTests {
 
-    /// A web view whose page never finishes loading, as a stalled request or a long poll would.
-    private final class NeverLoadedWebView: WKWebView {
-        override var isLoading: Bool { true }
+    /// A web view that counts how many times it is asked whether it is loading, and answers as told.
+    ///
+    /// The tests count the checks instead of timing them: a loaded CI simulator can take seconds
+    /// to wake a short sleep, and the number of checks does not depend on that.
+    private final class ScriptedWebView: WKWebView {
+
+        var stillLoading = true
+        private(set) var checks = 0
+
+        override var isLoading: Bool {
+            checks += 1
+            return stillLoading
+        }
     }
 
     @Test func aPageThatNeverFinishesLoadingDoesNotHoldTheSnapshotForever() async throws {
         // Regression: the wait repeated for as long as the view was loading.
-        let webView = NeverLoadedWebView(frame: .zero)
-        let start = Date()
+        let webView = ScriptedWebView(frame: .zero)
 
         try await webView.waitLoadingState(tolerance: 0.01, maximumWait: 0.1)
 
-        #expect(Date().timeIntervalSince(start) < 5)
+        #expect(
+            (10...11).contains(webView.checks),
+            "the wait gives up after the maximum, in steps of the tolerance (the sum of the steps may fall just short of it)"
+        )
     }
 
     @Test func aToleranceOfZeroStillWaitsBetweenChecks() async throws {
-        let webView = NeverLoadedWebView(frame: .zero)
+        let webView = ScriptedWebView(frame: .zero)
         let start = Date()
 
         try await webView.waitLoadingState(tolerance: 0, maximumWait: 0.1)
 
-        #expect(Date().timeIntervalSince(start) >= 0.09, "the checks are spaced, not a busy loop")
+        #expect((10...11).contains(webView.checks), "the step is at least 10 ms, not a busy loop")
+        #expect(Date().timeIntervalSince(start) >= 0.09, "and the pauses really happen")
     }
 
     @Test func aPageThatIsNotLoadingEndsTheWaitAfterOneCheck() async throws {
-        let webView = WKWebView(frame: .zero)
-        let start = Date()
+        let webView = ScriptedWebView(frame: .zero)
+        webView.stillLoading = false
 
         try await webView.waitLoadingState(tolerance: 0.05, maximumWait: 30)
 
-        #expect(Date().timeIntervalSince(start) < 5)
+        #expect(webView.checks == 1)
     }
 }
 #endif

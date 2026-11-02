@@ -31,7 +31,7 @@ struct LayoutWaitTests {
 
         try await signal.waitForLayout(timeout: 30)
 
-        #expect(Date().timeIntervalSince(start) < 5)
+        #expect(Date().timeIntervalSince(start) < 25, "the signal ended the wait, not the 30 s fallback")
     }
 
     @Test func theSignalIsArmedAgainForTheNextWait() async throws {
