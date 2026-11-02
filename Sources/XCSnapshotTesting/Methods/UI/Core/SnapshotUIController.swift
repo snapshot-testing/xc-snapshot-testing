@@ -465,56 +465,6 @@ struct DescriptorUnavailableError: Error, LocalizedError, CustomStringConvertibl
 #endif
 
 #if os(macOS)
-import CoreGraphics
-func CGContextCreateBitmapContext(size: CGSize, opaque: Bool, scale: CGFloat) -> CGContext? {
-    var scale = scale
-
-    if scale == .zero {
-        // Match `UIGraphicsBeginImageContextWithOptions`, reset to the scale factor of the device’s main screen if scale is 0.
-        scale = NSScreen.main?.backingScaleFactor ?? 1
-    }
-
-    let width = ceil(size.width * scale)
-    let height = ceil(size.height * scale)
-
-    guard width >= 1, height >= 1 else {
-        return nil
-    }
-
-    guard let space = NSScreen.main?.colorSpace?.cgColorSpace else {
-        return nil
-    }
-    // kCGImageAlphaNone is not supported in CGBitmapContextCreate.
-    // Check #3330 for more detail about why this bitmap is choosen.
-    // From v5.17.0, use runtime detection of bitmap info instead of hardcode.
-    // However, macOS's runtime detection will also call this function, cause recursive, so still hardcode here
-    let bitmapInfo: CGBitmapInfo
-    if !opaque {
-        // [NSImage imageWithSize:flipped:drawingHandler:] returns float(16-bits) RGBA8888 on alpha image, which we don't need
-        bitmapInfo = [
-            .byteOrderDefault, .init(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
-        ]
-    } else {
-        bitmapInfo = [.byteOrderDefault, .init(rawValue: CGImageAlphaInfo.noneSkipLast.rawValue)]
-    }
-
-    guard
-        let context = CGContext(
-            data: nil,
-            width: Int(width),
-            height: Int(height),
-            bitsPerComponent: 8,
-            bytesPerRow: .zero,
-            space: space,
-            bitmapInfo: bitmapInfo.rawValue
-        )
-    else { return nil }
-
-    context.scaleBy(x: scale, y: scale)
-
-    return context
-}
-
 struct RenderingError: Error, CustomStringConvertible, LocalizedError {
 
     var description: String {

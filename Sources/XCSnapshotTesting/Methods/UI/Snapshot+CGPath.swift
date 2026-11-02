@@ -48,7 +48,10 @@ extension SyncSnapshot where Input: CGPath, Output == ImageBytes {
                 y: -bounds.origin.y
             )
 
-            let path = path.copy(using: &transform)!
+            // An empty path has a null bounding box, which can't be moved to the origin
+            guard !path.isEmpty, let path = path.copy(using: &transform) else {
+                throw NothingToDrawError(subject: "path")
+            }
 
             let image = NSImage(size: bounds.size, flipped: false) { destRect in
                 guard let context = NSGraphicsContext.current else {
@@ -168,12 +171,4 @@ extension SyncSnapshot where Input: CGPath, Output == StringBytes {
         }
     }
 }
-
-private let defaultNumberFormatter: NumberFormatter = {
-    let numberFormatter = NumberFormatter()
-    numberFormatter.decimalSeparator = "."
-    numberFormatter.minimumFractionDigits = 1
-    numberFormatter.maximumFractionDigits = 3
-    return numberFormatter
-}()
 #endif

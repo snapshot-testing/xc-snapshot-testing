@@ -68,15 +68,6 @@ extension SyncSnapshot where Output == StringBytes {
     }
 }
 
-private let snapshotDateFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
-    formatter.calendar = Calendar(identifier: .gregorian)
-    formatter.locale = Locale(identifier: "en_US_POSIX")
-    formatter.timeZone = TimeZone(abbreviation: "UTC")
-    return formatter
-}()
-
 struct InvalidJSONObjectError: Error, LocalizedError, CustomStringConvertible {
 
     let type: Any.Type

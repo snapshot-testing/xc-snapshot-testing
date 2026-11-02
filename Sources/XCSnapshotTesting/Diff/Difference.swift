@@ -281,7 +281,7 @@ extension [Difference<String>] {
                 )
 
                 // Adds previous hunk if it contains changes
-                if newHunk.lines.contains(where: { $0.hasPrefix("−") || $0.hasPrefix("+") }) {
+                if newHunk.hasChanges {
                     state.hunks.append(newHunk)
                 }
 
@@ -329,8 +329,9 @@ extension [Difference<String>] {
             }
         }
 
-        // Returns accumulated hunks + final hunk (if valid)
-        return finalHunk.lines.isEmpty ? hunks : hunks + [finalHunk]
+        // Returns accumulated hunks + final hunk, unless it only holds the lines of context that follow
+        // the last change: those already close the hunk before it
+        return finalHunk.hasChanges ? hunks + [finalHunk] : hunks
     }
 }
 

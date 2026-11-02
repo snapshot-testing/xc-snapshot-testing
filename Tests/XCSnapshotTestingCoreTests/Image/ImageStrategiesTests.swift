@@ -150,5 +150,37 @@ struct ImageStrategiesTests {
         )
     }
     #endif
+
+    // MARK: - Number formatting
+
+    @Test func pointsAreWrittenWithTheSameDigitsInEveryLocale() {
+        let formatter = defaultNumberFormatter
+
+        #expect(formatter.locale.identifier == "en_US_POSIX")
+        #expect(formatter.string(from: 1.5) == "1.5")
+        #expect(formatter.string(from: 12) == "12.0")
+    }
+
+    #if os(macOS)
+    // MARK: - Nothing to draw
+
+    @Test func anEmptyPathFailsInsteadOfCrashing() {
+        // Regression: the bounds of an empty path are null, and moving the path to the origin returned nil.
+        #expect(throws: NothingToDrawError.self) {
+            try SnapshotRunner.run(SyncSnapshot<CGPath, ImageBytes>.image, CGMutablePath())
+        }
+    }
+
+    @Test func aLayerWithoutSizeFailsInsteadOfCrashing() {
+        // Regression: an image without size has no graphics context, and it was force unwrapped.
+        #expect(throws: NothingToDrawError.self) {
+            try SnapshotRunner.run(SyncSnapshot<CALayer, ImageBytes>.image, CALayer())
+        }
+    }
+
+    @Test func theErrorSaysWhatCouldNotBeDrawn() {
+        #expect(NothingToDrawError(subject: "path").errorDescription?.contains("this path") == true)
+    }
+    #endif
 }
 #endif

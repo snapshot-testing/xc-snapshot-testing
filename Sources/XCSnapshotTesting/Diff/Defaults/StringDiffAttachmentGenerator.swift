@@ -43,24 +43,22 @@ public struct StringDiffAttachmentGenerator: DiffAttachmentGenerator {
         from reference: StringBytes,
         with diffable: StringBytes
     ) -> DiffAttachment? {
-        guard reference.rawValue != diffable.rawValue else {
+        // Compared by bytes: `String` equality treats a composed and a decomposed accent as the same
+        // text, but they are not the same file.
+        guard !reference.rawValue.utf8.elementsEqual(diffable.rawValue.utf8) else {
             return nil
         }
 
-        let hunks = reference.rawValue
-            .split(separator: "\n", omittingEmptySubsequences: false)
-            .map(String.init)
-            .diffing(
-                diffable.rawValue
-                    .split(separator: "\n", omittingEmptySubsequences: false)
-                    .map(String.init)
-            )
+        let hunks = Self.lines(of: reference.rawValue)
+            .diffing(Self.lines(of: diffable.rawValue))
             .groupping()
 
         let failure =
-            hunks
-            .flatMap { [$0.patchMarker] + $0.lines }
-            .joined(separator: "\n")
+            hunks.isEmpty
+            ? Self.sameLinesMessage
+            : hunks
+                .flatMap { [$0.patchMarker] + $0.lines }
+                .joined(separator: "\n")
 
         let attachment = SnapshotAttachment(
             data: Data(failure.utf8),
@@ -71,6 +69,25 @@ public struct StringDiffAttachmentGenerator: DiffAttachmentGenerator {
             message: failure,
             attachments: [attachment]
         )
+    }
+}
+
+extension StringDiffAttachmentGenerator {
+
+    fileprivate static let sameLinesMessage =
+        "The texts have the same lines, but they are not the same: they differ in the line endings "
+        + "(\\r\\n against \\n) or in characters that look alike, such as an accent written as one "
+        + "character and as two."
+
+    /// The lines of a text, whether they end in `\n` or `\r\n`.
+    ///
+    /// A `\r\n` is a single `Character`, so splitting on `"\n"` alone never splits a text with those
+    /// line endings, and the whole text was compared as one line.
+    fileprivate static func lines(of text: String) -> [String] {
+        text.split(
+            omittingEmptySubsequences: false,
+            whereSeparator: { $0 == "\n" || $0 == "\r\n" }
+        ).map(String.init)
     }
 }
 
