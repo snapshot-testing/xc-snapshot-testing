@@ -19,7 +19,7 @@ import Foundation
 ///   - name: An optional identifier for the snapshot. Useful to differentiate multiple assertions in a single test method.
 ///   - recording: Optionally override the snapshot recording mode for this assertion (e.g., `.always` to force update, `.never` to only compare).
 ///   - snapshotDirectory: Optionally specify a custom directory for stored snapshots, overriding the default.
-///   - timeout: Time in seconds before the assertion fails for taking too long. Defaults to zero (no timeout).
+///   - timeout: Time in seconds before the assertion fails for taking too long. Defaults to zero (no timeout). Zero or `.infinity` means no limit.
 ///   - isolation: Optionally specify an actor for input evaluation, supporting thread/actor isolation. Defaults to current context.
 ///   - fileID: The unique identifier for the file in which the assertion appears. Supplied automatically by the compiler.
 ///   - filePath: The file path where the assertion is called. Supplied automatically by the compiler.
@@ -99,7 +99,7 @@ public func assert<Input: Sendable, Output: BytesRepresentable>(
 ///   - serialization: Settings for how output is serialized (e.g., image encoding, text precision). Defaults to `.init()`.
 ///   - recording: Optionally override the recording mode for all snapshots in this assertion (e.g., `.always`, `.never`).
 ///   - snapshotDirectory: Optionally specify a custom directory for storing or comparing snapshots, overriding the default.
-///   - timeout: Maximum seconds to wait for input evaluation per assertion. Defaults to `.zero`.
+///   - timeout: Maximum seconds to wait for input evaluation per assertion. Defaults to `.zero`. Zero or `.infinity` means no limit.
 ///   - isolation: Optionally specify an actor context for input evaluation, supporting actor/thread isolation. Defaults to current context.
 ///   - fileID: The unique identifier of the source file. Provided automatically by the compiler.
 ///   - filePath: The path to the source file. Provided automatically.
@@ -167,7 +167,7 @@ public func assert<Input: Sendable, Output: BytesRepresentable>(
 ///   - serialization: Settings for how output is serialized (e.g., image encoding, text precision). Defaults to `.init()`.
 ///   - recording: Optionally override the recording mode for all snapshots in this assertion (e.g., `.always`, `.never`).
 ///   - snapshotDirectory: Optionally specify a custom directory for storing or comparing snapshots, overriding the default.
-///   - timeout: Maximum seconds to wait for input evaluation per assertion. Defaults to `.zero`.
+///   - timeout: Maximum seconds to wait for input evaluation per assertion. Defaults to `.zero`. Zero or `.infinity` means no limit.
 ///   - isolation: Optionally specify an actor context for input evaluation, supporting actor/thread isolation. Defaults to current context.
 ///   - fileID: The unique identifier of the source file. Provided automatically by the compiler.
 ///   - filePath: The path to the source file. Provided automatically.
@@ -241,7 +241,7 @@ public func assert<Input: Sendable, Output: BytesRepresentable>(
 ///   - name: An optional identifier for the snapshot. Useful for disambiguating multiple assertions in a single test method.
 ///   - recording: Optionally override the recording mode for this assertion (e.g., `.always` to update, `.never` to only compare).
 ///   - snapshotDirectory: Optionally specify a custom directory for stored snapshots, overriding the default.
-///   - timeout: Time in seconds before the assertion fails if too long. Defaults to 5 seconds.
+///   - timeout: Time in seconds before the assertion fails if too long. Defaults to 5 seconds. Zero or `.infinity` means no limit.
 ///   - fileID: The unique identifier of the source file. Provided automatically by the compiler.
 ///   - filePath: The path to the source file. Provided automatically.
 ///   - testName: The name of the test function. Provided automatically.
@@ -314,7 +314,7 @@ public func assert<Input, Output: BytesRepresentable>(
 ///   - serialization: Settings for how output is serialized (e.g., image encoding, text precision). Defaults to `.init()`.
 ///   - recording: Optionally override the recording mode for all snapshots in this assertion (e.g., `.always`, `.never`).
 ///   - snapshotDirectory: Optionally specify a custom directory for storing or comparing snapshots, overriding the default.
-///   - timeout: Maximum seconds to wait for each assertion. Defaults to 5.
+///   - timeout: Maximum seconds to wait for each assertion. Defaults to 5. Zero or `.infinity` means no limit.
 ///   - fileID: The unique identifier of the source file. Provided automatically by the compiler.
 ///   - filePath: The path to the source file. Provided automatically.
 ///   - testName: The name of the test function. Provided automatically.
@@ -378,7 +378,7 @@ public func assert<Input, Output: BytesRepresentable>(
 ///   - serialization: Settings for how output is serialized (e.g., image encoding, text precision). Defaults to `.init()`.
 ///   - recording: Optionally override the recording mode for all snapshots in this assertion (e.g., `.always`, `.never`).
 ///   - snapshotDirectory: Optionally specify a custom directory for storing or comparing snapshots, overriding the default.
-///   - timeout: Maximum seconds to wait for each assertion. Defaults to 5.
+///   - timeout: Maximum seconds to wait for each assertion. Defaults to 5. Zero or `.infinity` means no limit.
 ///   - fileID: The unique identifier of the source file. Provided automatically by the compiler.
 ///   - filePath: The path to the source file. Provided automatically.
 ///   - testName: The name of the test function. Provided automatically.
@@ -446,7 +446,7 @@ public func assert<Input, Output: BytesRepresentable>(
 ///   - name: An optional identifier for the snapshot, used to disambiguate multiple assertions within a test.
 ///   - recording: Optionally override the recording mode for this assertion (e.g., `.always` to update, `.never` to only compare).
 ///   - snapshotDirectory: Optionally specify a directory for storing or comparing snapshots, overriding the default.
-///   - timeout: Maximum seconds to wait for input evaluation or snapshotting. Defaults to `.zero`.
+///   - timeout: Maximum seconds to wait for input evaluation or snapshotting. Defaults to `.zero`. Zero or `.infinity` means no limit.
 ///   - isolation: Optionally specify an actor for input evaluation, supporting thread/actor isolation. Defaults to current context.
 ///   - fileID: The unique identifier of the source file. Provided automatically by the compiler.
 ///   - filePath: The path to the source file. Provided automatically.
@@ -510,7 +510,7 @@ public func verify<Input: Sendable, Output: BytesRepresentable>(
 ///   - name: An optional identifier for the snapshot, used to disambiguate multiple assertions within a test.
 ///   - recording: Optionally override the recording mode for this assertion (e.g., `.always` to update, `.never` to only compare).
 ///   - snapshotDirectory: Optionally specify a directory for storing or comparing snapshots, overriding the default.
-///   - timeout: Maximum seconds to wait for input evaluation or snapshotting. Defaults to 5 seconds.
+///   - timeout: Maximum seconds to wait for input evaluation or snapshotting. Defaults to 5 seconds. Zero or `.infinity` means no limit.
 ///   - fileID: The unique identifier of the source file. Provided automatically by the compiler.
 ///   - filePath: The path to the source file. Provided automatically.
 ///   - testName: The name of the test function. Provided automatically.

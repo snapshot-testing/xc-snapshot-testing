@@ -67,7 +67,7 @@ public struct SnapshotTester<Engine: SnapshotEngine>: Sendable {
         do {
             let diffable: Executor.Output
 
-            if timeout > .zero {
+            if timeout.hasLimit {
                 diffable = try await Task.timeout(timeout) {
                     try await snapshot.executor(input)
                 }
@@ -104,9 +104,12 @@ public struct SnapshotTester<Engine: SnapshotEngine>: Sendable {
             dispatchGroup.leave()
         }
 
-        let result = dispatchGroup.wait(
-            timeout: .now() + .nanoseconds(Int(clamping: timeout.nanoseconds))
-        )
+        let deadline: DispatchTime =
+            timeout.hasLimit
+            ? .now() + .nanoseconds(Int(clamping: timeout.nanoseconds))
+            : .distantFuture
+
+        let result = dispatchGroup.wait(timeout: deadline)
 
         switch result {
         case .success:

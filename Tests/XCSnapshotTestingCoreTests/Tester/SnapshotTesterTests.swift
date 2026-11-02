@@ -294,6 +294,34 @@ final class SnapshotTesterTests: XCTestCase {
         XCTAssertEqual(try contents(of: "a"), "value")
     }
 
+    func testSyncSnapshotWithAZeroTimeoutHasNoLimit() throws {
+        // Zero means "no limit", as it does for the asynchronous tester, not "fail right away".
+        let slow = SyncSnapshot<String, StringBytes>(
+            pathExtension: "txt",
+            attachmentGenerator: .lines,
+            executor: Sync { input, continuation in
+                DispatchQueue.global().asyncAfter(deadline: .now() + 0.2) {
+                    continuation.resume(returning: StringBytes(rawValue: input))
+                }
+            }
+        )
+
+        let message = try XCTUnwrap(
+            XCSnapshotTesting.verify(
+                of: "value",
+                as: slow,
+                named: "a",
+                record: .missing,
+                snapshotDirectory: directory.path,
+                timeout: .zero,
+                testName: "snapshot"
+            )
+        )
+
+        XCTAssertTrue(message.hasPrefix("No reference was found on disk."))
+        XCTAssertEqual(try contents(of: "a"), "value")
+    }
+
     func testAnExecutorThatReportsTwiceDoesNotCrashTheSynchronousTester() throws {
         // Regression: the second report left the dispatch group unbalanced and aborted the process.
         struct Failure: Error {}
@@ -341,6 +369,30 @@ final class SnapshotTesterTests: XCTestCase {
         )
 
         XCTAssertTrue(try XCTUnwrap(message).hasPrefix("Exceeded timeout of 1.0 seconds waiting for snapshot."))
+    }
+
+    func testAsyncSnapshotWithAnInfiniteTimeoutHasNoLimit() async throws {
+        let slow = AsyncSnapshot<String, StringBytes>(
+            pathExtension: "txt",
+            attachmentGenerator: .lines,
+            executor: Async { input in
+                try await Task.sleep(nanoseconds: 200_000_000)
+                return StringBytes(rawValue: input)
+            }
+        )
+
+        let message = try await XCSnapshotTesting.verify(
+            of: "value",
+            as: slow,
+            named: "a",
+            record: .missing,
+            snapshotDirectory: directory.path,
+            timeout: .infinity,
+            testName: "snapshot"
+        )
+
+        XCTAssertTrue(try XCTUnwrap(message).hasPrefix("No reference was found on disk."))
+        XCTAssertEqual(try contents(of: "a"), "value")
     }
 
     func testAsyncSnapshotWithinTheTimeoutRecordsNormally() async throws {
