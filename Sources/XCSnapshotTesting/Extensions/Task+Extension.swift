@@ -33,7 +33,7 @@ extension Task where Failure == Error {
 
             let timeoutTask = Task<Void, Error> {
                 try await Task<Never, Never>.sleep(
-                    nanoseconds: UInt64(timeout) * 1_000_000_000
+                    nanoseconds: timeout.nanoseconds
                 )
 
                 // Once the timeout wins, the slow operation must not keep running nor resume again.

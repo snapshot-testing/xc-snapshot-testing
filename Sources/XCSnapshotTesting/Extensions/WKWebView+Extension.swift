@@ -8,7 +8,7 @@ extension WKWebView {
 
     func waitLoadingState(tolerance: TimeInterval) async throws {
         repeat {
-            try await Task.sleep(nanoseconds: UInt64(tolerance * 1_000_000_000))
+            try await Task.sleep(nanoseconds: tolerance.nanoseconds)
         } while isLoading
     }
 }

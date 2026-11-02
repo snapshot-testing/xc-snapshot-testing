@@ -6,5 +6,6 @@
 struct SnapshotWindowConfiguration<Input> {
     let window: SDKWindow
     let input: Input
+    let restoration = ViewOperationRestoration()
 }
 #endif

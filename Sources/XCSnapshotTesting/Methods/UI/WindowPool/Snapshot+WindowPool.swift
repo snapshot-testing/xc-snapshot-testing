@@ -30,16 +30,13 @@ extension Snapshot {
                     input: newInput
                 )
 
-                do {
-                    let executor = try await operation(configuration, executor)
-                    let output = try await executor(newInput)
-
+                defer {
+                    configuration.restoration.restore()
                     windowPool.release(window)
-                    return output
-                } catch {
-                    windowPool.release(window)
-                    throw error
                 }
+
+                let executor = try await operation(configuration, executor)
+                return try await executor(newInput)
             }
         }
     }

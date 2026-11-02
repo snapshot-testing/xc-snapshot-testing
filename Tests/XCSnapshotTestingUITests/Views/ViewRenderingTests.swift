@@ -81,6 +81,27 @@ struct ViewRenderingTests {
         #expect(rendered.swatch(x: 10, y: 10) == .blue, "the state set by prepare is captured")
     }
 
+    @Test func aFailureWhilePreparingLeavesTheViewAndTheWindowAsFound() async throws {
+        struct PrepareFailure: Error {}
+
+        let view = ColorView(.red, intrinsicSize: CGSize(width: 20, height: 20))
+
+        await #expect(throws: PrepareFailure.self) {
+            _ = try await render(
+                Strategy.image(layout: .sizeThatFits, prepare: { throw PrepareFailure() }),
+                view
+            )
+        }
+
+        #expect(view.superview == nil, "the view under test is taken out of the snapshot hierarchy")
+        #expect(view.subviews.isEmpty, "the helper views added to the view under test are removed")
+
+        // The window that was used is not left holding the failed controller, so the next snapshot is clean.
+        let rendered = try await render(Strategy.image(layout: .fixed(width: 30, height: 30)), ColorView(.green))
+        #expect(rendered.size == CGSize(width: 30, height: 30))
+        #expect(rendered.swatch(x: 15, y: 15) == .green)
+    }
+
     @Test func consecutiveSnapshotsDoNotLeakIntoEachOther() async throws {
         let first = try await render(
             Strategy.image(layout: .fixed(width: 40, height: 40)),

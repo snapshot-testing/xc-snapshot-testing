@@ -75,7 +75,7 @@ extension Snapshot where Input: UIKit.UIApplication, Output == ImageBytes {
         )
         .withApplication(sessionRole: sessionRole) { window, executor in
             Async(Input.self) { _ in window }
-                .sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                .sleep(nanoseconds: delay.nanoseconds)
                 .map { @MainActor window in
                     let renderer = UIGraphicsImageRenderer(
                         bounds: window.bounds,

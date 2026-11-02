@@ -86,12 +86,51 @@ struct ExtensionTests {
         #expect(directory.hasDirectoryPath)
     }
 
+    // MARK: - TimeInterval
+
+    @Test func intervalsBecomeWholeNanoseconds() {
+        #expect((1 as TimeInterval).nanoseconds == 1_000_000_000)
+        #expect((0.5 as TimeInterval).nanoseconds == 500_000_000)
+        #expect((0.0000000001 as TimeInterval).nanoseconds == 1, "a fraction is rounded up, not dropped")
+    }
+
+    @Test func intervalsThatCannotBeCountedDoNotTrap() {
+        #expect((0 as TimeInterval).nanoseconds == 0)
+        #expect((-1 as TimeInterval).nanoseconds == 0)
+        #expect(TimeInterval.nan.nanoseconds == 0)
+        #expect(TimeInterval.infinity.nanoseconds == .max)
+        #expect(TimeInterval.greatestFiniteMagnitude.nanoseconds == .max)
+        #expect((1e11 as TimeInterval).nanoseconds == .max)
+    }
+
     // MARK: - Task.timeout
 
     @Test func timeoutReturnsTheResultOfFastOperations() async throws {
         let value = try await Task.timeout(2) { 42 }
 
         #expect(value == 42)
+    }
+
+    @Test func timeoutsShorterThanASecondAreHonored() async throws {
+        // Regression: the seconds were truncated, so 0.5 became 0 and the timeout won immediately.
+        let value = try await Task<Int, Error>.timeout(0.5) {
+            try await Task.sleep(nanoseconds: 50_000_000)
+            return 7
+        }
+
+        #expect(value == 7)
+    }
+
+    @Test func timeoutsThatCannotBeCountedDoNotTrap() async throws {
+        let value = try await Task<Int, Error>.timeout(.infinity) { 1 }
+        #expect(value == 1)
+
+        await #expect(throws: TaskTimeout.self) {
+            try await Task<Int, Error>.timeout(.nan) {
+                try await Task.sleep(nanoseconds: 3_000_000_000)
+                return 1
+            }
+        }
     }
 
     @Test func timeoutRethrowsErrorsOfTheOperation() async {
