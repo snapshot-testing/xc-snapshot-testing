@@ -47,6 +47,30 @@ struct DiffHunkTests {
         #expect(hunk.lines == ["\(Self.space)a", "−b", "+X", "\(Self.space)c"])
     }
 
+    @Test func contextAfterTheLastChangeDoesNotMakeAHunkOfItsOwn() throws {
+        // Regression: a long common block after the last change added a second hunk of unchanged lines.
+        let first = (1...30).map { "line\($0)" }
+        var second = first
+        second[2] = "CHANGED"
+
+        let result = hunks(first, second)
+
+        #expect(result.count == 1)
+        #expect(result.allSatisfy { $0.hasChanges })
+        #expect(try #require(result.first).patchMarker == "@@ −1,7 +1,7 @@")
+    }
+
+    @Test func everyHunkHoldsAChange() {
+        let first = (1...100).map { "line\($0)" }
+        var second = first
+        for index in [3, 40, 90] { second[index] = "changed \(index)" }
+
+        let result = hunks(first, second)
+
+        #expect(result.count == 3)
+        #expect(result.allSatisfy { $0.hasChanges })
+    }
+
     @Test func linesEndingWithASpaceAreMarkedWithANotSign() throws {
         let result = hunks(["a "], ["a"])
 

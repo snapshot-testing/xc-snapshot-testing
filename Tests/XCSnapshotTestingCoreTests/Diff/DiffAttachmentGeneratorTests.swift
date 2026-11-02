@@ -29,6 +29,38 @@ struct DiffAttachmentGeneratorTests {
         #expect(patch.payload.map { String(decoding: $0, as: UTF8.self) } == attachment.message)
     }
 
+    @Test func textWithWindowsLineEndingsIsComparedLineByLine() throws {
+        // Regression: "\r\n" is a single Character, so the text was never split and was compared as one line.
+        let generator = StringDiffAttachmentGenerator()
+
+        let attachment = try #require(generator(from: "one\r\ntwo\r\nthree", with: "one\r\n2\r\nthree"))
+
+        #expect(attachment.message == "@@ −1,3 +1,3 @@\n\u{2007}one\n−two\n+2\n\u{2007}three")
+    }
+
+    @Test func textsThatOnlyDifferInTheLineEndingsAreNotTheSame() throws {
+        let generator = StringDiffAttachmentGenerator()
+
+        let attachment = try #require(generator(from: "one\r\ntwo", with: "one\ntwo"))
+
+        #expect(attachment.message.hasPrefix("The texts have the same lines"))
+        #expect(attachment.attachments.count == 1)
+    }
+
+    @Test func textsThatOnlyDifferInTheFormOfAnAccentAreNotTheSame() throws {
+        // `String` equality treats the two as equal, but the files are not.
+        let generator = StringDiffAttachmentGenerator()
+        let composed = "caf\u{E9}"
+        let decomposed = "cafe\u{301}"
+        #expect(composed == decomposed)
+
+        let attachment = try #require(
+            generator(from: StringBytes(rawValue: composed), with: StringBytes(rawValue: decomposed))
+        )
+
+        #expect(attachment.message.hasPrefix("The texts have the same lines"))
+    }
+
     // MARK: - Data
 
     @Test func equalDataProducesNoAttachment() {

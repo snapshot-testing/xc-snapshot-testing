@@ -21,6 +21,11 @@ struct DiffHunk {
     /// Formatted lines with change indicators.
     let lines: [String]
 
+    /// Whether any line is an addition or a removal, and not just context.
+    var hasChanges: Bool {
+        lines.contains { $0.hasPrefix("−") || $0.hasPrefix("+") }
+    }
+
     /// Generates the hunk header in patch format.
     var patchMarker: String {
         let firstMarker = "−\(firstStart + 1),\(firstLength)"
