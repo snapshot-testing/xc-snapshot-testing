@@ -21,83 +21,228 @@ struct Difference<Element> {
 
 extension Array where Element: Hashable {
 
+    /// The most edits (removals plus additions) that are searched for before the collections are
+    /// reported as entirely different.
+    ///
+    /// The search takes time proportional to the size of the collections times the number of edits,
+    /// and memory proportional to the square of the edits. A diff with thousands of changes is not one
+    /// anybody reads, so past this point a coarse answer is better than minutes of waiting.
+    fileprivate static var maximumEdits: Int { 2_000 }
+
     // MARK: - Main Comparison Function
-    /// Calculates differences between collections using the Longest Common Subsequence (LCS) algorithm.
-    /// - Parameters:
-    ///   - first: First collection to compare
-    ///   - second: Second collection to compare
+    /// Calculates differences between collections with the shortest edit script of Myers' algorithm.
+    ///
+    /// The result is made of runs of elements that are common to both collections, only in the first
+    /// one, or only in the second one. Between two common runs, the removals come before the additions.
+    ///
+    /// - Parameter other: Collection to compare with
     /// - Returns: List of identified differences
     func diffing(_ other: [Element]) -> [Difference<Element>] {
-        // 1. Maps element indices from first collection
-        var elementIndices = [Element: [Int]]()
-        for (index, element) in enumerated() {
-            elementIndices[element, default: []].append(index)
+        // 1. The start and the end that do not change are most of the work saved: they need no search.
+        var prefixLength = 0
+        while prefixLength < count, prefixLength < other.count, self[prefixLength] == other[prefixLength] {
+            prefixLength += 1
         }
 
-        // 2. Finds the longest run of elements shared by both collections
-        var longestSubsequence = (
-            firstIndex: 0,  // Start index in first collection
-            secondIndex: 0,  // Start index in second collection
-            length: 0  // Subsequence length
-        )
-
-        // Length of the common run ending at each index of the first collection, for the previous
-        // element of the second collection. It must be rebuilt for every element, so that an
-        // element without a match breaks the run.
-        var overlap = [Int: Int]()
-
-        // Iterates through second collection to find matches
-        for pair in other.enumerated() {
-            var currentOverlap = [Int: Int]()
-
-            for firstIndex in elementIndices[pair.element] ?? [] {
-                let currentLength = (overlap[firstIndex - 1] ?? 0) + 1
-                currentOverlap[firstIndex] = currentLength
-
-                // Updates longest subsequence found
-                if currentLength > longestSubsequence.length {
-                    longestSubsequence.firstIndex = firstIndex - currentLength + 1
-                    longestSubsequence.secondIndex = pair.offset - currentLength + 1
-                    longestSubsequence.length = currentLength
-                }
-            }
-
-            overlap = currentOverlap
+        var suffixLength = 0
+        while suffixLength < count - prefixLength,
+            suffixLength < other.count - prefixLength,
+            self[count - 1 - suffixLength] == other[other.count - 1 - suffixLength]
+        {
+            suffixLength += 1
         }
 
-        // 3. No common subsequence case
-        guard longestSubsequence.length > 0 else {
+        let first = Array(self[prefixLength..<(count - suffixLength)])
+        let second = Array(other[prefixLength..<(other.count - suffixLength)])
+
+        var differences = [Difference<Element>]()
+
+        if prefixLength > 0 {
+            differences.append(Difference(elements: Array(self[..<prefixLength]), origin: .common))
+        }
+
+        // 2. What is left in the middle
+        differences += Self.differencesBetween(first, second)
+
+        if suffixLength > 0 {
+            differences.append(Difference(elements: Array(self[(count - suffixLength)...]), origin: .common))
+        }
+
+        return differences
+    }
+
+    private static func differencesBetween(
+        _ first: [Element],
+        _ second: [Element]
+    ) -> [Difference<Element>] {
+        guard !first.isEmpty, !second.isEmpty else {
             return [
-                Difference(elements: self, origin: .first),
-                Difference(elements: other, origin: .second),
+                Difference(elements: first, origin: .first),
+                Difference(elements: second, origin: .second),
             ].filter { !$0.elements.isEmpty }
         }
 
-        // 4. Splits collections into parts for recursive analysis
-        let (firstPart, secondPart) = (
-            Array(self.prefix(upTo: longestSubsequence.firstIndex)),
-            Array(other.prefix(upTo: longestSubsequence.secondIndex))
-        )
-
-        let (firstRemainder, secondRemainder) = (
-            Array(self.suffix(from: longestSubsequence.firstIndex + longestSubsequence.length)),
-            Array(other.suffix(from: longestSubsequence.secondIndex + longestSubsequence.length))
-        )
-
-        // 5. Combines results from analyzed parts recursively
-        return firstPart.diffing(secondPart)
-            + [
-                Difference(
-                    elements: Array(
-                        self[
-                            longestSubsequence.firstIndex..<longestSubsequence.firstIndex
-                                + longestSubsequence.length
-                        ]
-                    ),
-                    origin: .common
-                )
+        guard let edits = shortestEdits(first, second) else {
+            // Too different to search: everything of the first collection was removed and everything
+            // of the second one was added.
+            return [
+                Difference(elements: first, origin: .first),
+                Difference(elements: second, origin: .second),
             ]
-            + firstRemainder.diffing(secondRemainder)
+        }
+
+        // 3. Walks both collections, grouping what they have in common and what each one has alone
+        var differences = [Difference<Element>]()
+        var common = [Element]()
+        var removed = [Element]()
+        var added = [Element]()
+
+        func flushCommon() {
+            guard !common.isEmpty else { return }
+            differences.append(Difference(elements: common, origin: .common))
+            common = []
+        }
+
+        func flushChanges() {
+            if !removed.isEmpty {
+                differences.append(Difference(elements: removed, origin: .first))
+                removed = []
+            }
+
+            if !added.isEmpty {
+                differences.append(Difference(elements: added, origin: .second))
+                added = []
+            }
+        }
+
+        var firstIndex = 0
+        var secondIndex = 0
+
+        while firstIndex < first.count || secondIndex < second.count {
+            if firstIndex < first.count, edits.removed[firstIndex] {
+                flushCommon()
+                removed.append(first[firstIndex])
+                firstIndex += 1
+            } else if secondIndex < second.count, edits.added[secondIndex] {
+                flushCommon()
+                added.append(second[secondIndex])
+                secondIndex += 1
+            } else {
+                flushChanges()
+                common.append(first[firstIndex])
+                firstIndex += 1
+                secondIndex += 1
+            }
+        }
+
+        flushChanges()
+        flushCommon()
+
+        return differences
+    }
+
+    /// Which elements of the first collection are removed and which of the second one are added, in
+    /// the fewest edits, or `nil` when more than ``maximumEdits`` would be needed.
+    private static func shortestEdits(
+        _ first: [Element],
+        _ second: [Element]
+    ) -> (removed: [Bool], added: [Bool])? {
+        // Elements are compared as numbers, which is much cheaper than comparing strings of a text
+        // over and over.
+        var identifiers = [Element: Int]()
+        func identifier(_ element: Element) -> Int {
+            if let identifier = identifiers[element] {
+                return identifier
+            }
+
+            identifiers[element] = identifiers.count
+            return identifiers.count - 1
+        }
+
+        let a = first.map(identifier)
+        let b = second.map(identifier)
+        let n = a.count
+        let m = b.count
+
+        let limit = Swift.min(n + m, maximumEdits)
+        let offset = limit + 1
+
+        // `furthest[k + offset]` is the furthest x reached on the diagonal k = x - y
+        var furthest = [Int](repeating: 0, count: 2 * limit + 3)
+        // The diagonals -d...d after each number of edits d, to walk back from the end
+        var trace = [[Int]]()
+        var edits: Int?
+
+        search: for d in 0...limit {
+            for k in stride(from: -d, through: d, by: 2) {
+                var x: Int
+
+                if k == -d || (k != d && furthest[offset + k - 1] < furthest[offset + k + 1]) {
+                    x = furthest[offset + k + 1]
+                } else {
+                    x = furthest[offset + k - 1] + 1
+                }
+
+                var y = x - k
+
+                while x < n, y < m, a[x] == b[y] {
+                    x += 1
+                    y += 1
+                }
+
+                furthest[offset + k] = x
+
+                if x >= n, y >= m {
+                    edits = d
+                    break search
+                }
+            }
+
+            trace.append([Int](furthest[(offset - d)...(offset + d)]))
+        }
+
+        guard let edits else {
+            return nil
+        }
+
+        var removed = [Bool](repeating: false, count: n)
+        var added = [Bool](repeating: false, count: m)
+
+        var x = n
+        var y = m
+
+        for d in stride(from: edits, to: 0, by: -1) {
+            let previous = trace[d - 1]
+            let k = x - y
+
+            // `previous` holds the diagonals -(d-1)...(d-1)
+            func previousX(_ diagonal: Int) -> Int {
+                previous[diagonal + d - 1]
+            }
+
+            let previousK =
+                if k == -d || (k != d && previousX(k - 1) < previousX(k + 1)) {
+                    k + 1
+                } else {
+                    k - 1
+                }
+
+            let startX = previousX(previousK)
+            let startY = startX - previousK
+
+            // Only the edits are recorded: the run of equal elements after each of them is what is
+            // left over, and `startX` already is the end of the run before it.
+            if previousK == k + 1 {
+                added[startY] = true
+            } else {
+                removed[startX] = true
+            }
+
+            x = startX
+            y = startY
+        }
+
+        return (removed, added)
     }
 }
 
