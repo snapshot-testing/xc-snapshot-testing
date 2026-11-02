@@ -36,13 +36,22 @@ extension SyncSnapshot where Input: CALayer, Output == ImageBytes {
             precision: precision,
             perceptualPrecision: perceptualPrecision
         ).pullback { layer in
+            // Locking the focus on an image without size raises an Objective-C exception
+            guard layer.bounds.width > 0, layer.bounds.height > 0 else {
+                throw NothingToDrawError(subject: "layer")
+            }
+
             let image = NSImage(size: layer.bounds.size)
             image.lockFocus()
-            let context = NSGraphicsContext.current!.cgContext
+            defer { image.unlockFocus() }
+
+            guard let context = NSGraphicsContext.current?.cgContext else {
+                throw NothingToDrawError(subject: "layer")
+            }
+
             layer.setNeedsLayout()
             layer.layoutIfNeeded()
             layer.render(in: context)
-            image.unlockFocus()
             return image
         }
     }
