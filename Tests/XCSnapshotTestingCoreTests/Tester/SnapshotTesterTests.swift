@@ -89,6 +89,63 @@ final class SnapshotTesterTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: reference("a").path))
     }
 
+    // MARK: - Folders
+
+    func testComparingNeverCreatesFolders() throws {
+        let missing = directory.appendingPathComponent("not-created", isDirectory: true)
+
+        let message = try XCSnapshotTesting.verify(
+            of: "hello",
+            as: .lines,
+            named: "a",
+            record: .never,
+            snapshotDirectory: missing.path,
+            testName: "snapshot"
+        )
+
+        XCTAssertTrue(try XCTUnwrap(message).hasPrefix("No reference was found on disk."))
+        XCTAssertFalse(
+            FileManager.default.fileExists(atPath: missing.path),
+            "nothing is written, so nothing is created"
+        )
+    }
+
+    func testRecordingCreatesTheFoldersOfTheSnapshot() throws {
+        let nested = directory.appendingPathComponent("a/b/c", isDirectory: true)
+
+        _ = try XCSnapshotTesting.verify(
+            of: "hello",
+            as: .lines,
+            named: "a",
+            record: .missing,
+            snapshotDirectory: nested.path,
+            testName: "snapshot"
+        )
+
+        let url = nested.appendingPathComponent("SnapshotTesterTests/snapshot.a.txt")
+        XCTAssertEqual(try String(contentsOf: url, encoding: .utf8), "hello")
+    }
+
+    func testAMissingReferenceIsReportedOnAReadOnlyCheckout() throws {
+        // Regression: the folder of the snapshot was created before comparing, so a checkout that
+        // cannot be written failed with a permission error instead of reporting the missing reference.
+        try FileManager.default.setAttributes([.posixPermissions: 0o555], ofItemAtPath: directory.path)
+        addTeardownBlock { [directory] in
+            try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: directory!.path)
+        }
+
+        let message = try XCSnapshotTesting.verify(
+            of: "hello",
+            as: .lines,
+            named: "a",
+            record: .never,
+            snapshotDirectory: directory.appendingPathComponent("snapshots").path,
+            testName: "snapshot"
+        )
+
+        XCTAssertTrue(try XCTUnwrap(message).hasPrefix("No reference was found on disk."))
+    }
+
     // MARK: - Matching reference
 
     func testMatchingReferencePasses() throws {
