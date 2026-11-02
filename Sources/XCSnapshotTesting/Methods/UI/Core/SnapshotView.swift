@@ -83,7 +83,7 @@ class SnapshotView: SDKView {
             view.topAnchor.constraint(equalTo: containerView.topAnchor),
             view.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             view.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
-            view.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            view.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
         ])
 
         sizableViews[sizeListener.id] = (transformableView, sizeListener)

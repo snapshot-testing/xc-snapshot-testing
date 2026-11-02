@@ -24,9 +24,7 @@ class SizeListener {
         ObjectIdentifier(self)
     }
 
-    weak var delegate: SizeListenerDelegate? {
-        willSet { updateSize(size) }
-    }
+    weak var delegate: SizeListenerDelegate?
 
     private(set) var size: CGSize = .zero
     fileprivate weak var owningView: SDKView?
