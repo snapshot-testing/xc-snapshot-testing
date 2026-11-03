@@ -10,6 +10,9 @@ import UIKit
 #if os(iOS) || os(tvOS) || os(visionOS) || os(macOS)
 extension Snapshot {
 
+    /// Runs `operation` with the key window of the application that is the input.
+    ///
+    /// - Throws: ``NoWindowAvailableError`` when the application has no key window.
     func withApplication<NewInput: SDKApplication>(
         sessionRole: UISceneSession.Role,
         operation: @escaping @Sendable (SDKWindow, Executor) async throws -> Async<NewInput, Output>

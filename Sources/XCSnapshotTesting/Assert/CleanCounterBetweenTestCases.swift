@@ -6,6 +6,7 @@ import Foundation
 #if canImport(XCTest)
 import XCTest
 
+/// An XCTest observer that posts ``XCTestBundleDidFinishNotification`` when the test bundle finishes.
 final class CleanCounterBetweenTestCases: NSObject, XCTestObservation {
 
     @MainActor
@@ -35,15 +36,23 @@ extension XCTestCase {
 }
 #endif
 
+/// Posted when the XCTest bundle finishes running.
+///
+/// The inline engine writes the pending inline snapshots to the test sources when it is posted.
 @_spi(Internals)
 public let XCTestBundleDidFinishNotification = Notification.Name(
     "XCTestBundleDidFinishNotification"
 )
 
+/// Posted when a suite that applies the `finalizeSnapshots` trait finishes.
+///
+/// The `userInfo` holds the name of the test file under ``kTestFileName``. The inline engine
+/// writes the pending inline snapshots of that file when it is posted.
 @_spi(Internals)
 public let SwiftTestingDidFinishNotification = Notification.Name(
     "SwiftTestingDidFinishNotification"
 )
 
+/// The `userInfo` key that holds the name of the test file in ``SwiftTestingDidFinishNotification``.
 @_spi(Internals)
 public let kTestFileName = "kTestFileName"

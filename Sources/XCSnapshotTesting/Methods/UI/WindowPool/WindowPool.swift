@@ -11,6 +11,9 @@ import UIKit
 
 #if os(iOS) || os(tvOS) || os(macOS) || os(visionOS)
 @MainActor
+/// Lends the windows in which views are rendered, creating no more than a limit of them.
+///
+/// Once the limit is reached, a request waits for the lock of one of the existing windows.
 final class WindowPool {
 
     // MARK: - Internal static properties
@@ -36,6 +39,10 @@ final class WindowPool {
 
     // MARK: - Internal methods
 
+    /// Returns a window, locked for the caller until it is given back with ``release(_:)``.
+    ///
+    /// A new window is created while there are fewer than `maxConcurrentTests` of them. After that,
+    /// the call waits for the lock of the least busy of the first `maxConcurrentTests` windows and reuses it.
     func acquire(
         sessionRole: UISceneSession.Role,
         maxConcurrentTests: Int
@@ -78,6 +85,7 @@ final class WindowPool {
         leases.min(by: { $0.load < $1.load })!
     }
 
+    /// Hides `window` and unlocks it, so the next waiting task can use it.
     func release(_ window: SDKWindow) {
         defer { display(window, visible: false) }
 
@@ -87,6 +95,12 @@ final class WindowPool {
     // MARK: - Private methods
 
     #if !os(macOS)
+    /// Finds a scene with the given role.
+    ///
+    /// It tries, in order: a scene of the application, a scene of a pooled window, a new scene
+    /// session (iOS 17 and later) and the scene of a temporary window.
+    ///
+    /// - Throws: ``NoWindowAvailableError`` when none of them yields a scene.
     private func windowScene(for sessionRole: UISceneSession.Role) throws -> UIWindowScene {
         if let windowScene = application?.windowScenes(for: sessionRole).first {
             return windowScene
@@ -110,6 +124,7 @@ final class WindowPool {
     }
 
     @available(iOS 17, tvOS 17, *)
+    /// Asks the application to activate a scene session with the given role, and returns its scene.
     private func activateNewSceneSession(_ sessionRole: UISceneSession.Role) -> UIWindowScene? {
         guard let application = application else {
             return nil
@@ -122,6 +137,7 @@ final class WindowPool {
         return application.windowScenes(for: sessionRole).first
     }
 
+    /// Shows an empty window just long enough to read the scene the system attaches to it.
     private func windowSceneThroughTemporaryWindow(
         _ sessionRole: UISceneSession.Role
     ) -> UIWindowScene? {
@@ -137,6 +153,7 @@ final class WindowPool {
     }
     #endif
 
+    /// Shows or hides `window`. A window that is shown is resized to its screen.
     private func display(_ window: SDKWindow, visible: Bool) {
         #if os(macOS)
         if !visible {

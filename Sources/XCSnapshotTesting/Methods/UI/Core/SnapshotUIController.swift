@@ -16,6 +16,11 @@ import SpriteKit
 #endif
 
 #if os(iOS) || os(tvOS) || os(macOS) || os(visionOS)
+/// Hosts the view or view controller under test, and produces its snapshot.
+///
+/// The controller owns a ``SnapshotView`` that applies the safe area and the size of the
+/// ``LayoutConfiguration``. It installs the traits of the configuration, waits for the content to lay
+/// out, and then renders it.
 @MainActor
 class SnapshotUIController: SDKViewController {
 
@@ -125,6 +130,7 @@ class SnapshotUIController: SDKViewController {
         }
     }
 
+    /// Adds a tracking area, so that the mouse enter and exit effects of the content work.
     override func viewWillAppear() {
         super.viewWillAppear()
 
@@ -145,6 +151,7 @@ class SnapshotUIController: SDKViewController {
         }
     }
     #else
+    /// Wakes up the pending snapshot, once the layout pass has finished.
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
 
@@ -165,6 +172,7 @@ class SnapshotUIController: SDKViewController {
 
     // MARK: - Internal methods
 
+    /// Forces a layout pass if the content has no size yet.
     func layoutIfNeeded() {
         #if os(macOS)
         let view = childController.view
@@ -184,6 +192,13 @@ class SnapshotUIController: SDKViewController {
         }
     }
 
+    /// Renders the content as an image, once the next layout pass has finished.
+    ///
+    /// `SCNView` and `SKView` content is captured with the snapshot methods of those views.
+    /// Anything else is drawn from its layer.
+    ///
+    /// - Throws: ``RenderingError`` on macOS when no bitmap can be created for the view, for
+    ///   instance because it has no size.
     func snapshot() async throws -> SDKImage {
         #if !os(macOS)
         let traits = configuration.traits
@@ -231,6 +246,9 @@ class SnapshotUIController: SDKViewController {
         #endif
     }
 
+    /// The private method that produces the text description of the hierarchy.
+    ///
+    /// The method is called by its selector, so the description comes from UIKit and AppKit themselves.
     enum DescriptorMethod: String {
         #if os(macOS)
         case subtreeDescription = "_subtreeDescription"
@@ -239,6 +257,7 @@ class SnapshotUIController: SDKViewController {
         case recursiveDescription = "recursiveDescription"
         #endif
 
+        /// Calls the method on the controller, or on its view, and returns the text without memory addresses.
         @MainActor
         fileprivate func callAsFunction(_ viewController: SDKViewController) throws -> String {
             let reference: NSObject
@@ -282,6 +301,7 @@ class SnapshotUIController: SDKViewController {
         }
     }
 
+    /// Returns the text description of the content with `method`, once the next layout pass has finished.
     func descriptor(_ method: DescriptorMethod) async throws -> String {
         isWaitingSnapshotSignal = true
 
@@ -301,6 +321,7 @@ class SnapshotUIController: SDKViewController {
         return try method(childController)
     }
 
+    /// Removes the content from the controller and releases the views that wrap it.
     func detachChild() {
         defer { snapshotView.dispose() }
 
@@ -318,6 +339,7 @@ class SnapshotUIController: SDKViewController {
 
     // MARK: - Private methods
 
+    /// Adds the content as a child, pins it to the snapshot view, and applies the safe area.
     private func attachChild() {
         addChild(childController)
         snapshotView.add(childController.view, with: childSizeListener)
@@ -358,6 +380,9 @@ class SnapshotUIController: SDKViewController {
         #endif
     }
 
+    /// Constrains the content to the size of the configuration.
+    ///
+    /// A dimension that is zero or missing is left free, so the content takes its intrinsic size there.
     private func setupSizeConstraints() {
         let size = configuration.size ?? .zero
 
@@ -405,6 +430,7 @@ class SnapshotUIController: SDKViewController {
     }
 
     #if os(macOS)
+    /// Draws the visible area of `view` into an image.
     private func snapshot(_ view: SDKView) throws -> SDKImage {
         let bounds = snapshotView.calculateContentFrame()
         guard let rep = view.bitmapImageRepForCachingDisplay(in: bounds) else {
@@ -418,6 +444,7 @@ class SnapshotUIController: SDKViewController {
         return snapshot
     }
     #else
+    /// Renders the layer of `view` into an image, using the scale and the traits of the configuration.
     private func snapshot(
         _ view: SDKView,
         with traits: Traits
@@ -467,6 +494,7 @@ struct DescriptorUnavailableError: Error, LocalizedError, CustomStringConvertibl
 #endif
 
 #if os(macOS)
+/// The error thrown when the content has no size and no image can be generated.
 struct RenderingError: Error, CustomStringConvertible, LocalizedError {
 
     var description: String {

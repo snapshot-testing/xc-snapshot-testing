@@ -71,6 +71,7 @@ extension SDKApplication {
 
 extension AsyncSnapshot {
 
+    /// Makes the snapshot wait for the lock of its input before it runs, so two snapshots of the same application never render at once.
     func withLock<Input: SDKApplication, Output: BytesRepresentable>() -> AsyncSnapshot<
         Input, Output
     > where Executor == Async<Input, Output> {

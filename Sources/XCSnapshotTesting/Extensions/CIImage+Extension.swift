@@ -9,6 +9,18 @@ import MetalPerformanceShaders
 
 extension CIImage {
 
+    /// Compares this image with `newValue`, pixel by pixel, using the CIE Lab color difference.
+    ///
+    /// A pixel counts as different when its difference is above the limit set by `perceptualPrecision`.
+    /// The images match when the share of pixels that are the same is at least `pixelPrecision`.
+    ///
+    /// - Parameters:
+    ///   - newValue: The image to compare with.
+    ///   - pixelPrecision: The share of pixels, from 0 to 1, that must be the same.
+    ///   - perceptualPrecision: How close in color a pixel must be, from 0 to 1, to count as the same.
+    ///   - usesMetal: Whether to try the Metal kernel first. When `nil`, it is tried if the device supports it.
+    ///     The CPU is the fallback.
+    /// - Returns: `nil` if the images match, otherwise a message that describes the difference.
     func perceptuallyCompare(
         _ newValue: CIImage,
         pixelPrecision: Float,
@@ -176,6 +188,9 @@ extension CIImage {
         return buffer.data.load(fromByteOffset: 0, as: Float.self)
     }
 
+    /// Renders the image into a buffer of 32-bit floats, going through 16-bit floats.
+    ///
+    /// Some CPU renderers cannot output 32-bit floats directly. The caller frees the buffer.
     fileprivate func render(in context: CIContext, format: CIFormat = CIFormat.Rh) -> vImage_Buffer? {
         // Some hardware configurations (virtualized CPU renderers) do not support 32-bit float output formats,
         // so use a compatible 16-bit float format and convert the output value to 32-bit floats.
@@ -224,6 +239,7 @@ final class ThresholdKernelFailures: @unchecked Sendable {
 }
 
 // Copied from https://developer.apple.com/documentation/coreimage/ciimageprocessorkernel
+/// A Core Image kernel that thresholds an image with Metal Performance Shaders.
 final class ThresholdImageProcessorKernel: CIImageProcessorKernel {
     static let inputThresholdKey = "thresholdValue"
     static let device = MTLCreateSystemDefaultDevice()
@@ -232,6 +248,7 @@ final class ThresholdImageProcessorKernel: CIImageProcessorKernel {
     /// Makes the kernel fail as it would on a machine that can't run it. Only for the tests.
     nonisolated(unsafe) static var failsOnPurpose = false
 
+    /// Whether the default Metal device can run the kernel.
     static var isSupported: Bool {
         guard let device = device else {
             return false

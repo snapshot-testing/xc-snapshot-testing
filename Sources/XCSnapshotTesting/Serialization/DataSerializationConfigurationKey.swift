@@ -3,19 +3,14 @@
 
 import Foundation
 
-/// Protocol defining keys for serialization/deserialization configurations with default values.
+/// A key for a value of ``DataSerializationConfiguration``, such as the scale of images.
 ///
-/// Types conforming to `DataSerializationConfigurationKey` represent unique keys for specific configurations like
-/// image scaling or formatting. Each key must define:
-/// 1. An **associated type** (`Value`) representing the configuration value's type.
-/// 2. A **static default value** for the key.
+/// The key gives the type of the value and its default.
 public protocol DataSerializationConfigurationKey: Sendable {
 
-    /// Associated type representing the value type for this configuration key.
+    /// The type of the value.
     associatedtype Value: Sendable
 
-    /// Default value for this key when not explicitly configured.
-    ///
-    /// Example: For an image scaling configuration key, the default might be `1.0`.
+    /// The value used when none was set.
     static var defaultValue: Value { get }
 }

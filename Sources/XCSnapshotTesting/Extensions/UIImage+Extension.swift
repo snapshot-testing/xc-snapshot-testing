@@ -49,6 +49,7 @@ extension SDKImage {
         )
     }
 
+    /// Draws the image into an RGBA bitmap and returns it as PNG data.
     func pngData() -> Data? {
         performOnMainThread {
             guard
@@ -139,11 +140,27 @@ extension SDKImage {
         #endif
     }
 
+    /// An image of the difference between this one and `image`.
+    ///
+    /// It tries the grayscale difference of the color components first, and falls back to the
+    /// difference blend mode when that is not possible: the sizes differ, or the platform is macOS.
     @MainActor
     func substract(_ image: SDKImage) -> SDKImage {
         normalizedComponentDiff(image) ?? blendModeDiff(image)
     }
 
+    /// Compares this image, the reference, with `newValue`.
+    ///
+    /// Both images are drawn in the format of the reference before they are compared, so a reference
+    /// recorded in a wide color space or with 16 bits does not lose differences.
+    ///
+    /// - Parameters:
+    ///   - newValue: The new image.
+    ///   - precision: The share of bytes, from 0 to 1, that must be equal.
+    ///   - perceptualPrecision: How close in color a pixel must be, from 0 to 1. Below 1, the images
+    ///     are compared perceptually.
+    ///   - storedFormat: The format `newValue` will be stored in, applied before comparing.
+    /// - Returns: `nil` if the images match, otherwise a message that says why they do not.
     @MainActor
     func compare(
         _ newValue: SDKImage,
@@ -239,6 +256,9 @@ extension SDKImage {
 
 extension SDKImage {
 
+    /// A grayscale image with the difference of each pixel, or `nil` if the images cannot be compared.
+    ///
+    /// It is always `nil` on macOS.
     private func normalizedComponentDiff(_ image: SDKImage) -> SDKImage? {
         #if os(macOS)
         guard
@@ -352,6 +372,7 @@ extension SDKImage {
     }
 
     // MARK: - Fallback: blend mode tradicional
+    /// The difference between the images drawn with the difference blend mode, on a canvas big enough for both.
     private func blendModeDiff(_ image: SDKImage) -> SDKImage {
         #if os(macOS)
         guard

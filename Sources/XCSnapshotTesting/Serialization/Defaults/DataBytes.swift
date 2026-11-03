@@ -3,32 +3,38 @@
 
 import Foundation
 
-/// A wrapper type for `Data` that conforms to `BytesRepresentable`, enabling serialization and deserialization of byte-based data.
-///
-/// This type provides a convenient way to work with raw byte data through a `Data` value, supporting reading from and writing to `BytesContainer` instances. It is designed for scenarios where direct byte manipulation or inspection is required.
-///
-/// - SeeAlso:
-///    - ``BytesRepresentable``
-///    - ``BytesContainer``
+/// A ``BytesRepresentable`` that wraps `Data`.
 public struct DataBytes: BytesRepresentable {
 
+    /// The wrapped data.
     public let rawValue: Data
 
+    /// Creates an instance with the contents of a read-only container.
+    ///
+    /// - Parameter container: The container to read from.
+    /// - Throws: An error if `container` is not in read mode.
     public init(from container: BytesContainer) throws {
         self.rawValue = try container.read()
     }
 
+    /// Creates an instance that wraps the given data.
+    ///
+    /// - Parameter rawValue: The data to wrap.
     public init(rawValue: Data) {
         self.rawValue = rawValue
     }
 
+    /// Writes the wrapped data to a write-only container.
+    ///
+    /// - Parameter container: The container to write to.
+    /// - Throws: An error if `container` is not in write mode.
     public func serialize(to container: BytesContainer) throws {
         try container.write(rawValue)
     }
 }
 
 extension IdentitySyncSnapshot<DataBytes> {
-    /// A snapshot strategy for comparing strings based on equality.
+    /// A snapshot strategy for comparing raw data based on equality.
     public static let data = IdentitySyncSnapshot<DataBytes>(
         pathExtension: nil,
         attachmentGenerator: .data

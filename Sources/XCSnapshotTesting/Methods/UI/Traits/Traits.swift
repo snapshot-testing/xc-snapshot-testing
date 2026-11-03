@@ -8,29 +8,33 @@ import UIKit
 #endif
 
 #if os(iOS) || os(tvOS) || os(visionOS)
+/// A trait that ``Traits`` can store: its default value, and how to apply a value to UIKit.
 protocol TraitKey: Sendable, Hashable {
 
     associatedtype Value: Hashable & Sendable
 
     static var defaultValue: Value { get }
 
+    /// Applies `value` through the trait overrides of a view controller, on iOS 17 and later.
     @available(iOS 17, tvOS 17, *)
     @MainActor
     static func apply(_ value: Value, to traitsOverrides: inout UITraitOverrides)
 
+    /// Applies `value` to a trait collection, for the versions that have no trait overrides.
     @MainActor
     static func apply(_ value: Value, to traitCollection: inout UITraitCollection)
 }
 
-/// A set of characteristics that describe the environment in which UI elements are displayed during snapshot testing.
-///
-/// `Traits` allows you to customize the appearance and behavior of UI elements by specifying various display and accessibility characteristics.
-/// These traits help ensure that your UI renders correctly across different devices and configurations during testing.
+/// The traits that a UI snapshot is rendered with, such as the content size category or the user interface style.
 ///
 /// ```swift
-/// let traits = Traits(preferredContentSizeCategory: .extraLarge)
-/// SnapshotEnvironment.current.traits = traits
+/// try await assert(
+///     of: view,
+///     as: .image(traits: Traits(preferredContentSizeCategory: .extraLarge))
+/// )
 /// ```
+///
+/// Traits set in the environment apply to every snapshot, and the ones passed to a strategy win over them.
 public struct Traits: Sendable, Hashable {
 
     private var traits = [ObjectIdentifier: Storage]()
@@ -38,7 +42,9 @@ public struct Traits: Sendable, Hashable {
     /// Creates a default `Traits` instance with no specific characteristics set.
     public init() {}
 
-    /// Creates a `Traits` instance from a collection of trait dictionaries.
+    /// Creates a `Traits` instance from several instances, merged in order.
+    ///
+    /// When two of them set the same trait, the later one wins.
     public init(traitsFrom traitCollection: [Traits]) {
         self.init(
             traitCollection.lazy.map(\.traits).reduce([:]) {
@@ -81,6 +87,10 @@ public struct Traits: Sendable, Hashable {
         }
     }
 
+    /// Applies the traits to `viewController`.
+    ///
+    /// On iOS 17 and later they are set as trait overrides. Before that, they are collected into one
+    /// trait collection and set as the override of each child view controller.
     @MainActor
     func commit(in viewController: UIViewController) {
         #if !os(visionOS)
@@ -116,6 +126,7 @@ public struct Traits: Sendable, Hashable {
     }
 }
 
+/// A type-erased trait value, with the closures that apply, compare and hash it.
 private struct Storage: Sendable, Hashable {
 
     var value: any Hashable & Sendable
@@ -186,6 +197,10 @@ private struct Storage: Sendable, Hashable {
 
 extension Traits {
 
+    /// Prints a warning when `object`, which was already snapshotted with these traits, is now used with `otherTraits`.
+    ///
+    /// Reusing an instance with other traits can leak state between runs. When the check is disabled in
+    /// the environment, only a short notice is printed.
     func inconsistentTraitsChecker<Object>(_ object: Object, to otherTraits: Traits) {
         if self != otherTraits {
             guard !SnapshotEnvironment.current.disableInconsistentTraitsChecker else {
@@ -221,6 +236,7 @@ extension Traits {
 
 extension Traits {
 
+    /// The traits of an iPhone: its idiom, its scale, and the size classes for `size`.
     static func iOS(
         displayScale: CGFloat,
         size: CGSize,
@@ -234,6 +250,7 @@ extension Traits {
         )
     }
 
+    /// The traits of an iPad: its idiom, its scale, and the size classes for `size`.
     static func iPadOS(
         displayScale: CGFloat,
         size: CGSize,
@@ -247,6 +264,7 @@ extension Traits {
         )
     }
 
+    /// The traits of an Apple TV: its idiom, its scale, and the size classes for `size`.
     static func tvOS(
         displayScale: CGFloat,
         size: CGSize,
@@ -260,6 +278,7 @@ extension Traits {
         )
     }
 
+    /// The traits of an Apple Vision Pro: its idiom, its scale, and the size classes for `size`.
     @available(iOS 17, tvOS 17, *)
     static func visionOS(
         displayScale: CGFloat,
@@ -274,6 +293,9 @@ extension Traits {
         )
     }
 
+    /// Builds the traits from an idiom, a scale and the size classes resolved for `size`.
+    ///
+    /// On tvOS the idiom is always `.tv`.
     private static func iOS(
         userInterfaceIdiom: UIUserInterfaceIdiom = .phone,
         displayScale: CGFloat,

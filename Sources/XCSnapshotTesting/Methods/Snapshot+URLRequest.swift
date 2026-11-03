@@ -70,19 +70,21 @@ extension SyncSnapshot where Input == URLRequest, Output == StringBytes {
 
     /// A snapshot strategy for comparing requests based on a cURL representation.
     ///
-    // ``` swift
-    // assert(of: request, as: .curl)
-    // ```
-    //
-    // Records:
-    //
-    // ```
-    // curl \
-    //   --request POST \
-    //   --header "Accept: text/html" \
-    //   --data 'pricing[billing]=monthly&pricing[lane]=individual' \
-    //   "https://www.pointfree.co/subscribe"
-    // ```
+    /// ```swift
+    /// try assert(of: request, as: .curl)
+    /// ```
+    ///
+    /// Records:
+    ///
+    /// ```
+    /// curl \
+    ///   --request POST \
+    ///   --header "Accept: text/html" \
+    ///   --data 'pricing[billing]=monthly&pricing[lane]=individual' \
+    ///   "https://www.pointfree.co/subscribe"
+    /// ```
+    ///
+    /// The `Cookie` header is moved to `--cookie`, and the query items of the URL are sorted.
     public static var curl: SyncSnapshot<Input, Output> {
         IdentitySyncSnapshot.lines.pullback { (request: URLRequest) in
             var components = ["curl"]

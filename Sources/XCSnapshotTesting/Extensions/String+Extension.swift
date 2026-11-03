@@ -27,13 +27,7 @@ extension String {
         )
     }
 
-    /// The text as one component of a path.
-    ///
-    /// The characters that a file name can't hold (see https://superuser.com/a/358861), the control
-    /// characters and `%` are written as `%` and the hexadecimal bytes of the character, so two
-    /// different texts never end up in the same file: removing them would make `a:b`, `a/b` and `ab`
-    /// share a snapshot. A component that is `.` or `..` would leave the folder it is appended to, so
-    /// its dots are written that way too.
+    /// Removes what cannot be part of a file name: the characters that file systems reject, and the `()` of a function name.
     func sanitizingPathComponent() -> String {
         let invalidCharacters = CharacterSet(charactersIn: "\\/:*?\"<>|%")
             .union(.newlines)

@@ -14,7 +14,7 @@ public enum RecordMode: Int16, Sendable {
     /// Records only if a snapshot is missing. Existing snapshots are not replaced, even if mismatches occur.
     case missing
 
-    /// Records snapshots only when tests fail due to a mismatch. Useful for automatically updating failing snapshots.
+    /// Writes a snapshot when the output does not match the reference, which updates the failing ones.
     case failed
 
     /// Always records snapshots, overwriting any existing files. Use to intentionally update all snapshots after UI changes.

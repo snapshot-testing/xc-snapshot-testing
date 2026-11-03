@@ -8,11 +8,17 @@ import CoreServices
 import UniformTypeIdentifiers
 #endif
 
+/// A ``SnapshotEngine`` that keeps references as files.
+///
+/// References go in `__Snapshots__/<platform>/<platform version>`, next to the test file, in a folder
+/// named after the file. The platform version is part of the path only when the environment asks for it.
 struct SnapshotFileEngine<Executor: SnapshotExecutor>: SnapshotEngine
 where Executor.Output: BytesRepresentable {
 
+    /// A directory to use instead of `__Snapshots__`. The platform is not added to it.
     let sourceURL: URL?
 
+    /// Returns the directory for the references of the test file, creating it if needed.
     func sourceURL(
         for filePath: StaticString,
         using tester: SnapshotTester<SnapshotFileEngine<Executor>>
@@ -35,6 +41,10 @@ where Executor.Output: BytesRepresentable {
         return sourceURL
     }
 
+    /// Returns the directory for the outputs of failed comparisons, creating it if needed.
+    ///
+    /// It sits in the directory named by the `SNAPSHOT_ARTIFACTS` environment variable, or in the
+    /// temporary directory when the variable is not set.
     func temporaryURL(
         for filePath: StaticString,
         using tester: SnapshotTester<SnapshotFileEngine<Executor>>
@@ -69,6 +79,7 @@ where Executor.Output: BytesRepresentable {
         )
     }
 
+    /// Writes the contents atomically for a `.write` operation. A `.notify` operation does nothing.
     func perform(
         _ operation: SnapshotPerformOperation,
         contents: Data,
@@ -90,6 +101,7 @@ where Executor.Output: BytesRepresentable {
         try contents.write(to: url, options: .atomic)
     }
 
+    /// Returns the failure message for `context.reason`.
     func generateFailureMessage(
         for context: SnapshotFailContext,
         using tester: SnapshotTester<SnapshotFileEngine<Executor>>
@@ -109,6 +121,7 @@ where Executor.Output: BytesRepresentable {
 
 extension SnapshotFileEngine {
 
+    /// Appends `componentPath`, the platform and the platform version, when there is one, to `url`.
     fileprivate func snapshotURL(
         _ url: URL,
         at componentPath: String,
@@ -133,6 +146,7 @@ extension SnapshotFileEngine {
 
 extension SnapshotFileEngine {
 
+    /// The message for an assertion with no reference.
     fileprivate func missing(_ context: SnapshotFailContext) -> String {
         let name = String(describing: context.function)
 
@@ -150,6 +164,7 @@ extension SnapshotFileEngine {
         }
     }
 
+    /// The message for an output that differs from the reference, with the diff command and the description of the difference.
     fileprivate func doesNotMatch(_ context: SnapshotFailContext) -> String {
         let name = String(describing: context.function)
 
@@ -174,6 +189,7 @@ extension SnapshotFileEngine {
         return message
     }
 
+    /// The message for an assertion that replaced the reference because the record mode is `.all`.
     fileprivate func allRecordMode(_ context: SnapshotFailContext) -> String {
         let name = String(describing: context.function)
 
@@ -186,6 +202,7 @@ extension SnapshotFileEngine {
             """
     }
 
+    /// The message for an executor that did not finish within `timeout` seconds.
     fileprivate func timeout(_ context: SnapshotFailContext, timeout: TimeInterval) -> String {
         """
         Exceeded timeout of \(timeout) seconds waiting for snapshot.

@@ -11,9 +11,12 @@ import UIKit
 
 #if os(iOS) || os(tvOS) || os(visionOS) || os(macOS)
 @MainActor
+/// A pooled window, and the lock that lets one task at a time use it.
 class WindowLease {
 
     private let _lock = AsyncLock()
+
+    /// The number of tasks waiting for the lock.
     private(set) var pendingTasks: Int = .zero
     private(set) var isHeld = false
 

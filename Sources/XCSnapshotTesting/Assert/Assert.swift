@@ -5,45 +5,37 @@ import Foundation
 
 // MARK: - Assert snapshot
 
-/// Validates a single snapshot of an asynchronously computed input value using a specified snapshot strategy.
+/// Asserts that a value matches the reference stored for it.
 ///
-/// This function serializes and compares the provided input value against a previously recorded snapshot,
-/// using the supplied `AsyncSnapshot` strategy and serialization configuration. Designed for use in
-/// snapshot and regression testing, it ensures that the current representation of the input matches the stored
-/// reference, or updates the reference if recording is enabled.
+/// The value goes through `snapshot`, and the output is compared with the reference file. The
+/// assertion fails if there is no reference or if the output differs. The record mode decides
+/// whether the reference is written, see ``RecordMode``. Failures are reported to the running test.
+///
+/// ```swift
+/// try await assert(
+///     of: view,
+///     as: .image(layout: .fixed(width: 320, height: 200)),
+///     named: "compact"
+/// )
+/// ```
 ///
 /// - Parameters:
-///   - input: An autoclosure that asynchronously produces the input value to be tested. The closure is executed during the assertion.
-///   - snapshot: An `AsyncSnapshot` describing how the input should be converted to bytes and compared (e.g., image rendering, text output).
-///   - serialization: Controls output transformation details, such as image encoding or precision. Defaults to `.init()`.
-///   - name: An optional identifier for the snapshot. Useful to differentiate multiple assertions in a single test method.
-///   - recording: Optionally override the snapshot recording mode for this assertion (e.g., `.always` to force update, `.never` to only compare).
-///   - snapshotDirectory: Optionally specify a custom directory for stored snapshots, overriding the default.
-///   - timeout: Time in seconds before the assertion fails for taking too long. Defaults to zero (no timeout). Zero or `.infinity` means no limit.
-///   - isolation: Optionally specify an actor for input evaluation, supporting thread/actor isolation. Defaults to current context.
-///   - fileID: The unique identifier for the file in which the assertion appears. Supplied automatically by the compiler.
-///   - filePath: The file path where the assertion is called. Supplied automatically by the compiler.
-///   - testName: The name of the test function calling the assertion. Supplied automatically by the compiler.
-///   - line: The source line number where the assertion is called. Supplied automatically by the compiler.
-///   - column: The source column where the assertion is called. Supplied automatically by the compiler.
+///   - input: The value to snapshot. It is evaluated when the assertion runs.
+///   - snapshot: How to turn the value into the output that is compared.
+///   - serialization: How the output is encoded to, and decoded from, the reference file.
+///   - name: A name that tells this snapshot apart from the others in the same test. Without one, snapshots are numbered by the position of the call.
+///   - recording: Overrides the record mode of the environment for this assertion.
+///   - snapshotDirectory: A directory for the references, instead of `__Snapshots__`.
+///   - timeout: How long to wait for the snapshot, in seconds. Zero or `.infinity` means no limit.
+///   - isolation: The actor that evaluates `input`.
+///   - fileID: The `#fileID` of the call.
+///   - filePath: The `#filePath` of the call.
+///   - testName: The name of the test function.
+///   - line: The line of the call.
+///   - column: The column of the call.
+/// - Throws: An error from evaluating `input`, running the snapshot, or reading and writing the references.
 ///
-/// - Throws: An error if input evaluation, snapshotting, or comparison fails, or if recording fails in recording mode.
-///
-/// - Important: For multiple assertions within the same test (e.g., in a loop), supply unique `name` values to
-///   avoid snapshot counting issues. Automatic snapshot naming relies on the call site position.
-///
-/// - Note: The recording mode falls back to session-level or environment settings if not provided.
-///   Use testing traits, or ``withTestingEnvironment(record:diffTool:maxConcurrentTests:platform:operation:file:line:)``
-///   to control globally.
-///
-/// - Example:
-///   ```swift
-///   try await assert(
-///     of: view,
-///     as: .image(layout: .device(.iPhone15ProMax)),
-///     named: "light_mode"
-///   )
-///   ```
+/// - Important: In a loop the call site is always the same, so every iteration would use the same reference. Pass a different `name` to each one.
 public func assert<Input: Sendable, Output: BytesRepresentable>(
     of input: @Sendable @autoclosure () async throws -> Input,
     as snapshot: AsyncSnapshot<Input, Output>,
@@ -86,42 +78,32 @@ public func assert<Input: Sendable, Output: BytesRepresentable>(
     )
 }
 
-/// Asserts that an asynchronously produced value matches multiple named snapshots, each using a distinct strategy.
+/// Asserts that a value matches the references of several snapshots, one for each key of `strategies`. The keys are the names of the snapshots.
 ///
-/// For each entry in the provided dictionary, this function generates an input value asynchronously and compares it
-/// against a previously recorded reference snapshot using the corresponding `AsyncSnapshot` strategy. Each assertion
-/// uses the key as a unique snapshot name. If in recording mode, the reference is updated instead. Failures are
-/// reported using the testing system.
-///
-/// - Parameters:
-///   - input: An autoclosure that asynchronously produces the value to be snapshotted and compared. Evaluated once per strategy.
-///   - strategies: A dictionary mapping unique snapshot names to `AsyncSnapshot` strategies, allowing different configurations or formats per assertion.
-///   - serialization: Settings for how output is serialized (e.g., image encoding, text precision). Defaults to `.init()`.
-///   - recording: Optionally override the recording mode for all snapshots in this assertion (e.g., `.always`, `.never`).
-///   - snapshotDirectory: Optionally specify a custom directory for storing or comparing snapshots, overriding the default.
-///   - timeout: Maximum seconds to wait for input evaluation per assertion. Defaults to `.zero`. Zero or `.infinity` means no limit.
-///   - isolation: Optionally specify an actor context for input evaluation, supporting actor/thread isolation. Defaults to current context.
-///   - fileID: The unique identifier of the source file. Provided automatically by the compiler.
-///   - filePath: The path to the source file. Provided automatically.
-///   - testName: The name of the test function. Provided automatically.
-///   - line: The line number of the assertion in the source file. Provided automatically.
-///   - column: The column number of the assertion in the source file. Provided automatically.
-///
-/// - Throws: An error if input evaluation, snapshotting, or comparison fails, or if writing fails in recording mode.
-///
-/// - Important: Each snapshot uses the dictionary key as its unique name. If you need to assert multiple snapshots within a loop,
-///   provide unique keys to prevent snapshot overwrites or counting issues.
-///
-/// - Example:
-///   ```swift
-///   try await assert(
+/// ```swift
+/// try await assert(
 ///     of: view,
 ///     as: [
-///       "light": .image(layout: .device(.iPhone15ProMax)),
-///       "dark": .image(layout: .device(.iPhone15ProMaxDark))
+///         "compact": .image(layout: .fixed(width: 320, height: 200)),
+///         "regular": .image(layout: .fixed(width: 640, height: 400)),
 ///     ]
-///   )
-///   ```
+/// )
+/// ```
+///
+/// - Parameters:
+///   - input: The value to snapshot.
+///   - strategies: The snapshots to assert, by name.
+///   - serialization: How the output is encoded to, and decoded from, the reference file.
+///   - recording: Overrides the record mode of the environment for this assertion.
+///   - snapshotDirectory: A directory for the references, instead of `__Snapshots__`.
+///   - timeout: How long to wait for the snapshot, in seconds. Zero or `.infinity` means no limit.
+///   - isolation: The actor that evaluates `input`.
+///   - fileID: The `#fileID` of the call.
+///   - filePath: The `#filePath` of the call.
+///   - testName: The name of the test function.
+///   - line: The line of the call.
+///   - column: The column of the call.
+/// - Throws: An error from evaluating `input`, running a snapshot, or reading and writing the references.
 public func assert<Input: Sendable, Output: BytesRepresentable>(
     of input: @Sendable @autoclosure () async throws -> Input,
     as strategies: [String: AsyncSnapshot<Input, Output>],
@@ -155,42 +137,32 @@ public func assert<Input: Sendable, Output: BytesRepresentable>(
     }
 }
 
-/// Asserts that an asynchronously produced value matches multiple snapshots, each using a different strategy from the provided array.
+/// Asserts that a value matches the references of several snapshots, one for each element of `strategies`. They are named after the position of the call and of the element, such as `testName.L12C9@1` and `testName.L12C9@2`, where `L12C9` is the line and column of the call.
 ///
-/// For each strategy in the array, this function generates an input value asynchronously and compares it against a previously recorded
-/// reference snapshot using the corresponding `AsyncSnapshot` strategy. Each assertion is uniquely named using a combination of the
-/// call site position and the one-based index (e.g., `testName.L12C9@1`, `testName.L12C9@2`, ...), ensuring distinct snapshot identities per call site.
+/// ```swift
+/// try await assert(
+///     of: view,
+///     as: [
+///         .image(layout: .fixed(width: 320, height: 200)),
+///         .image(precision: 0.95),
+///     ]
+/// )
+/// ```
 ///
 /// - Parameters:
-///   - input: An autoclosure that asynchronously produces the value to be snapshotted and compared. Evaluated once per strategy.
-///   - strategies: An array of `AsyncSnapshot` strategies to apply to the input. Each entry results in a separate snapshot assertion.
-///   - serialization: Settings for how output is serialized (e.g., image encoding, text precision). Defaults to `.init()`.
-///   - recording: Optionally override the recording mode for all snapshots in this assertion (e.g., `.always`, `.never`).
-///   - snapshotDirectory: Optionally specify a custom directory for storing or comparing snapshots, overriding the default.
-///   - timeout: Maximum seconds to wait for input evaluation per assertion. Defaults to `.zero`. Zero or `.infinity` means no limit.
-///   - isolation: Optionally specify an actor context for input evaluation, supporting actor/thread isolation. Defaults to current context.
-///   - fileID: The unique identifier of the source file. Provided automatically by the compiler.
-///   - filePath: The path to the source file. Provided automatically.
-///   - testName: The name of the test function. Provided automatically.
-///   - line: The line number of the assertion in the source file. Provided automatically.
-///   - column: The column number of the assertion in the source file. Provided automatically.
-///
-/// - Throws: An error if input evaluation, snapshotting, or comparison fails, or if writing fails in recording mode.
-///
-/// - Important: Each snapshot uses a unique name based on the test function and its index (e.g., `testName.L12C9@1`). This allows safe use in loops or repeated calls without naming collisions.
-///   If you require meaningful snapshot names, prefer the dictionary overload.
-///
-/// - Example:
-///   ```swift
-///   let strategies = [
-///       .image(layout: .device(.iPhone15ProMax)),
-///       .image(precision: 0.95)
-///   ]
-///   try await assert(
-///     of: view,
-///     as: strategies
-///   )
-///   ```
+///   - input: The value to snapshot.
+///   - strategies: The snapshots to assert.
+///   - serialization: How the output is encoded to, and decoded from, the reference file.
+///   - recording: Overrides the record mode of the environment for this assertion.
+///   - snapshotDirectory: A directory for the references, instead of `__Snapshots__`.
+///   - timeout: How long to wait for the snapshot, in seconds. Zero or `.infinity` means no limit.
+///   - isolation: The actor that evaluates `input`.
+///   - fileID: The `#fileID` of the call.
+///   - filePath: The `#filePath` of the call.
+///   - testName: The name of the test function.
+///   - line: The line of the call.
+///   - column: The column of the call.
+/// - Throws: An error from evaluating `input`, running a snapshot, or reading and writing the references.
 public func assert<Input: Sendable, Output: BytesRepresentable>(
     of input: @Sendable @autoclosure () async throws -> Input,
     as strategies: [AsyncSnapshot<Input, Output>],
@@ -228,40 +200,36 @@ public func assert<Input: Sendable, Output: BytesRepresentable>(
 
 // MARK: - Sync snapshot
 
-/// Asserts that a synchronously produced value matches a previously recorded snapshot using the specified strategy.
+/// Asserts that a value matches the reference stored for it.
 ///
-/// This function serializes and compares the given input value against a stored reference using the provided `SyncSnapshot` strategy
-/// and serialization configuration. It is designed for snapshot or regression testing, ensuring the current value matches the reference,
-/// or updates the reference if recording is enabled. Failures are reported using the testing system.
+/// The value goes through `snapshot`, and the output is compared with the reference file. The
+/// assertion fails if there is no reference or if the output differs. The record mode decides
+/// whether the reference is written, see ``RecordMode``. Failures are reported to the running test.
+///
+/// ```swift
+/// try assert(
+///     of: view,
+///     as: .image(layout: .fixed(width: 320, height: 200)),
+///     named: "compact"
+/// )
+/// ```
 ///
 /// - Parameters:
-///   - input: An autoclosure producing the value to be tested. Evaluated during the assertion.
-///   - snapshot: The `SyncSnapshot` strategy describing how to serialize and compare the input (e.g., as an image, as text).
-///   - serialization: Settings for output transformation, such as image encoding or precision. Defaults to `.init()`.
-///   - name: An optional identifier for the snapshot. Useful for disambiguating multiple assertions in a single test method.
-///   - recording: Optionally override the recording mode for this assertion (e.g., `.always` to update, `.never` to only compare).
-///   - snapshotDirectory: Optionally specify a custom directory for stored snapshots, overriding the default.
-///   - timeout: Time in seconds before the assertion fails if too long. Defaults to 5 seconds. Zero or `.infinity` means no limit.
-///   - fileID: The unique identifier of the source file. Provided automatically by the compiler.
-///   - filePath: The path to the source file. Provided automatically.
-///   - testName: The name of the test function. Provided automatically.
-///   - line: The line number of the assertion call. Provided automatically.
-///   - column: The column number of the assertion call. Provided automatically.
+///   - input: The value to snapshot. It is evaluated when the assertion runs.
+///   - snapshot: How to turn the value into the output that is compared.
+///   - serialization: How the output is encoded to, and decoded from, the reference file.
+///   - name: A name that tells this snapshot apart from the others in the same test. Without one, snapshots are numbered by the position of the call.
+///   - recording: Overrides the record mode of the environment for this assertion.
+///   - snapshotDirectory: A directory for the references, instead of `__Snapshots__`.
+///   - timeout: How long to wait for the snapshot, in seconds. Zero or `.infinity` means no limit.
+///   - fileID: The `#fileID` of the call.
+///   - filePath: The `#filePath` of the call.
+///   - testName: The name of the test function.
+///   - line: The line of the call.
+///   - column: The column of the call.
+/// - Throws: An error from evaluating `input`, running the snapshot, or reading and writing the references.
 ///
-/// - Throws: An error if input evaluation, snapshotting, or comparison fails, or if recording fails when enabled.
-///
-/// - Important: For multiple assertions within the same test (such as in a loop), supply unique `name` values to avoid snapshot overwrites or collisions. Automatic naming uses the call site location.
-///
-/// - Note: If `recording` is not provided, global or session-level settings apply. Use test traits or `withTestingEnvironment(record:operation:)` to control recording globally.
-///
-/// - Example:
-///   ```swift
-///   try assert(
-///     of: renderedView,
-///     as: .image(layout: .device(.iPadPro)),
-///     named: "dark_mode"
-///   )
-///   ```
+/// - Important: In a loop the call site is always the same, so every iteration would use the same reference. Pass a different `name` to each one.
 public func assert<Input, Output: BytesRepresentable>(
     of input: @autoclosure () throws -> Input,
     as snapshot: SyncSnapshot<Input, Output>,
@@ -302,39 +270,31 @@ public func assert<Input, Output: BytesRepresentable>(
     )
 }
 
-/// Asserts that a synchronously produced value matches multiple named snapshots, each using a distinct strategy.
+/// Asserts that a value matches the references of several snapshots, one for each key of `strategies`. The keys are the names of the snapshots.
 ///
-/// For each entry in the provided dictionary, this function compares the input value against a previously recorded reference snapshot
-/// using the corresponding `SyncSnapshot` strategy. Each assertion uses the dictionary key as a unique snapshot name. If in recording mode,
-/// the reference is updated instead. Failures are reported using the testing system.
+/// ```swift
+/// try await assert(
+///     of: view,
+///     as: [
+///         "compact": .image(layout: .fixed(width: 320, height: 200)),
+///         "regular": .image(layout: .fixed(width: 640, height: 400)),
+///     ]
+/// )
+/// ```
 ///
 /// - Parameters:
-///   - input: The value to be snapshotted and compared. Used for all strategies.
-///   - strategies: A dictionary mapping unique snapshot names to `SyncSnapshot` strategies, allowing different configurations or formats per assertion.
-///   - serialization: Settings for how output is serialized (e.g., image encoding, text precision). Defaults to `.init()`.
-///   - recording: Optionally override the recording mode for all snapshots in this assertion (e.g., `.always`, `.never`).
-///   - snapshotDirectory: Optionally specify a custom directory for storing or comparing snapshots, overriding the default.
-///   - timeout: Maximum seconds to wait for each assertion. Defaults to 5. Zero or `.infinity` means no limit.
-///   - fileID: The unique identifier of the source file. Provided automatically by the compiler.
-///   - filePath: The path to the source file. Provided automatically.
-///   - testName: The name of the test function. Provided automatically.
-///   - line: The line number of the assertion in the source file. Provided automatically.
-///   - column: The column number of the assertion in the source file. Provided automatically.
-///
-/// - Throws: An error if snapshotting or comparison fails, or if writing fails in recording mode.
-///
-/// - Important: Each snapshot uses the dictionary key as its unique name. If you need to assert multiple snapshots within a loop, provide unique keys to prevent snapshot overwrites or counting issues.
-///
-/// - Example:
-///   ```swift
-///   try assert(
-///     of: renderedView,
-///     as: [
-///       "light": .image(layout: .device(.iPadPro)),
-///       "dark": .image(layout: .device(.iPadProDark))
-///     ]
-///   )
-///   ```
+///   - input: The value to snapshot.
+///   - strategies: The snapshots to assert, by name.
+///   - serialization: How the output is encoded to, and decoded from, the reference file.
+///   - recording: Overrides the record mode of the environment for this assertion.
+///   - snapshotDirectory: A directory for the references, instead of `__Snapshots__`.
+///   - timeout: How long to wait for the snapshot, in seconds. Zero or `.infinity` means no limit.
+///   - fileID: The `#fileID` of the call.
+///   - filePath: The `#filePath` of the call.
+///   - testName: The name of the test function.
+///   - line: The line of the call.
+///   - column: The column of the call.
+/// - Throws: An error from evaluating `input`, running a snapshot, or reading and writing the references.
 public func assert<Input, Output: BytesRepresentable>(
     of input: Input,
     as strategies: [String: SyncSnapshot<Input, Output>],
@@ -366,40 +326,31 @@ public func assert<Input, Output: BytesRepresentable>(
     }
 }
 
-/// Asserts that a synchronously produced value matches multiple snapshots, each using a different strategy from the provided array.
+/// Asserts that a value matches the references of several snapshots, one for each element of `strategies`. They are named after the position of the call and of the element, such as `testName.L12C9@1` and `testName.L12C9@2`, where `L12C9` is the line and column of the call.
 ///
-/// For each strategy in the array, this function compares the input value against a previously recorded reference snapshot using the
-/// corresponding `SyncSnapshot` strategy. Each assertion is uniquely named using a combination of the test function and the index
-/// (e.g., `testName.L12C9@1`, `testName.L12C9@2`, ...), ensuring distinct snapshot identities per call site.
+/// ```swift
+/// try await assert(
+///     of: view,
+///     as: [
+///         .image(layout: .fixed(width: 320, height: 200)),
+///         .image(precision: 0.95),
+///     ]
+/// )
+/// ```
 ///
 /// - Parameters:
-///   - input: The value to be snapshotted and compared. Used for all strategies.
-///   - strategies: An array of `SyncSnapshot` strategies to apply to the input. Each entry results in a separate snapshot assertion.
-///   - serialization: Settings for how output is serialized (e.g., image encoding, text precision). Defaults to `.init()`.
-///   - recording: Optionally override the recording mode for all snapshots in this assertion (e.g., `.always`, `.never`).
-///   - snapshotDirectory: Optionally specify a custom directory for storing or comparing snapshots, overriding the default.
-///   - timeout: Maximum seconds to wait for each assertion. Defaults to 5. Zero or `.infinity` means no limit.
-///   - fileID: The unique identifier of the source file. Provided automatically by the compiler.
-///   - filePath: The path to the source file. Provided automatically.
-///   - testName: The name of the test function. Provided automatically.
-///   - line: The line number of the assertion in the source file. Provided automatically.
-///   - column: The column number of the assertion in the source file. Provided automatically.
-///
-/// - Throws: An error if snapshotting or comparison fails, or if writing fails in recording mode.
-///
-/// - Important: Each snapshot uses a unique name based on the test function and its index (e.g., `testName.L12C9@1`). This allows safe use in loops or repeated calls without naming collisions. If you require meaningful snapshot names, prefer the dictionary overload.
-///
-/// - Example:
-///   ```swift
-///   let strategies = [
-///       .image(layout: .device(.iPadPro)),
-///       .image(precision: 0.95)
-///   ]
-///   try await assert(
-///     of: renderedView,
-///     as: strategies
-///   )
-///   ```
+///   - input: The value to snapshot.
+///   - strategies: The snapshots to assert.
+///   - serialization: How the output is encoded to, and decoded from, the reference file.
+///   - recording: Overrides the record mode of the environment for this assertion.
+///   - snapshotDirectory: A directory for the references, instead of `__Snapshots__`.
+///   - timeout: How long to wait for the snapshot, in seconds. Zero or `.infinity` means no limit.
+///   - fileID: The `#fileID` of the call.
+///   - filePath: The `#filePath` of the call.
+///   - testName: The name of the test function.
+///   - line: The line of the call.
+///   - column: The column of the call.
+/// - Throws: An error from evaluating `input`, running a snapshot, or reading and writing the references.
 public func assert<Input, Output: BytesRepresentable>(
     of input: Input,
     as strategies: [SyncSnapshot<Input, Output>],
@@ -433,33 +384,26 @@ public func assert<Input, Output: BytesRepresentable>(
     }
 }
 
-/// Validates an asynchronously produced value against a stored snapshot using a specified strategy and serialization configuration.
+/// Compares a value with the reference stored for it, and returns the failure message instead of reporting it.
 ///
-/// This function evaluates the provided input value asynchronously, serializes it using the supplied `AsyncSnapshot` strategy and `DataSerialization`,
-/// and compares it to a previously recorded snapshot on disk. If the assertion fails, it returns a descriptive failure message;
-/// otherwise, it returns `nil`. Supports optional snapshot recording, custom directories, timeouts, and actor isolation.
+/// It does what ``assert(of:as:serialization:named:record:snapshotDirectory:timeout:fileID:file:testName:line:column:)`` does, but leaves it to the caller to report the failure.
 ///
 /// - Parameters:
-///   - input: An autoclosure that asynchronously produces the value to snapshot and compare. Executed at assertion time.
-///   - snapshot: An `AsyncSnapshot` describing how to serialize and compare the input (e.g., image rendering, text output).
-///   - serialization: Settings for output transformation and encoding. Defaults to `.init()`.
-///   - name: An optional identifier for the snapshot, used to disambiguate multiple assertions within a test.
-///   - recording: Optionally override the recording mode for this assertion (e.g., `.always` to update, `.never` to only compare).
-///   - snapshotDirectory: Optionally specify a directory for storing or comparing snapshots, overriding the default.
-///   - timeout: Maximum seconds to wait for input evaluation or snapshotting. Defaults to `.zero`. Zero or `.infinity` means no limit.
-///   - isolation: Optionally specify an actor for input evaluation, supporting thread/actor isolation. Defaults to current context.
-///   - fileID: The unique identifier of the source file. Provided automatically by the compiler.
-///   - filePath: The path to the source file. Provided automatically.
-///   - testName: The name of the test function. Provided automatically.
-///   - line: The line number of the assertion in the source file. Provided automatically.
-///   - column: The column number of the assertion in the source file. Provided automatically.
-///
-/// - Returns: An optional failure message string if the assertion fails; otherwise, `nil`.
-///
-/// - Throws: An error if input evaluation, snapshotting, comparison, or recording fails.
-///
-/// - Important: For multiple assertions within the same test (e.g., in a loop), use unique `name` values.
-/// - Note: Recording mode falls back to environment or session-level settings if not specified.
+///   - input: The value to snapshot. It is evaluated when the assertion runs.
+///   - snapshot: How to turn the value into the output that is compared.
+///   - serialization: How the output is encoded to, and decoded from, the reference file.
+///   - name: A name that tells this snapshot apart from the others in the same test. Without one, snapshots are numbered by the position of the call.
+///   - recording: Overrides the record mode of the environment for this assertion.
+///   - snapshotDirectory: A directory for the references, instead of `__Snapshots__`.
+///   - timeout: How long to wait for the snapshot, in seconds. Zero or `.infinity` means no limit.
+///   - isolation: The actor that evaluates `input`.
+///   - fileID: The `#fileID` of the call.
+///   - filePath: The `#filePath` of the call.
+///   - testName: The name of the test function.
+///   - line: The line of the call.
+///   - column: The column of the call.
+/// - Returns: The failure message, or `nil` if the output matches the reference.
+/// - Throws: An error from evaluating `input`, running the snapshot, or reading and writing the references.
 public func verify<Input: Sendable, Output: BytesRepresentable>(
     of input: @Sendable @autoclosure () async throws -> Input,
     as snapshot: AsyncSnapshot<Input, Output>,
@@ -497,32 +441,25 @@ public func verify<Input: Sendable, Output: BytesRepresentable>(
     return try await tester(input(), for: snapshot)?.message
 }
 
-/// Validates a synchronously produced value against a stored snapshot using a specified strategy and serialization configuration.
+/// Compares a value with the reference stored for it, and returns the failure message instead of reporting it.
 ///
-/// This function evaluates the provided input value, serializes it using the supplied `SyncSnapshot` strategy and `DataSerialization`,
-/// and compares it to a previously recorded snapshot on disk. If the assertion fails, it returns a descriptive failure message;
-/// otherwise, it returns `nil`. Supports optional snapshot recording, custom directories, and timeouts.
+/// It does what ``assert(of:as:serialization:named:record:snapshotDirectory:timeout:fileID:file:testName:line:column:)`` does, but leaves it to the caller to report the failure.
 ///
 /// - Parameters:
-///   - input: An autoclosure that produces the value to snapshot and compare. Executed at assertion time.
-///   - snapshot: A `SyncSnapshot` describing how to serialize and compare the input (e.g., image rendering, text output).
-///   - serialization: Settings for output transformation and encoding. Defaults to `.init()`.
-///   - name: An optional identifier for the snapshot, used to disambiguate multiple assertions within a test.
-///   - recording: Optionally override the recording mode for this assertion (e.g., `.always` to update, `.never` to only compare).
-///   - snapshotDirectory: Optionally specify a directory for storing or comparing snapshots, overriding the default.
-///   - timeout: Maximum seconds to wait for input evaluation or snapshotting. Defaults to 5 seconds. Zero or `.infinity` means no limit.
-///   - fileID: The unique identifier of the source file. Provided automatically by the compiler.
-///   - filePath: The path to the source file. Provided automatically.
-///   - testName: The name of the test function. Provided automatically.
-///   - line: The line number of the assertion in the source file. Provided automatically.
-///   - column: The column number of the assertion in the source file. Provided automatically.
-///
-/// - Returns: An optional failure message string if the assertion fails; otherwise, `nil`.
-///
-/// - Throws: An error if input evaluation, snapshotting, comparison, or recording fails.
-///
-/// - Important: For multiple assertions within the same test (e.g., in a loop), use unique `name` values.
-/// - Note: Recording mode falls back to environment or session-level settings if not specified.
+///   - input: The value to snapshot. It is evaluated when the assertion runs.
+///   - snapshot: How to turn the value into the output that is compared.
+///   - serialization: How the output is encoded to, and decoded from, the reference file.
+///   - name: A name that tells this snapshot apart from the others in the same test. Without one, snapshots are numbered by the position of the call.
+///   - recording: Overrides the record mode of the environment for this assertion.
+///   - snapshotDirectory: A directory for the references, instead of `__Snapshots__`.
+///   - timeout: How long to wait for the snapshot, in seconds. Zero or `.infinity` means no limit.
+///   - fileID: The `#fileID` of the call.
+///   - filePath: The `#filePath` of the call.
+///   - testName: The name of the test function.
+///   - line: The line of the call.
+///   - column: The column of the call.
+/// - Returns: The failure message, or `nil` if the output matches the reference.
+/// - Throws: An error from evaluating `input`, running the snapshot, or reading and writing the references.
 public func verify<Input, Output: BytesRepresentable>(
     of input: @autoclosure () throws -> Input,
     as snapshot: SyncSnapshot<Input, Output>,

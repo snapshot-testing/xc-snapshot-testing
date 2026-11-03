@@ -222,6 +222,23 @@ struct ExtensionTests {
         }
     }
 
+    @Test func timeoutKeepsTheFractionOfASecond() async throws {
+        // Regression: the limit was truncated to whole seconds, so 0.5 expired right away.
+        let value = try await Task.timeout(0.5) {
+            try await Task.sleep(nanoseconds: 100_000_000)
+            return 42
+        }
+
+        #expect(value == 42)
+
+        await #expect(throws: TaskTimeout.self) {
+            try await Task<Int, Error>.timeout(0.2) {
+                try await Task.sleep(nanoseconds: 2_000_000_000)
+                return 1
+            }
+        }
+    }
+
     private final class Flag: @unchecked Sendable {
         private let lock = NSLock()
         private var value = false

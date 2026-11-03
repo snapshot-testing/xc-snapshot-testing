@@ -12,6 +12,9 @@ import UIKit
 extension SDKWindow {
 
     @discardableResult
+    /// Dismisses what the root view controller presented, detaches it from the window, and returns it.
+    ///
+    /// - Returns: The controller that was the root, or `nil` if there was none.
     func removeRootViewController() -> SDKViewController? {
         #if os(macOS)
         if let contentViewController {
@@ -44,6 +47,9 @@ extension SDKWindow {
     }
 
     @discardableResult
+    /// Makes `viewController` the root of the window. On UIKit, it also lays the window out.
+    ///
+    /// - Returns: The controller that was the root before, or `nil` if there was none.
     func switchRoot(
         _ viewController: SDKViewController
     ) -> SDKViewController? {

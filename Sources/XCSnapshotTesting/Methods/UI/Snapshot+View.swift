@@ -7,49 +7,20 @@
 #if os(macOS)
 extension AsyncSnapshot where Input: SwiftUI.View & Sendable, Output == ImageBytes {
 
-    /// Default configuration for capturing SwiftUI `View` as image snapshots.
-    ///
-    /// This configuration provides a basic setup for capturing SwiftUI views with default settings.
-    /// It renders the view in its initial state with default sizing and comparison precision.
-    ///
-    /// - Note: This configuration is suitable for simple views where custom sizing or
-    ///   comparison settings are not required.
+    /// Renders a SwiftUI `View` as an image, with the default settings. The view is sized to its natural size.
     public static var image: AsyncSnapshot<Input, Output> {
         .image()
     }
 
-    /// Creates a custom image snapshot configuration for SwiftUI `View`.
-    ///
-    /// This configuration allows you to capture SwiftUI `View` instances with custom settings for
-    /// layout, comparison precision, and other visual traits. It renders the view in isolation,
-    /// making it ideal for component testing.
+    /// Renders a SwiftUI `View` as an image.
     ///
     /// - Parameters:
-    ///   - precision: Pixel tolerance for comparison (1 = perfect match, lower values allow more variation).
-    ///   - perceptualPrecision: Tolerance for color and tonal differences (values closer to 1 require more exact matches).
-    ///   - layout: Specifies how the view should be sized during rendering (e.g., specific device simulation).
-    ///   - delay: Delay before capturing the image (useful for waiting for animations or dynamic content).
-    ///   - prepare: An asynchronous closure that runs on the main actor after the layout, the `delay` and the web view loading, and right before the snapshot is taken. Use it to wait for conditions such as `onAppear` having run or background tasks having finished.
-    ///   - application: The `NSApplication` instance to render the windows.
-    ///
-    /// Example usage:
-    /// ```swift
-    /// struct MyView: View {
-    ///     var body: some View {
-    ///         Text("Hello, World!")
-    ///             .padding()
-    ///             .background(Color.blue)
-    ///     }
-    /// }
-    ///
-    /// try assert(
-    ///     of: MyView(),
-    ///     as: .image(
-    ///         layout: .device(.iPhone15Pro),
-    ///         precision: 0.98
-    ///     )
-    /// )
-    /// ```
+    ///   - precision: The share of pixels, from 0 to 1, that must be the same. `1` requires every pixel to match.
+    ///   - perceptualPrecision: How close in color a pixel must be, from 0 to 1, to count as the same. `1` requires an exact match.
+    ///   - layout: How the content is sized: to a fixed size, or to its natural size.
+    ///   - delay: Seconds to wait after the layout and before capturing, for animations or content that loads.
+    ///   - prepare: Runs on the main actor after the layout, the delay and the web view loading, right before the capture. Use it to wait for something, such as `onAppear` having run.
+    ///   - application: The application whose windows host the content. With `nil`, the shared application is used.
     public static func image(
         precision: Float = 1,
         perceptualPrecision: Float = 1,
@@ -84,50 +55,28 @@ extension AsyncSnapshot where Input: SwiftUI.View & Sendable, Output == ImageByt
 #elseif os(iOS) || os(tvOS) || os(visionOS)
 extension Snapshot where Input: SwiftUI.View & Sendable, Output == ImageBytes {
 
-    /// Default configuration for capturing SwiftUI `View` as image snapshots.
-    ///
-    /// This configuration provides a basic setup for capturing SwiftUI views with default settings.
-    /// It renders the view in its initial state with default sizing and comparison precision.
-    ///
-    /// - Note: This configuration is suitable for simple views where custom sizing or
-    ///   comparison settings are not required.
+    /// Renders a SwiftUI `View` as an image, with the default settings. The view is sized to its natural size.
     public static var image: AsyncSnapshot<Input, Output> {
         .image()
     }
 
-    /// Creates a custom image snapshot configuration for SwiftUI `View`.
-    ///
-    /// This configuration allows you to capture SwiftUI `View` instances with custom settings for
-    /// layout, comparison precision, and other visual traits. It renders the view in isolation,
-    /// making it ideal for component testing.
+    /// Renders a SwiftUI `View` as an image.
     ///
     /// - Parameters:
-    ///   - sessionRole: Defines the role of the UI session (default is `.windowApplication`).
-    ///   - precision: Pixel tolerance for comparison (1 = perfect match, lower values allow more variation).
-    ///   - perceptualPrecision: Tolerance for color and tonal differences (values closer to 1 require more exact matches).
-    ///   - layout: Specifies how the view should be sized during rendering (e.g., specific device simulation).
-    ///   - traits: Collection of UI traits (e.g., accessibility features, display characteristics).
-    ///   - isOpaque: Whether the SwiftUI hosting view keeps its default system background. Pass `false` to keep transparent regions of the view transparent in the recorded image. Defaults to `true`.
-    ///   - delay: Delay before capturing the image (useful for waiting for animations or dynamic content).
-    ///   - prepare: An asynchronous closure that runs on the main actor after the layout, the `delay` and the web view loading, and right before the snapshot is taken. Use it to wait for conditions such as `onAppear` having run or background tasks having finished.
-    ///   - application: The `UIApplication` instance to render the windows.
+    ///   - sessionRole: The role of the scene session the window belongs to.
+    ///   - precision: The share of pixels, from 0 to 1, that must be the same. `1` requires every pixel to match.
+    ///   - perceptualPrecision: How close in color a pixel must be, from 0 to 1, to count as the same. `1` requires an exact match.
+    ///   - layout: How the content is sized: for a device, to a fixed size, or to its natural size.
+    ///   - traits: Traits to apply, over the ones of the environment.
+    ///   - isOpaque: Whether the background is opaque. With `false`, transparent areas of the view stay transparent.
+    ///   - delay: Seconds to wait after the layout and before capturing, for animations or content that loads.
+    ///   - prepare: Runs on the main actor after the layout, the delay and the web view loading, right before the capture. Use it to wait for something, such as `onAppear` having run.
+    ///   - application: The application whose windows host the content. With `nil`, the shared application is used.
     ///
-    /// Example usage:
     /// ```swift
-    /// struct MyView: View {
-    ///     var body: some View {
-    ///         Text("Hello, World!")
-    ///             .padding()
-    ///             .background(Color.blue)
-    ///     }
-    /// }
-    ///
-    /// try assert(
-    ///     of: MyView(),
-    ///     as: .image(
-    ///         layout: .device(.iPhone15Pro),
-    ///         precision: 0.98
-    ///     )
+    /// try await assert(
+    ///     of: ProfileView(),
+    ///     as: .image(precision: 0.98, layout: .device(.iPhone15Pro))
     /// )
     /// ```
     public static func image(
@@ -171,45 +120,17 @@ extension Snapshot where Input: SwiftUI.View & Sendable, Output == ImageBytes {
 #elseif os(watchOS)
 extension Snapshot where Input: SwiftUI.View & Sendable, Output == ImageBytes {
 
-    /// Default configuration for capturing SwiftUI `View` as image snapshots on watchOS.
-    ///
-    /// This configuration provides a basic setup for capturing SwiftUI views with default settings.
-    /// It renders the view in its initial state with default sizing and comparison precision.
-    ///
-    /// - Note: This configuration is suitable for simple watchOS views where custom sizing or
-    ///   comparison settings are not required.
+    /// Renders a SwiftUI `View` as an image, with the default settings. The view is sized to its natural size.
     public static var image: AsyncSnapshot<Input, Output> {
         .image()
     }
 
-    /// Creates a custom image snapshot configuration for SwiftUI `View` on watchOS.
-    ///
-    /// This configuration allows you to capture SwiftUI `View` instances with custom settings for
-    /// layout and comparison precision. It renders the view in isolation, making it ideal for component testing.
+    /// Renders a SwiftUI `View` as an image.
     ///
     /// - Parameters:
-    ///   - precision: Pixel tolerance for comparison (1 = perfect match, lower values allow more variation).
-    ///   - scale: The scale factor for the rendered image.
-    ///   - layout: Specifies how the view should be sized during rendering.
-    ///
-    /// Example usage:
-    /// ```swift
-    /// struct MyWatchView: View {
-    ///     var body: some View {
-    ///         Text("Hello, watch!")
-    ///             .padding()
-    ///             .background(Color.green)
-    ///     }
-    /// }
-    ///
-    /// try assert(
-    ///     of: MyWatchView(),
-    ///     as: .image(
-    ///         precision: 0.98,
-    ///         scale: 2.0
-    ///     )
-    /// )
-    /// ```
+    ///   - precision: The share of pixels, from 0 to 1, that must be the same. `1` requires every pixel to match.
+    ///   - scale: The scale of the rendered image.
+    ///   - layout: How the content is sized: to a fixed size, or to its natural size.
     public static func image(
         precision: Float = 1,
         scale: CGFloat = 1,

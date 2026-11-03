@@ -3,67 +3,31 @@
 
 import Foundation
 
-/// A dynamic environment container for accessing snapshot testing configuration values.
+/// Read-only access to the environment of the running test.
 ///
-/// `SnapshotEnvironment` provides a convenient way to access configuration values using Swift's `@dynamicMemberLookup` feature.
-/// It allows you to retrieve values from the underlying `SnapshotEnvironmentValues` using dynamic key path lookups.
+/// Each configuration value is a property, found through ``SnapshotEnvironmentValues``.
 ///
 /// ```swift
-/// struct MyEnvironmentKey: SnapshotEnvironmentKey {
-///     typealias Value = Int
-///     static let defaultValue = 42
-/// }
-///
-/// extension SnapshotEnvironmentValues {
-///     var myEnvironment: Int {
-///         get { self[MyEnvironmentKey.self] }
-///         set { self[MyEnvironmentKey.self] = newValue }
-///     }
-/// }
-///
-/// let value = SnapshotEnvironment.current.myEnvironment // results 42
+/// let recordMode = SnapshotEnvironment.current.recordMode
 /// ```
 @dynamicMemberLookup
 public struct SnapshotEnvironment: Sendable {
 
-    /// The current snapshot environment instance available in the testing context.
+    /// The environment of the running test.
     public static let current = SnapshotEnvironment()
 
     fileprivate init() {}
 
-    /// Provides dynamic member lookup access to values stored in `SnapshotEnvironmentValues`.
+    /// The value at `keyPath` in the environment.
     ///
-    /// This subscript allows you to retrieve configuration values from the snapshot testing environment
-    /// using key paths to properties defined in `SnapshotEnvironmentValues`.
-    ///
-    /// - Parameter keyPath: A key path to the value in `SnapshotEnvironmentValues`.
-    /// - Returns: The value associated with the given key path.
-    ///
-    /// Example usage:
-    /// ```swift
-    /// let currentDiffTool = SnapshotEnvironment.current.diffTool
-    /// let currentRecordMode = SnapshotEnvironment.current.recordMode
-    /// ```
-    ///
-    /// - Note: This subscript provides type-safe access to environment values and is made possible
-    ///   by Swift's `@dynamicMemberLookup` feature.
+    /// - Parameter keyPath: A property of ``SnapshotEnvironmentValues``.
     public subscript<Value>(dynamicMember keyPath: KeyPath<SnapshotEnvironmentValues, Value>) -> Value {
         (SnapshotEnvironmentValues.current ?? SnapshotEnvironmentValues())[keyPath: keyPath]
     }
 
-    /// Accesses configuration values stored in `SnapshotEnvironmentValues` using keys that conform to `SnapshotEnvironmentKey`.
+    /// The value stored for `key`, or its default value if none was set.
     ///
-    /// This subscript allows you to retrieve values from the snapshot testing environment configuration.
-    /// Each value is associated with a specific key type that conforms to `SnapshotEnvironmentKey`.
-    ///
-    /// - Parameter key: The type of key identifying the configuration value to access.
-    /// - Returns: The value associated with the provided key.
-    ///
-    /// Example usage:
-    /// ```swift
-    /// let diffTool = SnapshotEnvironment.current[DiffToolKey.self]
-    /// print(diffTool(currentFilePath: "file://old.png", failedFilePath: "file://new.png"))
-    /// ```
+    /// - Parameter key: The type of the key.
     public subscript<Key: SnapshotEnvironmentKey>(_ key: Key.Type) -> Key.Value {
         (SnapshotEnvironmentValues.current ?? SnapshotEnvironmentValues())[key]
     }

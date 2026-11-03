@@ -12,26 +12,17 @@ private struct TraitsEnvironmentKey: SnapshotEnvironmentKey {
 
 extension SnapshotEnvironmentValues {
 
-    /// Provides access to the `Traits` configuration for snapshot testing.
+    /// The traits applied to every UI snapshot, before the ones passed to the strategy.
     ///
-    /// This property allows you to customize the appearance and behavior of
-    /// UI elements during snapshot testing by specifying traits like
-    /// accessibility features, color schemes, or device characteristics.
-    ///
-    /// Example:
     /// ```swift
-    /// // Configure traits for snapshot testing
     /// withTestingEnvironment {
-    ///     $0.traits = .init(preferredContentSizeCategory: .extraLarge)
+    ///     $0.traits = Traits(preferredContentSizeCategory: .extraLarge)
     /// } operation: {
-    ///     // Your testing code here
+    ///     // ...
     /// }
     /// ```
     ///
-    /// - Note: Traits can be combined to simulate various UI conditions during testing.
-    /// - SeeAlso:
-    ///     - ``Traits``
-    ///     - ``withTestingEnvironment(_:operation:file:line:)``
+    /// - SeeAlso: ``Traits``
     public var traits: Traits {
         get { self[TraitsEnvironmentKey.self] }
         set { self[TraitsEnvironmentKey.self] = newValue }

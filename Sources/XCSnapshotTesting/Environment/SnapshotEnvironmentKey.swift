@@ -3,21 +3,20 @@
 
 import Foundation
 
-/// A protocol for defining keys that can be used with `SnapshotEnvironmentValues`.
+/// A key for a value of the snapshot environment.
 ///
-/// Conform to this protocol to create custom keys for storing values in the snapshot testing environment.
-/// Each key must specify an associated value type and provide a default value.
+/// Conform a type to it to add a value to ``SnapshotEnvironmentValues``. The key gives the type of
+/// the value and its default.
 ///
 /// ```swift
 /// struct MyEnvironmentKey: SnapshotEnvironmentKey {
-///     typealias Value = Int
 ///     static let defaultValue = 42
 /// }
 /// ```
 public protocol SnapshotEnvironmentKey {
-    /// The type of value associated with the key.
+    /// The type of the value.
     associatedtype Value: Sendable
 
-    /// The default value for the key if no value has been explicitly set.
+    /// The value used when none was set.
     static var defaultValue: Value { get }
 }

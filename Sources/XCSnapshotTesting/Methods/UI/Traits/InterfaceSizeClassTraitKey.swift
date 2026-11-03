@@ -8,16 +8,13 @@ import UIKit
 #endif
 
 #if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
-/// A size class that describes the horizontal or vertical space available for a user interface.
-///
-/// `InterfaceSizeClass` helps determine how UI elements should layout based on the available space.
-/// Commonly used to differentiate between compact and regular layouts for different device sizes and orientations.
+/// How much space the interface has in one direction, as in UIKit's `UIUserInterfaceSizeClass`.
 public enum InterfaceSizeClass: Sendable, Hashable {
     /// The size class is not specified.
     case unspecified
-    /// The size class is regular (typically for larger screens or orientations).
+    /// There is room: a large screen, or the long side of a device.
     case regular
-    /// The size class is compact (typically for smaller screens or orientations).
+    /// There is little room: a small screen, or the short side of a device.
     case compact
 }
 
@@ -44,30 +41,15 @@ public struct DeviceInterfaceSizeClass: Sendable, Hashable {
     }
 }
 
-/// A struct that dynamically determines the device interface size class based on a given size.
+/// Chooses the size classes of a device from the size being rendered, so they follow the orientation.
 ///
-/// `DeviceDynamicInterfaceSizeClass` allows you to define how interface size classes should be determined
-/// for different device sizes. This is useful for adaptive UI layouts that need to respond to different
-/// screen sizes and orientations.
-///
-/// You can create a dynamic size class provider using either a closure or a constant value.
-///
-/// Example usage with a closure:
 /// ```swift
-/// let dynamicSizeClass = DeviceDynamicInterfaceSizeClass { size in
-///     if size.width < 768 {
-///         return .compact
-///     } else {
-///         return .regular
-///     }
+/// let sizeClass = DeviceDynamicInterfaceSizeClass { size in
+///     DeviceInterfaceSizeClass(
+///         horizontal: size.width < 768 ? .compact : .regular,
+///         vertical: .regular
+///     )
 /// }
-/// let sizeClass = dynamicSizeClass(CGSize(width: 500, height: 300)) // Returns .compact
-/// ```
-///
-/// Example usage with a constant:
-/// ```swift
-/// let constantSizeClass = DeviceDynamicInterfaceSizeClass(constant: .regular)
-/// let sizeClass = constantSizeClass(CGSize(width: 1000, height: 800)) // Returns .regular
 /// ```
 public struct DeviceDynamicInterfaceSizeClass: Sendable {
 
@@ -113,103 +95,211 @@ extension DeviceDynamicInterfaceSizeClass {
 
     // MARK: - iPhone 17
 
+    /// Size classes of the iPhone 17 Pro Max.
+    ///
+    /// Portrait is compact width and regular height. Landscape is regular width and compact height.
     public static let iPhone17ProMax = withRegularLandscape
 
+    /// Size classes of the iPhone 17 Pro.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     public static let iPhone17Pro = withCompactLandscape
 
+    /// Size classes of the iPhone 17.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     public static let iPhone17 = withCompactLandscape
 
+    /// Size classes of the iPhone 17e.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     public static let iPhone17e = withCompactLandscape
 
     // MARK: - iPhone Air
 
+    /// Size classes of the iPhone Air.
+    ///
+    /// Portrait is compact width and regular height. Landscape is regular width and compact height.
     public static let iPhoneAir = withRegularLandscape
 
     // MARK: - iPhone 16
 
+    /// Size classes of the iPhone 16 Pro Max.
+    ///
+    /// Portrait is compact width and regular height. Landscape is regular width and compact height.
     public static let iPhone16ProMax = withRegularLandscape
 
+    /// Size classes of the iPhone 16 Pro.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     public static let iPhone16Pro = withCompactLandscape
 
+    /// Size classes of the iPhone 16 Plus.
+    ///
+    /// Portrait is compact width and regular height. Landscape is regular width and compact height.
     public static let iPhone16Plus = withRegularLandscape
 
+    /// Size classes of the iPhone 16.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     public static let iPhone16 = withCompactLandscape
 
+    /// Size classes of the iPhone 16e.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     public static let iPhone16e = withCompactLandscape
 
     // MARK: - iPhone 15
 
+    /// Size classes of the iPhone 15 Pro Max.
+    ///
+    /// Portrait is compact width and regular height. Landscape is regular width and compact height.
     public static let iPhone15ProMax = withRegularLandscape
 
+    /// Size classes of the iPhone 15 Pro.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     public static let iPhone15Pro = withCompactLandscape
 
+    /// Size classes of the iPhone 15 Plus.
+    ///
+    /// Portrait is compact width and regular height. Landscape is regular width and compact height.
     public static let iPhone15Plus = withRegularLandscape
 
+    /// Size classes of the iPhone 15.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     public static let iPhone15 = withCompactLandscape
 
     // MARK: - iPhone 14
 
+    /// Size classes of the iPhone 14 Pro Max.
+    ///
+    /// Portrait is compact width and regular height. Landscape is regular width and compact height.
     public static let iPhone14ProMax = withRegularLandscape
 
+    /// Size classes of the iPhone 14 Pro.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     public static let iPhone14Pro = withCompactLandscape
 
+    /// Size classes of the iPhone 14 Plus.
+    ///
+    /// Portrait is compact width and regular height. Landscape is regular width and compact height.
     public static let iPhone14Plus = withRegularLandscape
 
+    /// Size classes of the iPhone 14.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     public static let iPhone14 = withCompactLandscape
 
     // MARK: - iPhone 13
 
+    /// Size classes of the iPhone 13 Pro Max.
+    ///
+    /// Portrait is compact width and regular height. Landscape is regular width and compact height.
     public static let iPhone13ProMax = withRegularLandscape
 
+    /// Size classes of the iPhone 13 Pro.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     public static let iPhone13Pro = withCompactLandscape
 
+    /// Size classes of the iPhone 13.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     public static let iPhone13 = withCompactLandscape
 
+    /// Size classes of the iPhone 13 mini.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     public static let iPhone13Mini = withCompactLandscape
 
     // MARK: - iPhone 12
 
+    /// Size classes of the iPhone 12 Pro Max.
+    ///
+    /// Portrait is compact width and regular height. Landscape is regular width and compact height.
     public static let iPhone12ProMax = withRegularLandscape
 
+    /// Size classes of the iPhone 12 Pro.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     public static let iPhone12Pro = withCompactLandscape
 
+    /// Size classes of the iPhone 12.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     public static let iPhone12 = withCompactLandscape
 
+    /// Size classes of the iPhone 12 mini.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     public static let iPhone12Mini = withCompactLandscape
 
     // MARK: - iPhone 11
 
+    /// Size classes of the iPhone 11 Pro Max.
+    ///
+    /// Portrait is compact width and regular height. Landscape is regular width and compact height.
     public static let iPhone11ProMax = withRegularLandscape
 
+    /// Size classes of the iPhone 11 Pro.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     public static let iPhone11Pro = withCompactLandscape
 
+    /// Size classes of the iPhone 11.
+    ///
+    /// Portrait is compact width and regular height. Landscape is regular width and compact height.
     public static let iPhone11 = withRegularLandscape
 
     // MARK: - iPhone XS
 
+    /// Size classes of the iPhone XS Max.
+    ///
+    /// Portrait is compact width and regular height. Landscape is regular width and compact height.
     public static let iPhoneXSMax = withRegularLandscape
 
+    /// Size classes of the iPhone XS.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     public static let iPhoneXS = withCompactLandscape
 
     // MARK: - iPhone XR
 
+    /// Size classes of the iPhone XR.
+    ///
+    /// Portrait is compact width and regular height. Landscape is regular width and compact height.
     public static let iPhoneXR = withRegularLandscape
 
     // MARK: - iPhone X
 
+    /// Size classes of the iPhone X.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     @available(*, deprecated, message: "iPhoneX is not supported by iOS 17 or later.")
     public static let iPhoneX = withCompactLandscape
 
     // MARK: - iPhone 8
 
+    /// Size classes of the iPhone 8 Plus.
+    ///
+    /// Portrait is compact width and regular height. Landscape is regular width and compact height.
     @available(*, deprecated, message: "iPhone8Plus is not supported by iOS 17 or later.")
     public static let iPhone8Plus = withRegularLandscape
 
+    /// Size classes of the iPhone 8.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     @available(*, deprecated, message: "iPhone8 is not supported by iOS 17 or later.")
     public static let iPhone8 = withCompactLandscape
 
     // MARK: - iPhone SE
 
+    /// Size classes of the iPhone SE.
+    ///
+    /// Portrait is compact width and regular height. Landscape is compact width and compact height.
     public static let iPhoneSE = withCompactLandscape
 
     // MARK: - iPhone Private Methods
@@ -222,6 +312,7 @@ extension DeviceDynamicInterfaceSizeClass {
         landscape: .init(horizontal: .compact, vertical: .compact)
     )
 
+    /// Size classes of an iPhone: compact width and regular height in portrait, and `landscape()` in landscape.
     private static func iOS(
         landscape: @autoclosure @escaping @Sendable () -> DeviceInterfaceSizeClass
     ) -> DeviceDynamicInterfaceSizeClass {
@@ -241,6 +332,10 @@ extension DeviceDynamicInterfaceSizeClass {
 // MARK: - iPads
 extension DeviceDynamicInterfaceSizeClass {
 
+    /// Size classes of an iPad, resolved from the size being rendered.
+    ///
+    /// The width is regular when it is at least 75% of the height, otherwise compact.
+    /// The height is regular when it is more than 50% of the width, otherwise compact.
     public static let iPadOS = DeviceDynamicInterfaceSizeClass { size in
         let horizontal: InterfaceSizeClass
         let vertical: InterfaceSizeClass
@@ -264,14 +359,17 @@ extension DeviceDynamicInterfaceSizeClass {
 // MARK: - Regular Sizes
 extension DeviceDynamicInterfaceSizeClass {
 
+    /// Size classes of macOS, always regular in both directions.
     public static let macOS = DeviceDynamicInterfaceSizeClass(
         constant: DeviceInterfaceSizeClass(horizontal: .regular, vertical: .regular)
     )
 
+    /// Size classes of tvOS, always regular in both directions.
     public static let tvOS = DeviceDynamicInterfaceSizeClass(
         constant: DeviceInterfaceSizeClass(horizontal: .regular, vertical: .regular)
     )
 
+    /// Size classes of visionOS, always regular in both directions.
     public static let visionOS = DeviceDynamicInterfaceSizeClass(
         constant: DeviceInterfaceSizeClass(horizontal: .regular, vertical: .regular)
     )
@@ -280,12 +378,14 @@ extension DeviceDynamicInterfaceSizeClass {
 // MARK: - WatchOS
 extension DeviceDynamicInterfaceSizeClass {
 
+    /// Size classes of watchOS, always compact in both directions.
     public static let watchOS = DeviceDynamicInterfaceSizeClass(
         constant: DeviceInterfaceSizeClass(horizontal: .compact, vertical: .compact)
     )
 }
 
 #if os(iOS) || os(tvOS) || os(visionOS)
+/// Stores ``Traits/deviceInterfaceSizeClass``, applied as the horizontal and vertical size classes.
 private struct DeviceInterfaceSizeClassTraitKey: TraitKey {
 
     static let defaultValue = DeviceInterfaceSizeClass(

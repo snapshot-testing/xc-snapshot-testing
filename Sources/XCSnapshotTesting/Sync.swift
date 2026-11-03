@@ -3,15 +3,7 @@
 
 import Foundation
 
-/// A continuation that allows resuming a synchronous operation with a value or error.
-///
-/// `SyncContinuation` is used to signal the completion of a synchronous operation,
-/// either by returning a value or throwing an error. It provides a way to bridge
-/// between synchronous and asynchronous code, particularly in the context of
-/// ``Sync`` workflows.
-///
-/// - Note: This type is designed to be `Sendable`, making it suitable for use
-///   in concurrent environments.
+/// Delivers the outcome of a ``Sync`` operation: a value or an error.
 public struct SyncContinuation<Output>: Sendable {
 
     fileprivate let block: @Sendable (Result<Output, Error>) -> Void
@@ -23,13 +15,7 @@ public struct SyncContinuation<Output>: Sendable {
         self.block = block
     }
 
-    /// Resumes the continuation with a result.
-    ///
-    /// Only the first call has an effect. A closure that resumes the continuation and then throws,
-    /// or one that calls back more than once, would otherwise report two results for one operation:
-    /// an unbalanced `DispatchGroup`, or a checked continuation resumed twice.
-    ///
-    /// - Parameter result: The result to resume the continuation with.
+    /// Delivers `result`.
     public func resume(with result: Result<Output, Error>) {
         guard hasResumed.claim() else {
             return
@@ -38,16 +24,12 @@ public struct SyncContinuation<Output>: Sendable {
         block(result)
     }
 
-    /// Resumes the continuation with a success value.
-    ///
-    /// - Parameter value: The value to resume the continuation with.
+    /// Delivers `value`.
     public func resume(returning value: Output) {
         resume(with: .success(value))
     }
 
-    /// Resumes the continuation by throwing an error.
-    ///
-    /// - Parameter error: The error to resume the continuation with.
+    /// Delivers `error`.
     public func resume(throwing error: Error) {
         resume(with: .failure(error))
     }
@@ -67,22 +49,19 @@ private final class ResumeOnce: @unchecked Sendable {
     }
 }
 
-/// A wrapper for synchronous operations that allows composing and transforming workflows with input and output values.
+/// A synchronous operation from an `Input` to an `Output`.
 ///
-/// `Sync` provides a functional interface for executing synchronous tasks, with support for mapping outputs, pulling back inputs, and inserting delays.
-///
-/// - Parameters:
-///   - Input: The type of input value the synchronous operation accepts.
-///   - Output: The type of output value the synchronous operation produces.
+/// It is the executor of the snapshots that run synchronously. Operations are composed with `map`,
+/// `pullback` and `sleep`, and the result is delivered through a callback.
 public struct Sync<Input, Output>: SnapshotExecutor {
 
     private let producer: @Sendable (Input, SyncContinuation<Output>) -> Void
 
-    /// Initializes a `Sync` instance with a specific input type and block.
+    /// Creates an operation from a block that delivers its output through a continuation.
     ///
     /// - Parameters:
-    ///   - inputType: The type of input value. This is inferred from the block if not explicitly provided.
-    ///   - block: A closure that takes an input value and a continuation for the output, potentially throwing an error.
+    ///   - inputType: The type of the input. It is inferred from `block` when omitted.
+    ///   - block: The work to do. It receives the input and a ``SyncContinuation`` for the output.
     public init(
         _ inputType: Input.Type = Input.self,
         _ block: @escaping @Sendable (Input, SyncContinuation<Output>) throws -> Void
@@ -96,11 +75,11 @@ public struct Sync<Input, Output>: SnapshotExecutor {
         }
     }
 
-    /// Initializes a `Sync` instance with a specific input type and block.
+    /// Creates an operation from a block that returns its output or throws.
     ///
     /// - Parameters:
-    ///   - inputType: The type of input value. This is inferred from the block if not explicitly provided.
-    ///   - block: A closure that takes an input value and returns an output value, potentially throwing an error.
+    ///   - inputType: The type of the input. It is inferred from `block` when omitted.
+    ///   - block: The work to do. It receives the input.
     public init(
         _ inputType: Input.Type = Input.self,
         _ block: @escaping @Sendable (Input) throws -> Output
@@ -110,19 +89,11 @@ public struct Sync<Input, Output>: SnapshotExecutor {
         }
     }
 
-    /// Invokes the synchronous operation with the given input and completion handler.
-    ///
-    /// This method allows executing the `Sync` operation by providing an `Input` value and a
-    /// completion callback that receives the result. The callback is invoked when the operation
-    /// completes, either with a success value or an error.
+    /// Runs the operation.
     ///
     /// - Parameters:
-    ///   - input: The input value to pass to the synchronous operation.
-    ///   - callback: A closure that handles the result of the operation. It receives a
-    ///     `Result<Output, Error>` indicating success or failure.
-    ///
-    /// - Note: This method is designed for synchronous execution, but the ``SyncContinuation``
-    ///   mechanism allows bridging to asynchronous patterns when needed.
+    ///   - input: The input of the operation.
+    ///   - callback: Called with the output, or with the error the operation threw.
     public func callAsFunction(
         _ input: Input,
         callback: @escaping @Sendable (Result<Output, Error>) -> Void
@@ -144,16 +115,10 @@ public struct Sync<Input, Output>: SnapshotExecutor {
 
 extension Sync {
 
-    /// Transforms the output of this `Sync` operation using a closure that takes the output and a continuation for the new type.
+    /// Transforms the output with a block that delivers the new output through a continuation.
     ///
-    /// This method allows for custom transformation logic where the closure can manually manage the continuation
-    /// for the new output type. The closure is provided with the original output and a continuation for the new type.
-    ///
-    /// - Parameters:
-    ///   - block: A closure that takes the output of this `Sync` and a continuation for the new output type,
-    ///     and performs the transformation.
-    ///
-    /// - Returns: A new `Sync` instance that produces the transformed output.
+    /// - Parameter block: Receives the output and a continuation for the new output.
+    /// - Returns: An operation that produces the transformed output.
     public func map<NewOutput>(
         _ block: @escaping @Sendable (Output, SyncContinuation<NewOutput>) -> Void
     ) -> Sync<Input, NewOutput> {
@@ -169,15 +134,10 @@ extension Sync {
         }
     }
 
-    /// Transforms the output of this `Sync` operation using a closure that maps the output to a new type.
+    /// Transforms the output with a block that may throw.
     ///
-    /// This method provides a convenient way to transform the output by applying a closure that may throw.
-    /// The closure is called with the output of this `Sync`, and the result is passed to the continuation.
-    ///
-    /// - Parameters:
-    ///   - block: A closure that takes the output of this `Sync`, may throw an error, and returns a new output type.
-    ///
-    /// - Returns: A new `Sync` instance that produces the transformed output.
+    /// - Parameter block: Receives the output and returns the new output.
+    /// - Returns: An operation that produces the transformed output.
     public func map<NewOutput>(
         _ block: @escaping @Sendable (Output) throws -> NewOutput
     ) -> Sync<Input, NewOutput> {
@@ -197,13 +157,10 @@ extension Sync {
         }
     }
 
-    /// Creates a new `Sync` instance that transforms the input using the provided closure.
+    /// Adapts the input of the operation to another type.
     ///
-    /// This method allows adapting a `NewInput` to the expected `Input` type of the original `Sync` operation.
-    /// The closure is responsible for converting the new input into the original input type.
-    ///
-    /// - Parameter block: A closure that takes a `NewInput` and produces an `Input`, possibly throwing an error.
-    /// - Returns: A new `Sync` instance that operates on `NewInput` but uses the original `Input` type internally.
+    /// - Parameter block: Converts a `NewInput` into the `Input` of this operation. It may throw.
+    /// - Returns: An operation that takes a `NewInput`.
     public func pullback<NewInput>(
         _ block: @escaping @Sendable (NewInput) throws -> Input
     ) -> Sync<NewInput, Output> {
@@ -218,15 +175,11 @@ extension Sync {
         }
     }
 
-    /// Creates a new `Sync` instance that transforms the input using a continuation-based closure.
+    /// Adapts the input of the operation to another type, with a block that delivers the converted
+    /// input through a continuation.
     ///
-    /// This method provides low-level control over input transformation, allowing asynchronous or
-    /// complex logic through the `SyncContinuation` parameter. The closure must handle both success
-    /// and failure cases when converting `NewInput` to `Input`.
-    ///
-    /// - Parameter block: A closure that takes a `NewInput` and a continuation for `Input`, performing
-    ///   the transformation asynchronously or with custom logic.
-    /// - Returns: A new `Sync` instance that operates on `NewInput` but uses the original `Input` type internally.
+    /// - Parameter block: Receives a `NewInput` and a continuation for the `Input` of this operation.
+    /// - Returns: An operation that takes a `NewInput`.
     public func pullback<NewInput>(
         _ block: @escaping @Sendable (NewInput, SyncContinuation<Input>) -> Void
     ) -> Sync<NewInput, Output> {
@@ -250,17 +203,10 @@ extension Sync {
 
 extension Sync where Output: Sendable {
 
-    /// Transforms the output of this `Sync` operation using an asynchronous closure that may throw.
+    /// Transforms the output with an asynchronous block, which makes the operation asynchronous.
     ///
-    /// This method allows for asynchronous transformation of the output by applying a closure
-    /// that can throw errors. The closure is called with the output of this `Sync`, and the result
-    /// is passed to the continuation of the new `Async` instance.
-    ///
-    /// - Parameters:
-    ///   - block: A closure that takes the output of this `Sync`, may throw an error, and returns
-    ///     a new output type `NewOutput` which must be `Sendable`.
-    ///
-    /// - Returns: A new `Async` instance that produces the transformed output.
+    /// - Parameter block: Receives the output and returns the new output. It may throw.
+    /// - Returns: An ``Async`` operation that produces the transformed output.
     public func map<NewOutput: Sendable>(
         _ block: @escaping @Sendable (Output) async throws -> NewOutput
     ) -> Async<Input, NewOutput> where Input: Sendable {
@@ -270,15 +216,11 @@ extension Sync where Output: Sendable {
         }
     }
 
-    /// Creates a new `Async` instance that transforms the input using an asynchronous closure.
+    /// Adapts the input of the operation to another type, with an asynchronous block that makes the
+    /// operation asynchronous.
     ///
-    /// This method adapts a `NewInput` to the expected `Input` type of the original `Sync` operation
-    /// by applying the provided async closure. The closure may throw errors and returns an `Input`.
-    /// The resulting `Async` instance operates on `NewInput` but uses the original `Input` type internally.
-    ///
-    /// - Parameter block: A closure that takes a `NewInput` and returns an `Input`, possibly throwing an error.
-    /// - Returns: A new `Async` instance that produces the original `Output` type, adapted from `NewInput`.
-    /// - Requires: `Output` must conform to `Sendable` for this method to be available.
+    /// - Parameter block: Converts a `NewInput` into the `Input` of this operation. It may throw.
+    /// - Returns: An ``Async`` operation that takes a `NewInput`.
     public func pullback<NewInput: Sendable>(
         _ block: @escaping @Sendable (NewInput) async throws -> Input
     ) -> Async<NewInput, Output> where Output: Sendable {
@@ -291,15 +233,10 @@ extension Sync where Output: Sendable {
 
 extension Sync where Input: Sendable, Output: Sendable {
 
-    /// Introduces a delay in the synchronous operation before resuming.
+    /// Waits after the operation has produced its output, before passing it on.
     ///
-    /// This method provides a convenient way to pause the execution of a `Sync` operation
-    /// for the specified number of nanoseconds. The operation resumes after the delay,
-    /// preserving the original input and output values.
-    ///
-    /// - Parameter duration: The duration of the delay in nanoseconds.
-    /// - Returns: An `Async` instance that represents the delayed operation, preserving
-    ///           the original input and output types.
+    /// - Parameter duration: The time to wait, in nanoseconds.
+    /// - Returns: An ``Async`` operation with the same input and output.
     public func sleep(nanoseconds duration: UInt64) -> Async<Input, Output> {
         map {
             try await Task.sleep(nanoseconds: duration)
@@ -307,17 +244,13 @@ extension Sync where Input: Sendable, Output: Sendable {
         }
     }
 
-    /// Delays the execution of the synchronous operation until the specified deadline.
-    ///
-    /// This method introduces a delay in the operation's execution, pausing it until the given `deadline` is reached.
-    /// The delay can be adjusted with a `tolerance` and uses the specified `clock` for timing.
+    /// Waits until `deadline`, after the operation has produced its output, before passing it on.
     ///
     /// - Parameters:
-    ///   - deadline: The time until which the operation should be delayed.
-    ///   - tolerance: The allowable deviation from the deadline. If `nil`, no tolerance is applied.
-    ///   - clock: The clock to use for measuring time. Defaults to `.continuous`.
-    ///
-    /// - Returns: An `Async` instance that represents the delayed operation, preserving the original input and output types.
+    ///   - deadline: The instant to wait for.
+    ///   - tolerance: How far from `deadline` the wait may end. With `nil`, the clock decides.
+    ///   - clock: The clock that measures the wait.
+    /// - Returns: An ``Async`` operation with the same input and output.
     @available(macOS 13.0, iOS 16.0, tvOS 16.0, *)
     public func sleep<C>(
         until deadline: C.Instant,
@@ -334,18 +267,13 @@ extension Sync where Input: Sendable, Output: Sendable {
         }
     }
 
-    /// Delays the execution of the synchronous operation for the specified duration.
-    ///
-    /// This method introduces a delay in the operation's execution, pausing it for the given `duration`.
-    /// The delay can be adjusted with a `tolerance` and uses the specified `clock` for timing.
+    /// Waits for `duration`, after the operation has produced its output, before passing it on.
     ///
     /// - Parameters:
-    ///   - duration: The duration of the delay.
-    ///   - tolerance: The allowable deviation from the duration. If `nil`, no tolerance is applied.
-    ///   - clock: The clock to use for measuring time. Defaults to `.continuous`.
-    ///
-    /// - Returns: An `Async` instance that represents the delayed operation, preserving
-    ///           the original input and output types.
+    ///   - duration: How long to wait.
+    ///   - tolerance: How far from `duration` the wait may end. With `nil`, the clock decides.
+    ///   - clock: The clock that measures the wait.
+    /// - Returns: An ``Async`` operation with the same input and output.
     @available(macOS 13.0, iOS 16.0, tvOS 16.0, *)
     public func sleep<C>(
         for duration: C.Instant.Duration,
@@ -488,9 +416,10 @@ private final class Locked<Value>: @unchecked Sendable {
 
 extension Array {
 
-    /// Runs the executors one after the other and collects their outputs in order.
+    /// Combines the `Sync` values of the array into one that runs them one after another on the same input.
     ///
-    /// The first failure ends the sequence and is the failure of the result.
+    /// The outputs come back in the order of the array. A `Sync` that fails is skipped: its error
+    /// is dropped instead of being thrown.
     func sequence<Input, Output>() -> Sync<Input, [Output]> where Element == Sync<Input, Output> {
         guard !isEmpty else {
             return Sync { _ in [] }

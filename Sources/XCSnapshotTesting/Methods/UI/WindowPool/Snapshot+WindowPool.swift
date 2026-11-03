@@ -9,6 +9,10 @@ import UIKit
 
 #if os(iOS) || os(tvOS) || os(visionOS) || os(macOS)
 extension Snapshot {
+    /// Runs `operation` in a window leased from the pool, and gives the window back afterwards,
+    /// whether `operation` succeeds or throws.
+    ///
+    /// The number of windows in the pool is limited by ``SnapshotEnvironmentValues/maxConcurrentTests``.
     func withWindow<NewInput>(
         sessionRole: UISceneSession.Role,
         application: SDKApplication?,
