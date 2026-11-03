@@ -18,6 +18,7 @@ import WebKit
 @MainActor
 extension SDKView {
 
+    /// Draws the view into an image of the size of its bounds.
     func asImage() -> SDKImage {
         #if os(macOS)
         guard let rep = bitmapImageRepForCachingDisplay(in: bounds) else {
@@ -38,10 +39,14 @@ extension SDKView {
         #endif
     }
 
+    /// Wraps the view in a controller that uses it as its own view.
     func withController() -> SDKViewController {
         UIViewHostingController(self)
     }
 
+    /// Waits for the web views in the hierarchy to finish loading, within `tolerance`.
+    ///
+    /// Does nothing on platforms without web views.
     func waitLoadingStateIfNeeded(tolerance: TimeInterval) async {
         #if os(iOS) || os(macOS) || os(visionOS)
         if let webView = self as? WKWebView {
@@ -55,6 +60,10 @@ extension SDKView {
         #endif
     }
 
+    /// Marks the view and its subviews as needing layout.
+    ///
+    /// Does nothing for a view that is not in a window. The contents of table and collection views
+    /// are left alone, because they manage the layout of their cells.
     func recursiveNeedsLayout() {
         guard window != nil else {
             return
@@ -84,6 +93,7 @@ extension SDKView {
 }
 
 @MainActor
+/// A controller whose view is a given view, used to host a bare view as a child controller.
 private class UIViewHostingController: SDKViewController {
 
     private let contentView: SDKView
@@ -127,6 +137,7 @@ extension SDKView {
 
 extension Snapshot {
 
+    /// Makes the snapshot wait for the lock of its input before it runs, so two snapshots of the same view never render at once.
     func withLock<Input: SDKView, Output: BytesRepresentable>() -> AsyncSnapshot<Input, Output>
     where Executor == Async<Input, Output> {
         map { executor in
@@ -158,6 +169,7 @@ extension SDKView {
         }
     }
 
+    /// Remembers `traits`, and warns if the view was last used with different ones.
     func inconsistentTraitsChecker(for traits: Traits) {
         defer { self.traits = traits }
         self.traits?.inconsistentTraitsChecker(self, to: traits)
@@ -166,6 +178,7 @@ extension SDKView {
 
 extension Snapshot {
 
+    /// Makes the snapshot check the traits of its input view before it runs.
     func inconsistentTraitsChecker<Input: SDKView, Output: BytesRepresentable>(
         _ traits: @escaping @Sendable () -> Traits
     ) -> AsyncSnapshot<Input, Output> where Executor == Async<Input, Output> {

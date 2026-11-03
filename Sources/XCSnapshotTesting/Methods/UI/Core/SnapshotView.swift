@@ -8,6 +8,10 @@ import AppKit
 #endif
 
 #if os(iOS) || os(tvOS) || os(visionOS) || os(macOS)
+/// The root view of a snapshot.
+///
+/// It centers the content in views that are scaled down when the content is bigger than the space
+/// available, and it works out the frame to capture.
 class SnapshotView: SDKView {
 
     let configuration: LayoutConfiguration
@@ -43,6 +47,7 @@ class SnapshotView: SDKView {
     }
     #endif
 
+    /// Detaches the hosted views and stops following their sizes.
     func dispose() {
         defer { sizableViews = [:] }
 
@@ -52,6 +57,7 @@ class SnapshotView: SDKView {
         }
     }
 
+    /// Hosts `view` at the center, and follows the size that `sizeListener` reports for it.
     func add(_ view: SDKView, with sizeListener: SizeListener) {
         defer { sizeListener.delegate = self }
 
@@ -89,6 +95,7 @@ class SnapshotView: SDKView {
         sizableViews[sizeListener.id] = (transformableView, sizeListener)
     }
 
+    /// The frame to capture: the biggest hosted content plus the safe area, scaled to fit, centered in the bounds.
     func calculateContentFrame() -> CGRect {
         var contentSize = sizableViews.values.reduce(CGSize.zero) {
             CGSize(
@@ -121,6 +128,9 @@ class SnapshotView: SDKView {
         }
     }
 
+    /// Scales `transformableView` down so that content of `size` fits, and lays it out again.
+    ///
+    /// On macOS the contents scale of the layer changes instead of a transform.
     private func downscale(_ transformableView: SDKView, with size: CGSize) {
         let safeArea = configuration.safeArea
         let scale = scale(
@@ -142,6 +152,7 @@ class SnapshotView: SDKView {
         #endif
     }
 
+    /// The factor, never above 1, that makes `size` fit in the frame minus the safe area insets.
     private func scale(for size: CGSize) -> CGFloat {
         guard frame.size.height > .zero && frame.size.width > .zero else {
             return 1

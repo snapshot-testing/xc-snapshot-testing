@@ -14,13 +14,11 @@ extension AsyncSnapshot where Input: SCNScene & Sendable, Output == ImageBytes {
     /// A snapshot strategy for comparing SceneKit scenes based on pixel equality.
     ///
     /// - Parameters:
-    ///   - precision: The percentage of pixels that must match.
-    ///   - perceptualPrecision: The percentage a pixel must match the source pixel to be considered a
-    ///     match. 98-99% mimics
-    ///     [the precision](http://zschuessler.github.io/DeltaE/learn/#toc-defining-delta-e) of the
-    ///     human eye.
+    ///   - precision: The share of pixels, from 0 to 1, that must be the same.
+    ///   - perceptualPrecision: How close in color a pixel must be, from 0 to 1, to count as the same.
+    ///     Values of 0.98 to 0.99 match what the human eye can tell apart.
     ///   - size: The size of the scene.
-    ///   - delay: Delay before capturing the image (useful for waiting for animations or dynamic content).
+    ///   - delay: Seconds to wait before capturing, for animations or content that loads.
     ///   - application: The `NSApplication` instance to render the windows.
     public static func image(
         precision: Float = 1,
@@ -45,13 +43,11 @@ extension Snapshot where Input: SCNScene & Sendable, Output == ImageBytes {
     ///
     /// - Parameters:
     ///   - sessionRole: Defines the role of the UI session (default is `.windowApplication`).
-    ///   - precision: The percentage of pixels that must match.
-    ///   - perceptualPrecision: The percentage a pixel must match the source pixel to be considered a
-    ///     match. 98-99% mimics
-    ///     [the precision](http://zschuessler.github.io/DeltaE/learn/#toc-defining-delta-e) of the
-    ///     human eye.
+    ///   - precision: The share of pixels, from 0 to 1, that must be the same.
+    ///   - perceptualPrecision: How close in color a pixel must be, from 0 to 1, to count as the same.
+    ///     Values of 0.98 to 0.99 match what the human eye can tell apart.
     ///   - size: The size of the scene.
-    ///   - delay: Delay before capturing the image (useful for waiting for animations or dynamic content).
+    ///   - delay: Seconds to wait before capturing, for animations or content that loads.
     ///   - application: The `UIApplication` instance to render the windows.
     public static func image(
         sessionRole: UISceneSession.Role = .windowApplication,
@@ -75,6 +71,7 @@ extension Snapshot where Input: SCNScene & Sendable, Output == ImageBytes {
 
 extension Snapshot where Input: SCNScene & Sendable, Output == ImageBytes {
 
+    /// Shows the scene in a `SCNView` of the given size and snapshots that view as an image.
     fileprivate static func scnScene(
         sessionRole: UISceneSession.Role,
         precision: Float,

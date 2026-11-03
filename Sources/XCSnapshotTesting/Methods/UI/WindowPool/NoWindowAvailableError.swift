@@ -8,6 +8,7 @@ import UIKit
 #endif
 
 #if os(iOS) || os(tvOS) || os(visionOS) || os(macOS)
+/// The error thrown when no window can host the snapshot.
 struct NoWindowAvailableError: Error, CustomDebugStringConvertible {
     #if !os(macOS)
     let sessionRole: UISceneSession.Role
@@ -48,6 +49,7 @@ struct NoWindowAvailableError: Error, CustomDebugStringConvertible {
 #endif
 
 #if os(macOS)
+/// A stand-in for the UIKit type, so that code shared with the other platforms compiles on macOS.
 enum UISceneSession {
     enum Role {
         case windowApplication

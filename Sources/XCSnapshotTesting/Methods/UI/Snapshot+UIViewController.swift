@@ -10,47 +10,22 @@ import UIKit
 #if os(iOS) || os(tvOS) || os(visionOS)
 extension AsyncSnapshot where Input: UIKit.UIViewController, Output == ImageBytes {
 
-    /// Default configuration for capturing `UIViewController` as image snapshots.
-    ///
-    /// This configuration provides a basic setup for capturing view controllers with default settings.
-    /// It renders the view controller's view with default sizing and comparison precision.
-    ///
-    /// - Note: This configuration is suitable for simple view controllers where custom sizing or
-    ///   comparison settings are not required.
+    /// Renders a `UIViewController` as an image, with the default settings. The view is sized to its natural size.
     public static var image: AsyncSnapshot<Input, Output> {
         .image()
     }
 
-    /// Creates a custom image snapshot configuration for `UIViewController`.
-    ///
-    /// This configuration allows you to capture `UIViewController` instances with custom settings for
-    /// layout, comparison precision, and other visual traits. It renders the view controller's view
-    /// in isolation, making it ideal for screen testing.
+    /// Renders a `UIViewController` as an image. The controller is shown as the root of a window of its own.
     ///
     /// - Parameters:
-    ///   - sessionRole: Defines the role of the UI session (default is `.windowApplication`).
-    ///   - precision: Pixel tolerance for comparison (1 = perfect match, lower values allow more variation).
-    ///   - perceptualPrecision: Tolerance for color and tonal differences (values closer to 1 require more exact matches).
-    ///   - layout: Specifies how the view should be sized during rendering (e.g., specific device simulation).
-    ///   - traits: Collection of UI traits (e.g., accessibility features, display characteristics).
-    ///   - delay: Delay before capturing the image (useful for waiting for animations or dynamic content).
-    ///   - prepare: An asynchronous closure that runs on the main actor after the layout, the `delay` and the web view loading, and right before the snapshot is taken. Use it to wait for conditions such as `onAppear` having run or background tasks having finished.
-    ///   - application: The `UIApplication` instance to render the windows.
-    ///
-    /// Example usage:
-    /// ```swift
-    /// let viewController = UIViewController()
-    /// viewController.view.backgroundColor = .red
-    /// viewController.view.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
-    ///
-    /// try await assert(
-    ///     of: viewController,
-    ///     as: .image(
-    ///         layout: .device(.iPhone15Pro),
-    ///         precision: 0.98
-    ///     )
-    /// )
-    /// ```
+    ///   - sessionRole: The role of the scene session the window belongs to.
+    ///   - precision: The share of pixels, from 0 to 1, that must be the same. `1` requires every pixel to match.
+    ///   - perceptualPrecision: How close in color a pixel must be, from 0 to 1, to count as the same. `1` requires an exact match.
+    ///   - layout: How the content is sized: for a device, to a fixed size, or to its natural size.
+    ///   - traits: Traits to apply, over the ones of the environment.
+    ///   - delay: Seconds to wait after the layout and before capturing, for animations or content that loads.
+    ///   - prepare: Runs on the main actor after the layout, the delay and the web view loading, right before the capture. Use it to wait for something, such as `onAppear` having run.
+    ///   - application: The application whose windows host the content. With `nil`, the shared application is used.
     public static func image(
         sessionRole: UISceneSession.Role = .windowApplication,
         precision: Float = 1,
@@ -93,77 +68,24 @@ extension AsyncSnapshot where Input: UIKit.UIViewController, Output == ImageByte
 
 extension AsyncSnapshot where Input: UIKit.UIViewController, Output == StringBytes {
 
-    /// A snapshot strategy for comparing view controllers based on their embedded controller hierarchy.
-    ///
-    /// This strategy captures a text-based representation of the view controller hierarchy, including states like "appeared" or "disappeared."
-    /// It's useful for verifying the structural integrity of complex view controller hierarchies without relying on visual image comparisons.
-    ///
-    /// Example usage:
-    /// ```swift
-    /// let tabBarController = UITabBarController()
-    /// tabBarController.viewControllers = [UIViewController(), UIViewController()]
-    ///
-    /// try await assert(of: tabBarController, as: .hierarchy)
-    /// ```
-    ///
-    /// Recorded snapshot:
-    ///
-    /// ```
-    /// <UITabBarController>, state: appeared, view: <UILayoutContainerView>
-    ///    | <UINavigationController>, state: appeared, view: <UILayoutContainerView>
-    ///    |    | <UIViewController>, state: appeared, view: <UIView>
-    ///    | <UINavigationController>, state: disappeared, view: <UILayoutContainerView> not in the window
-    ///    |    | <UIViewController>, state: disappeared, view: (view not loaded)
-    /// ```
+    /// Describes the hierarchy of child view controllers as text, with the private `_printHierarchy` method.
     public static var hierarchy: AsyncSnapshot<Input, Output> {
         Snapshot.hierarchy()
     }
 
-    /// A snapshot strategy for comparing view controller views based on a recursive description of their properties and hierarchies.
-    ///
-    /// This strategy captures a text-based representation of the view hierarchy, including property values like frames, opacity, and layer information.
-    /// It's useful for verifying the structural integrity of complex views within view controllers without relying on visual image comparisons.
-    ///
-    /// Example usage:
-    /// ```swift
-    /// let viewController = UIViewController()
-    /// viewController.view.backgroundColor = .red
-    /// viewController.view.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
-    ///
-    /// try await assert(of: viewController, as: .recursiveDescription)
-    /// ```
-    ///
-    /// Recorded snapshot:
-    ///
-    /// ```
-    /// <UIView; frame = (0 0; 100 100); opaque = NO; layer = <CALayer>>
-    /// ```
+    /// Describes the view hierarchy of the controller as text, with `recursiveDescription`.
     public static var recursiveDescription: AsyncSnapshot<Input, Output> {
         Snapshot.recursiveDescription()
     }
 
-    /// Creates a custom snapshot configuration for comparing view controllers based on their embedded controller hierarchy.
+    /// Describes the hierarchy of child view controllers as text. The text comes from the private `_printHierarchy` method.
     ///
     /// - Parameters:
-    ///   - sessionRole: Defines the role of the UI session (default is `.windowApplication`).
-    ///   - layout: Specifies how the view should be sized during rendering.
-    ///   - traits: Collection of UI traits (e.g., accessibility features, display characteristics).
-    ///   - delay: Delay before capturing the hierarchy description (useful for waiting for animations or dynamic content).
-    ///   - application: The `UIApplication` instance to render the windows.
-    ///
-    /// Example usage with custom layout:
-    /// ```swift
-    /// let viewController = UIViewController()
-    /// viewController.view.backgroundColor = .blue
-    /// viewController.view.frame = CGRect(x: 0, y: 0, width: 200, height: 300)
-    ///
-    /// try await assert(
-    ///     of: viewController,
-    ///     as: .hierarchy(
-    ///         layout: .fixed(width: 200, height: 300)
-    ///     )
-    /// )
-    /// ```
+    ///   - sessionRole: The role of the scene session the window belongs to.
+    ///   - layout: How the content is sized: for a device, to a fixed size, or to its natural size.
+    ///   - traits: Traits to apply, over the ones of the environment.
+    ///   - delay: Seconds to wait after the layout and before capturing, for animations or content that loads.
+    ///   - application: The application whose windows host the content. With `nil`, the shared application is used.
     public static func hierarchy(
         sessionRole: UISceneSession.Role = .windowApplication,
         layout: SnapshotLayout = .sizeThatFits,
@@ -181,28 +103,14 @@ extension AsyncSnapshot where Input: UIKit.UIViewController, Output == StringByt
         )
     }
 
-    /// Creates a custom snapshot configuration for comparing view controller views based on a recursive description of their properties and hierarchies.
+    /// Describes the view hierarchy of the controller as text. The text comes from `recursiveDescription`.
     ///
     /// - Parameters:
-    ///   - sessionRole: Defines the role of the UI session (default is `.windowApplication`).
-    ///   - layout: Specifies how the view should be sized during rendering.
-    ///   - traits: Collection of UI traits (e.g., accessibility features, display characteristics).
-    ///   - delay: Delay before capturing the recursive description (useful for waiting for animations or dynamic content).
-    ///   - application: The `UIApplication` instance to render the windows.
-    ///
-    /// Example usage with custom layout:
-    /// ```swift
-    /// let viewController = UIViewController()
-    /// viewController.view.backgroundColor = .green
-    /// viewController.view.frame = CGRect(x: 0, y: 0, width: 300, height: 400)
-    ///
-    /// try await assert(
-    ///     of: viewController,
-    ///     as: .recursiveDescription(
-    ///         layout: .fixed(width: 300, height: 400)
-    ///     )
-    /// )
-    /// ```
+    ///   - sessionRole: The role of the scene session the window belongs to.
+    ///   - layout: How the content is sized: for a device, to a fixed size, or to its natural size.
+    ///   - traits: Traits to apply, over the ones of the environment.
+    ///   - delay: Seconds to wait after the layout and before capturing, for animations or content that loads.
+    ///   - application: The application whose windows host the content. With `nil`, the shared application is used.
     public static func recursiveDescription(
         sessionRole: UISceneSession.Role = .windowApplication,
         layout: SnapshotLayout = .sizeThatFits,
@@ -220,6 +128,9 @@ extension AsyncSnapshot where Input: UIKit.UIViewController, Output == StringByt
         )
     }
 
+    /// Builds a text description of the view controller with `method`.
+    ///
+    /// The controller is laid out in a pooled window first, as it is for an image snapshot.
     private static func descriptor(
         method: SnapshotUIController.DescriptorMethod,
         sessionRole: UISceneSession.Role,

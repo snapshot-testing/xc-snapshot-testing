@@ -3,9 +3,7 @@
 
 import Foundation
 
-/// Represents the orientation of a device, either landscape or portrait.
-///
-/// - Note: This type is `Sendable` to allow safe sharing across concurrent operations.
+/// The orientation of a device, with the share of the screen it uses.
 public enum DeviceOrientation: Sendable {
 
     /// A landscape orientation with an extended layout ratio.
@@ -21,11 +19,9 @@ public enum DeviceOrientation: Sendable {
     case portrait(DeviceLayoutRatio)
 }
 
-/// Represents a device's layout ratio, with predefined values for compact, medium, regular, and extended.
-/// The raw value is a Double between 0 and 1, representing the ratio.
-/// - SeeAlso: DeviceOrientation
+/// The share of the width of the screen that a layout uses, from 0 to 1.
 ///
-/// - Note: This type is `Sendable` to allow safe sharing across concurrent operations.
+/// A ratio below 1 makes the layout narrower than the screen.
 public struct DeviceLayoutRatio: Sendable, RawRepresentable, ExpressibleByFloatLiteral, Hashable, Comparable {
 
     /// A compact layout ratio (1/3).

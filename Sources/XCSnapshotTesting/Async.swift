@@ -3,13 +3,10 @@
 
 import Foundation
 
-/// A wrapper for asynchronous operations that allows composing and transforming asynchronous workflows with input and output values.
+/// An asynchronous operation from an `Input` to an `Output`.
 ///
-/// `Async` provides a functional interface for executing asynchronous tasks, with support for mapping outputs, pulling back inputs, and inserting delays.
-///
-/// - Parameters:
-///   - Input: The type of input value the async operation accepts.
-///   - Output: The type of output value the async operation produces.
+/// It is the executor of the snapshots that run asynchronously. Operations are composed with `map`,
+/// `pullback` and `sleep`.
 public struct Async<Input: Sendable, Output: Sendable>: SnapshotExecutor {
 
     fileprivate let block: @Sendable (Input) async throws -> Output
@@ -26,11 +23,11 @@ public struct Async<Input: Sendable, Output: Sendable>: SnapshotExecutor {
         self.block = block
     }
 
-    /// Executes the asynchronous operation with the provided input value.
+    /// Runs the operation.
     ///
-    /// - Parameter input: The input value to pass to the asynchronous operation.
-    /// - Returns: The output value produced by the operation.
-    /// - Throws: Any error thrown by the asynchronous operation.
+    /// - Parameter input: The input of the operation.
+    /// - Returns: The output of the operation.
+    /// - Throws: An error thrown by the operation.
     public func callAsFunction(_ input: Input) async throws -> Output {
         try await block(input)
     }
@@ -38,10 +35,10 @@ public struct Async<Input: Sendable, Output: Sendable>: SnapshotExecutor {
 
 extension Async {
 
-    /// Transforms the output of the asynchronous operation using a new closure.
+    /// Transforms the output with an asynchronous block.
     ///
-    /// - Parameter block: A closure that takes the original output and returns a new value of type `NewOutput`.
-    /// - Returns: A new `Async` instance that applies this transformation.
+    /// - Parameter block: Receives the output and returns the new output. It may throw.
+    /// - Returns: An operation that produces the transformed output.
     public func map<NewOutput: Sendable>(
         _ block: @escaping @Sendable (Output) async throws -> NewOutput
     ) -> Async<Input, NewOutput> {
@@ -51,10 +48,10 @@ extension Async {
         }
     }
 
-    /// Transforms the input of the asynchronous operation using a new closure.
+    /// Adapts the input of the operation to another type.
     ///
-    /// - Parameter block: A closure that takes a new input value and returns a value of type `Input` to pass to this operation.
-    /// - Returns: A new `Async` instance that applies this input transformation.
+    /// - Parameter block: Converts a `NewInput` into the `Input` of this operation. It may throw.
+    /// - Returns: An operation that takes a `NewInput`.
     public func pullback<NewInput: Sendable>(
         _ block: @escaping @Sendable (NewInput) async throws -> Input
     ) -> Async<NewInput, Output> {
@@ -67,10 +64,9 @@ extension Async {
 
 extension Async {
 
-    /// Adds a delay before completing the asynchronous operation.
+    /// Waits after the operation has produced its output, before passing it on.
     ///
-    /// - Parameter duration: The duration of the delay in nanoseconds.
-    /// - Returns: A new `Async` instance with the delay applied.
+    /// - Parameter duration: The time to wait, in nanoseconds.
     public func sleep(nanoseconds duration: UInt64) -> Async<Input, Output> {
         guard duration > .zero else {
             return self
@@ -82,13 +78,12 @@ extension Async {
         }
     }
 
-    /// Adds a delay until a specific deadline before completing the asynchronous operation.
+    /// Waits until `deadline`, after the operation has produced its output, before passing it on.
     ///
     /// - Parameters:
-    ///   - deadline: The instant at which the delay should end.
-    ///   - tolerance: The allowed tolerance for the deadline.
-    ///   - clock: The clock to use for measuring time.
-    /// - Returns: A new `Async` instance with the delay applied.
+    ///   - deadline: The instant to wait for.
+    ///   - tolerance: How far from `deadline` the wait may end. With `nil`, the clock decides.
+    ///   - clock: The clock that measures the wait.
     @available(macOS 13.0, iOS 16.0, tvOS 16.0, *)
     public func sleep<C>(
         until deadline: C.Instant,
@@ -105,13 +100,12 @@ extension Async {
         }
     }
 
-    /// Adds a delay for a specific duration before completing the asynchronous operation.
+    /// Waits for `duration`, after the operation has produced its output, before passing it on.
     ///
     /// - Parameters:
-    ///   - duration: The duration of the delay.
-    ///   - tolerance: The allowed tolerance for the duration.
-    ///   - clock: The clock to use for measuring time.
-    /// - Returns: A new `Async` instance with the delay applied.
+    ///   - duration: How long to wait.
+    ///   - tolerance: How far from `duration` the wait may end. With `nil`, the clock decides.
+    ///   - clock: The clock that measures the wait.
     @available(macOS 13.0, iOS 16.0, tvOS 16.0, *)
     public func sleep<C>(
         for duration: C.Instant.Duration,

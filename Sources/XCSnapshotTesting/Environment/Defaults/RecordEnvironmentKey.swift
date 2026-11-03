@@ -12,11 +12,9 @@ private struct RecordEnvironmentKey: SnapshotEnvironmentKey {
 
 extension SnapshotEnvironmentValues {
 
-    /// The current record mode for snapshot testing.
+    /// The record mode of the snapshot tests.
     ///
-    /// This key is used to store and retrieve the ``RecordMode`` value within the environment
-    /// of a snapshot test. The default value is determined by the testing system's environment,
-    /// falling back to `.missing` if no environment is available.
+    /// A Swift Testing trait can set it. Otherwise, it is `.missing`.
     public var recordMode: RecordMode {
         get { self[RecordEnvironmentKey.self] }
         set { self[RecordEnvironmentKey.self] = newValue }

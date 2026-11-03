@@ -8,26 +8,17 @@ import UIKit
 #endif
 
 #if os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(macOS)
-/// Layout configuration for rendering elements in snapshot tests.
+/// The safe area, size and traits that a UI snapshot is rendered with.
 ///
-/// `LayoutConfiguration` defines properties like safe area margins, element size, and device traits
-/// (e.g., orientation, screen size) to simulate different display scenarios.
-///
-/// This struct helps create consistent rendering conditions for snapshot tests by specifying layout properties
-/// that mimic different devices and orientations. However, it's important to note that this configuration
-/// only simulates visual conditions and does not actually execute tests on the specified platform. Due to
-/// inherent differences in layout engines across platforms (iOS, macOS, tvOS), test results should be
-/// validated on the target platform to account for framework-specific behaviors (UIKit, SwiftUI, AppKit).
-///
-/// - Note: This struct encapsulates screen size, safe area insets, and device-specific traits to enable
-///   responsive UI layouts across iOS, iPadOS, and tvOS. It provides a way to standardize testing conditions
-///   while acknowledging that final visual verification should occur on the actual target platform.
-/// - SeeAlso: `LayoutConfiguration.iPadPro12_9`, `LayoutConfiguration.iPhone13`, `LayoutConfiguration.tv`
+/// The presets, such as `iPhone15Pro` or `iPadPro12_9`, mimic the screen of a device. They only
+/// set up the layout: the code still runs on the platform of the test, so a snapshot can differ from
+/// the same screen on the real device.
 public struct LayoutConfiguration: Sendable {
 
     // MARK: - Internal static methods
 
     #if os(macOS)
+    /// Turns a ``SnapshotLayout`` into the configuration used to render.
     static func resolve(_ snapshotLayout: SnapshotLayout) -> LayoutConfiguration {
         switch snapshotLayout {
         case .sizeThatFits:
@@ -38,6 +29,9 @@ public struct LayoutConfiguration: Sendable {
         }
     }
     #elseif os(iOS) || os(tvOS) || os(visionOS)
+    /// Turns a ``SnapshotLayout`` into the configuration used to render.
+    ///
+    /// The traits of a device layout are merged with `traits`, which win.
     static func resolve(
         _ snapshotLayout: SnapshotLayout,
         with traits: Traits
@@ -153,6 +147,7 @@ public struct LayoutConfiguration: Sendable {
 
 extension LayoutConfiguration {
 
+    /// Edge insets whose sides are optional, so a side left out can fall back to a default value.
     fileprivate struct EdgeInsets {
 
         static var zero: Self {
@@ -255,8 +250,13 @@ extension LayoutConfiguration {
 // MARK: - iPhone 17
 extension LayoutConfiguration {
 
+    /// Layout of the iPhone 17e in portrait.
     public static let iPhone17e: LayoutConfiguration = .iPhone17e(.portrait)
 
+    /// Layout of the iPhone 17e in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone17e(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_1v1,
@@ -267,8 +267,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 17 Pro Max in portrait.
     public static let iPhone17ProMax: LayoutConfiguration = .iPhone17ProMax(.portrait)
 
+    /// Layout of the iPhone 17 Pro Max in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone17ProMax(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_9,
@@ -280,8 +285,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 17 Pro in portrait.
     public static let iPhone17Pro: LayoutConfiguration = .iPhone17Pro(.portrait)
 
+    /// Layout of the iPhone 17 Pro in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone17Pro(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_3,
@@ -293,8 +303,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 17 in portrait.
     public static let iPhone17: LayoutConfiguration = .iPhone17(.portrait)
 
+    /// Layout of the iPhone 17 in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone17(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_3,
@@ -310,8 +325,13 @@ extension LayoutConfiguration {
 // MARK: - iPhone Air
 extension LayoutConfiguration {
 
+    /// Layout of the iPhone Air in portrait.
     public static let iPhoneAir: LayoutConfiguration = .iPhoneAir(.portrait)
 
+    /// Layout of the iPhone Air in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhoneAir(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_5v2,
@@ -327,8 +347,13 @@ extension LayoutConfiguration {
 // MARK: - iPhone 16
 extension LayoutConfiguration {
 
+    /// Layout of the iPhone 16 Pro Max in portrait.
     public static let iPhone16ProMax: LayoutConfiguration = .iPhone16ProMax(.portrait)
 
+    /// Layout of the iPhone 16 Pro Max in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone16ProMax(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_9,
@@ -339,8 +364,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 16 Pro in portrait.
     public static let iPhone16Pro: LayoutConfiguration = .iPhone16Pro(.portrait)
 
+    /// Layout of the iPhone 16 Pro in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone16Pro(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_3,
@@ -351,8 +381,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 16 Plus in portrait.
     public static let iPhone16Plus: LayoutConfiguration = .iPhone16Plus(.portrait)
 
+    /// Layout of the iPhone 16 Plus in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone16Plus(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_7v2,
@@ -363,8 +398,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 16 in portrait.
     public static let iPhone16: LayoutConfiguration = .iPhone16(.portrait)
 
+    /// Layout of the iPhone 16 in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone16(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_1v2,
@@ -375,8 +415,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 16e in portrait.
     public static let iPhone16e: LayoutConfiguration = .iPhone16e(.portrait)
 
+    /// Layout of the iPhone 16e in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone16e(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_1v1,
@@ -391,8 +436,13 @@ extension LayoutConfiguration {
 // MARK: - iPhone 15
 extension LayoutConfiguration {
 
+    /// Layout of the iPhone 15 Pro Max in portrait.
     public static let iPhone15ProMax: LayoutConfiguration = .iPhone15ProMax(.portrait)
 
+    /// Layout of the iPhone 15 Pro Max in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone15ProMax(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_7v2,
@@ -403,8 +453,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 15 Pro in portrait.
     public static let iPhone15Pro: LayoutConfiguration = .iPhone15Pro(.portrait)
 
+    /// Layout of the iPhone 15 Pro in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone15Pro(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_1v2,
@@ -415,8 +470,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 15 Plus in portrait.
     public static let iPhone15Plus: LayoutConfiguration = .iPhone15Plus(.portrait)
 
+    /// Layout of the iPhone 15 Plus in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone15Plus(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_7v2,
@@ -427,8 +487,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 15 in portrait.
     public static let iPhone15: LayoutConfiguration = .iPhone15(.portrait)
 
+    /// Layout of the iPhone 15 in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone15(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_1v2,
@@ -443,8 +508,13 @@ extension LayoutConfiguration {
 // MARK: - iPhone 14
 extension LayoutConfiguration {
 
+    /// Layout of the iPhone 14 Pro Max in portrait.
     public static let iPhone14ProMax: LayoutConfiguration = .iPhone14ProMax(.portrait)
 
+    /// Layout of the iPhone 14 Pro Max in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone14ProMax(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_7v2,
@@ -455,8 +525,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 14 Pro in portrait.
     public static let iPhone14Pro: LayoutConfiguration = .iPhone14Pro(.portrait)
 
+    /// Layout of the iPhone 14 Pro in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone14Pro(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_1v2,
@@ -467,8 +542,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 14 Plus in portrait.
     public static let iPhone14Plus: LayoutConfiguration = .iPhone14Plus(.portrait)
 
+    /// Layout of the iPhone 14 Plus in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone14Plus(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_7v1,
@@ -479,8 +559,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 14 in portrait.
     public static let iPhone14: LayoutConfiguration = .iPhone14(.portrait)
 
+    /// Layout of the iPhone 14 in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone14(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_1v1,
@@ -495,8 +580,13 @@ extension LayoutConfiguration {
 // MARK: - iPhone 13
 extension LayoutConfiguration {
 
+    /// Layout of the iPhone 13 Pro Max in portrait.
     public static let iPhone13ProMax: LayoutConfiguration = .iPhone13ProMax(.portrait)
 
+    /// Layout of the iPhone 13 Pro Max in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone13ProMax(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_7v1,
@@ -507,8 +597,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 13 Pro in portrait.
     public static let iPhone13Pro: LayoutConfiguration = .iPhone13Pro(.portrait)
 
+    /// Layout of the iPhone 13 Pro in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone13Pro(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_1v1,
@@ -519,8 +614,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 13 in portrait.
     public static let iPhone13: LayoutConfiguration = .iPhone13(.portrait)
 
+    /// Layout of the iPhone 13 in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone13(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_1v1,
@@ -531,8 +631,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 13 mini in portrait.
     public static let iPhone13Mini: LayoutConfiguration = .iPhone13Mini(.portrait)
 
+    /// Layout of the iPhone 13 mini in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone13Mini(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen5_4,
@@ -547,8 +652,13 @@ extension LayoutConfiguration {
 // MARK: - iPhone 12
 extension LayoutConfiguration {
 
+    /// Layout of the iPhone 12 Pro Max in portrait.
     public static let iPhone12ProMax: LayoutConfiguration = .iPhone12ProMax(.portrait)
 
+    /// Layout of the iPhone 12 Pro Max in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone12ProMax(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_7v1,
@@ -559,8 +669,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 12 Pro in portrait.
     public static let iPhone12Pro: LayoutConfiguration = .iPhone12Pro(.portrait)
 
+    /// Layout of the iPhone 12 Pro in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone12Pro(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_1v1,
@@ -571,8 +686,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 12 in portrait.
     public static let iPhone12: LayoutConfiguration = .iPhone12(.portrait)
 
+    /// Layout of the iPhone 12 in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone12(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_1v1,
@@ -583,8 +703,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 12 mini in portrait.
     public static let iPhone12Mini: LayoutConfiguration = .iPhone12Mini(.portrait)
 
+    /// Layout of the iPhone 12 mini in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone12Mini(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen5_4,
@@ -599,8 +724,13 @@ extension LayoutConfiguration {
 // MARK: - iPhone 11
 extension LayoutConfiguration {
 
+    /// Layout of the iPhone 11 Pro Max in portrait.
     public static let iPhone11ProMax: LayoutConfiguration = .iPhone11ProMax(.portrait)
 
+    /// Layout of the iPhone 11 Pro Max in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone11ProMax(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_5,
@@ -611,8 +741,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 11 Pro in portrait.
     public static let iPhone11Pro: LayoutConfiguration = .iPhone11Pro(.portrait)
 
+    /// Layout of the iPhone 11 Pro in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone11Pro(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen5_8,
@@ -623,8 +758,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 11 in portrait.
     public static let iPhone11: LayoutConfiguration = .iPhone11(.portrait)
 
+    /// Layout of the iPhone 11 in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhone11(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_1v3,
@@ -639,8 +779,13 @@ extension LayoutConfiguration {
 // MARK: - iPhone X
 extension LayoutConfiguration {
 
+    /// Layout of the iPhone XR in portrait.
     public static let iPhoneXR: LayoutConfiguration = .iPhoneXR(.portrait)
 
+    /// Layout of the iPhone XR in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhoneXR(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_1v3,
@@ -651,8 +796,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone XS Max in portrait.
     public static let iPhoneXSMax: LayoutConfiguration = .iPhoneXSMax(.portrait)
 
+    /// Layout of the iPhone XS Max in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhoneXSMax(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen6_5,
@@ -663,8 +813,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone XS in portrait.
     public static let iPhoneXS: LayoutConfiguration = .iPhoneXS(.portrait)
 
+    /// Layout of the iPhone XS in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhoneXS(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
             size: .screen5_8,
@@ -675,9 +830,14 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone X in portrait.
     @available(*, deprecated, message: "iPhoneX is not supported by iOS 17 or later.")
     public static let iPhoneX: LayoutConfiguration = .iPhoneX(.portrait)
 
+    /// Layout of the iPhone X in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     @available(*, deprecated, message: "iPhoneX is not supported by iOS 17 or later.")
     public static func iPhoneX(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
@@ -693,9 +853,14 @@ extension LayoutConfiguration {
 // MARK: - iPhone 8
 extension LayoutConfiguration {
 
+    /// Layout of the iPhone 8 in portrait.
     @available(*, deprecated, message: "iPhone8 is not supported by iOS 17 or later.")
     public static let iPhone8: LayoutConfiguration = .iPhone8(.portrait)
 
+    /// Layout of the iPhone 8 in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     @available(*, deprecated, message: "iPhone8 is not supported by iOS 17 or later.")
     public static func iPhone8(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
@@ -708,9 +873,14 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPhone 8 Plus in portrait.
     @available(*, deprecated, message: "iPhone8Plus is not supported by iOS 17 or later.")
     public static let iPhone8Plus: LayoutConfiguration = .iPhone8Plus(.portrait)
 
+    /// Layout of the iPhone 8 Plus in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     @available(*, deprecated, message: "iPhone8Plus is not supported by iOS 17 or later.")
     public static func iPhone8Plus(_ orientation: DeviceOrientation) -> LayoutConfiguration {
         iPhone(
@@ -727,8 +897,13 @@ extension LayoutConfiguration {
 // MARK: - iPhone SE
 extension LayoutConfiguration {
 
+    /// Layout of the iPhone SE in portrait.
     public static let iPhoneSE: LayoutConfiguration = .iPhoneSE(.portrait)
 
+    /// Layout of the iPhone SE in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation.
+    /// - Precondition: `orientation` uses the `.extended` ratio.
     public static func iPhoneSE(
         _ orientation: DeviceOrientation
     ) -> LayoutConfiguration {
@@ -746,6 +921,12 @@ extension LayoutConfiguration {
 // MARK: - iPhone
 extension LayoutConfiguration {
 
+    /// Builds the layout of an iPhone from its screen size and safe areas.
+    ///
+    /// In landscape the size is reflected, and a left or right inset that was left out falls back to
+    /// the top inset of portrait, which is where the notch is.
+    ///
+    /// - Precondition: The ratio of `orientation` is `.extended`.
     fileprivate static func iPhone(
         size: CGSize,
         portraitSafeArea: EdgeInsets,
@@ -795,8 +976,13 @@ extension LayoutConfiguration {
 // MARK: - iPad Pro
 extension LayoutConfiguration {
 
+    /// Layout of the iPad Pro 12.9-inch in landscape.
     public static let iPadPro12_9 = iPadPro12_9(.landscape)
 
+    /// Layout of the iPad Pro 12.9-inch in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation. Its ratio scales the width,
+    ///   so `.landscape(.medium)` renders at half the full landscape width.
     public static func iPadPro12_9(
         _ orientation: DeviceOrientation
     ) -> LayoutConfiguration {
@@ -808,8 +994,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPad Pro 11-inch in landscape.
     public static let iPadPro11 = iPadPro11(.landscape)
 
+    /// Layout of the iPad Pro 11-inch in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation. Its ratio scales the width,
+    ///   so `.landscape(.medium)` renders at half the full landscape width.
     public static func iPadPro11(
         _ orientation: DeviceOrientation
     ) -> LayoutConfiguration {
@@ -821,9 +1012,14 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPad Pro 10.5-inch in landscape.
     @available(*, deprecated, message: "iPadPro10_5 is not supported by iPadOS 17 or later.")
     public static let iPadPro10_5 = iPadPro10_5(.landscape)
 
+    /// Layout of the iPad Pro 10.5-inch in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation. Its ratio scales the width,
+    ///   so `.landscape(.medium)` renders at half the full landscape width.
     @available(*, deprecated, message: "iPadPro10_5 is not supported by iPadOS 17 or later.")
     public static func iPadPro10_5(
         _ orientation: DeviceOrientation
@@ -836,9 +1032,14 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPad Pro 9.7-inch in landscape.
     @available(*, deprecated, message: "iPadPro9_7 is not supported by iPadOS 17 or later.")
     public static let iPadPro9_7 = iPadPro9_7(.landscape)
 
+    /// Layout of the iPad Pro 9.7-inch in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation. Its ratio scales the width,
+    ///   so `.landscape(.medium)` renders at half the full landscape width.
     @available(*, deprecated, message: "iPadPro9_7 is not supported by iPadOS 17 or later.")
     public static func iPadPro9_7(
         _ orientation: DeviceOrientation
@@ -885,8 +1086,13 @@ extension LayoutConfiguration {
 // MARK: - iPad Air
 extension LayoutConfiguration {
 
+    /// Layout of the iPad Air 13-inch in landscape.
     public static let iPadAir13 = iPadAir13(.landscape)
 
+    /// Layout of the iPad Air 13-inch in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation. Its ratio scales the width,
+    ///   so `.landscape(.medium)` renders at half the full landscape width.
     public static func iPadAir13(
         _ orientation: DeviceOrientation
     ) -> LayoutConfiguration {
@@ -898,8 +1104,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPad Air 11-inch in landscape.
     public static let iPadAir11 = iPadAir11(.landscape)
 
+    /// Layout of the iPad Air 11-inch in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation. Its ratio scales the width,
+    ///   so `.landscape(.medium)` renders at half the full landscape width.
     public static func iPadAir11(
         _ orientation: DeviceOrientation
     ) -> LayoutConfiguration {
@@ -911,8 +1122,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPad Air 10.9-inch in landscape.
     public static let iPadAir10_9 = iPadAir10_9(.landscape)
 
+    /// Layout of the iPad Air 10.9-inch in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation. Its ratio scales the width,
+    ///   so `.landscape(.medium)` renders at half the full landscape width.
     public static func iPadAir10_9(
         _ orientation: DeviceOrientation
     ) -> LayoutConfiguration {
@@ -924,8 +1140,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPad Air 10.5-inch in landscape.
     public static let iPadAir10_5 = iPadAir10_5(.landscape)
 
+    /// Layout of the iPad Air 10.5-inch in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation. Its ratio scales the width,
+    ///   so `.landscape(.medium)` renders at half the full landscape width.
     public static func iPadAir10_5(
         _ orientation: DeviceOrientation
     ) -> LayoutConfiguration {
@@ -937,9 +1158,14 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPad Air 9.7-inch in landscape.
     @available(*, deprecated, message: "iPadAir9_7 is not supported by iPadOS 17 or later.")
     public static let iPadAir9_7 = iPadAir9_7(.landscape)
 
+    /// Layout of the iPad Air 9.7-inch in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation. Its ratio scales the width,
+    ///   so `.landscape(.medium)` renders at half the full landscape width.
     @available(*, deprecated, message: "iPadAir9_7 is not supported by iPadOS 17 or later.")
     public static func iPadAir9_7(
         _ orientation: DeviceOrientation
@@ -956,8 +1182,13 @@ extension LayoutConfiguration {
 // MARK: - iPad
 extension LayoutConfiguration {
 
+    /// Layout of the iPad 11-inch in landscape.
     public static let iPad11 = iPad11(.landscape)
 
+    /// Layout of the iPad 11-inch in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation. Its ratio scales the width,
+    ///   so `.landscape(.medium)` renders at half the full landscape width.
     public static func iPad11(
         _ orientation: DeviceOrientation
     ) -> LayoutConfiguration {
@@ -969,8 +1200,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPad 10.2-inch in landscape.
     public static let iPad10_2 = iPad10_2(.landscape)
 
+    /// Layout of the iPad 10.2-inch in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation. Its ratio scales the width,
+    ///   so `.landscape(.medium)` renders at half the full landscape width.
     public static func iPad10_2(
         _ orientation: DeviceOrientation
     ) -> LayoutConfiguration {
@@ -982,9 +1218,14 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPad 9.7-inch in landscape.
     @available(*, deprecated, message: "iPad9_7 is not supported by iPadOS 17 or later.")
     public static let iPad9_7 = iPad9_7(.landscape)
 
+    /// Layout of the iPad 9.7-inch in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation. Its ratio scales the width,
+    ///   so `.landscape(.medium)` renders at half the full landscape width.
     @available(*, deprecated, message: "iPad9_7 is not supported by iPadOS 17 or later.")
     public static func iPad9_7(
         _ orientation: DeviceOrientation
@@ -1001,8 +1242,13 @@ extension LayoutConfiguration {
 // MARK: - iPad Mini
 extension LayoutConfiguration {
 
+    /// Layout of the iPad mini 8.3-inch in landscape.
     public static let iPadMini8_3 = iPadMini8_3(.landscape)
 
+    /// Layout of the iPad mini 8.3-inch in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation. Its ratio scales the width,
+    ///   so `.landscape(.medium)` renders at half the full landscape width.
     public static func iPadMini8_3(
         _ orientation: DeviceOrientation
     ) -> LayoutConfiguration {
@@ -1014,8 +1260,13 @@ extension LayoutConfiguration {
         )
     }
 
+    /// Layout of the iPad mini 7.9-inch in landscape.
     public static let iPadMini7_9 = iPadMini7_9(.landscape)
 
+    /// Layout of the iPad mini 7.9-inch in the given orientation.
+    ///
+    /// - Parameter orientation: The device orientation. Its ratio scales the width,
+    ///   so `.landscape(.medium)` renders at half the full landscape width.
     public static func iPadMini7_9(
         _ orientation: DeviceOrientation
     ) -> LayoutConfiguration {
@@ -1031,6 +1282,10 @@ extension LayoutConfiguration {
 // MARK: - iPad Method
 extension LayoutConfiguration {
 
+    /// Builds the layout of an iPad.
+    ///
+    /// The width is multiplied by the ratio of `orientation`. The safe area is 24 points at the top
+    /// and 20 at the bottom.
     fileprivate static func iPad(
         orientation: DeviceOrientation,
         size: CGSize,
@@ -1065,16 +1320,20 @@ extension LayoutConfiguration {
 
 extension LayoutConfiguration {
 
+    /// Layout of an Apple TV in Full HD: 1920×1080 points at 1× scale.
     public static let tv = tvOS(
         displayScale: 1,
         deviceInterfaceSizeClass: .tvOS
     )
 
+    /// Layout of an Apple TV 4K: 1920×1080 points at 2× scale.
     public static let tv4K = tvOS(
         displayScale: 2,
         deviceInterfaceSizeClass: .tvOS
     )
 
+    /// Builds the layout of an Apple TV: 1920×1080 points with a safe area of 60 points at the top
+    /// and bottom and 80 at the sides.
     private static func tvOS(
         displayScale: CGFloat,
         deviceInterfaceSizeClass: DeviceDynamicInterfaceSizeClass

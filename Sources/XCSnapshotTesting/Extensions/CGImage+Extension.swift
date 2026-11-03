@@ -6,6 +6,12 @@ import CoreGraphics
 
 extension CGImage {
 
+    /// Draws the image into a bitmap context of `format`.
+    ///
+    /// - Parameters:
+    ///   - format: The pixel format and color space of the context.
+    ///   - data: A buffer for the pixels. When `nil`, the context allocates its own.
+    /// - Returns: The context, or `nil` if it cannot be created.
     func context(format: ImageFormat = .sRGB, with data: UnsafeMutableRawPointer? = nil) -> CGContext? {
         guard
             let context = CGContext(

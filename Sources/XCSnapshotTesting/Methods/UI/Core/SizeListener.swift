@@ -11,12 +11,14 @@ import UIKit
 #endif
 
 #if os(iOS) || os(tvOS) || os(macOS) || os(visionOS)
+/// Receives the size changes that a ``SizeListener`` observes.
 @MainActor
 protocol SizeListenerDelegate: AnyObject {
 
     func viewDidUpdateSize(_ id: ObjectIdentifier, size: CGSize)
 }
 
+/// Observes the size of the content being snapshotted, and tells its delegate when it changes.
 @MainActor
 class SizeListener {
 
@@ -47,6 +49,9 @@ class SizeListener {
 
 // MARK: - UIView Extensions
 
+/// An invisible view that reports its size to a ``SizeListener`` each time it lays out.
+///
+/// On macOS it reports the size of its superview instead of its own.
 @MainActor
 class UIViewSizeListener: SDKView {
 
@@ -82,6 +87,7 @@ class UIViewSizeListener: SDKView {
 @MainActor
 extension SDKView {
 
+    /// Adds an invisible view, pinned to the safe area, that reports the size of that area to `listener`.
     func addSizeListener(_ listener: SizeListener) {
         let view = UIViewSizeListener(listener: listener)
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -101,6 +107,7 @@ extension SDKView {
 
 // MARK: - SwiftUI Extensions
 
+/// Reports the size of a SwiftUI view to a ``SizeListener``, through a `GeometryReader` in its background.
 private struct ViewSizeListener: ViewModifier {
 
     let listener: SizeListener

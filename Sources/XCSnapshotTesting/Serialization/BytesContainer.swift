@@ -3,21 +3,24 @@
 
 import Foundation
 
-/// A Sendable container for storing and manipulating data during serialization/deserialization.
+/// Holds the bytes of a snapshot while it is read or written.
 ///
-/// `BytesContainer` provides an interface for reading and writing data using a specific
-/// serialization configuration.
+/// A container is either read-only or write-only. It also carries the configuration that applies to
+/// the serialization, such as the scale of images.
 public struct BytesContainer: Sendable {
 
+    /// What the container allows: reading the data, or writing it.
     private enum OperationMode {
         case read
         case write
     }
 
+    /// The error thrown when reading a write-only container or writing a read-only one.
     private struct OperationNotAllowed: Error {
         fileprivate init() {}
     }
 
+    /// The data of the container, behind a lock, shared by all copies of the container.
     fileprivate class State: @unchecked Sendable {
         var data: Data {
             get { lock.withLock { _data } }

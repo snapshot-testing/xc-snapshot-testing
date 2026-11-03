@@ -5,9 +5,18 @@ import Foundation
 
 extension Task where Failure == Error {
 
-    /// Runs `closure`, and throws ``TaskTimeout`` if it takes longer than `timeout` seconds.
+    /// Runs `closure` and throws ``TaskTimeout`` if it takes longer than `timeout`.
     ///
-    /// Cancelling the task that waits cancels `closure` and ends the wait with a `CancellationError`.
+    /// When the timeout wins, the task running `closure` is cancelled. `closure` is expected
+    /// to honor cancellation. If it does not, it keeps running, but its result is discarded.
+    /// Cancelling the task that waits also cancels `closure`, and the wait ends with a
+    /// `CancellationError`.
+    ///
+    /// - Parameters:
+    ///   - timeout: The time limit in seconds.
+    ///   - closure: The work to run.
+    /// - Returns: The value returned by `closure`.
+    /// - Throws: ``TaskTimeout`` when the time limit is reached, or the error thrown by `closure`.
     public static func timeout(
         _ timeout: TimeInterval,
         execute closure: @Sendable @escaping () async throws -> Success
@@ -129,4 +138,5 @@ private final class TimeoutCompletion<Success: Sendable>: @unchecked Sendable {
     }
 }
 
+/// The error thrown by `Task.timeout(_:execute:)` when the time limit is reached.
 public struct TaskTimeout: Error {}

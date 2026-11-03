@@ -248,6 +248,13 @@ extension Array where Element: Hashable {
 
 extension [Difference<String>] {
 
+    /// Groups the differences into hunks, in the format of a unified diff.
+    ///
+    /// Unchanged runs longer than twice `context` are cut down to `context` lines on each side of the
+    /// changes. Removed lines start with `−`, added lines with `+`, and unchanged lines with a figure
+    /// space, to keep them aligned. Lines that end with a space get a `¬` at the end.
+    ///
+    /// - Parameter context: How many unchanged lines to keep around a change.
     func groupping(context: Int = 4) -> [DiffHunk] {
         let figureSpace = "\u{2007}"  // Figure space (for alignment)
 

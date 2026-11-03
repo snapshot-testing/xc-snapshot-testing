@@ -24,18 +24,13 @@ extension SyncSnapshot where Output == StringBytes {
 }
 
 extension SyncSnapshot where Output == StringBytes {
-    /// A snapshot strategy for comparing any structure based on their JSON representation.
+    /// Compares a value by its JSON representation, built with `JSONSerialization`.
     ///
-    /// This strategy serializes the input value into a JSON-formatted string using
-    /// `JSONSerialization` with the following options:
-    /// - `.prettyPrinted` for human-readable formatting
-    /// - `.sortedKeys` to ensure consistent key ordering
-    /// - `.fragmentsAllowed` for partial JSON outputs
+    /// The JSON is pretty printed, with sorted keys, and top-level fragments are allowed.
     ///
-    /// The result is a `StringBytes` snapshot containing the JSON-encoded data.
-    ///
-    /// - Available on: macOS 10.13+, watchOS 4.0+, tvOS 11.0+
-    /// - Example: `assert(of: user, as: .json)`
+    /// ```swift
+    /// try assert(of: ["name": "Blob"], as: .json)
+    /// ```
     public static var json: SyncSnapshot<Input, Output> {
         let options: JSONSerialization.WritingOptions = [
             .prettyPrinted,

@@ -3,39 +3,33 @@
 
 import Foundation
 
-/// Protocol for types that can be serialized/deserialized to/from a byte container.
+/// A value that can be written to and read from a ``BytesContainer``.
 ///
-/// Types conforming to `BytesRepresentable` must be able to:
-/// 1. Create an instance from a `BytesContainer` (deserialization).
-/// 2. Write their data to a `BytesContainer` (serialization).
-///
-/// This protocol is essential for snapshot testing, enabling objects to be converted into binary data
-/// for comparison.
+/// Snapshot outputs conform to it so they can be stored as references and compared.
+/// ``DataBytes``, ``StringBytes`` and ``ImageBytes`` are the conforming types that come with the library.
 public protocol BytesRepresentable: Sendable {
 
+    /// The value that the type wraps, such as a `String`, a `Data` or an image.
     associatedtype RawValue
 
     /// The underlying value used for serialization and deserialization.
     /// This can be any type, such as `String`, `Data`, or `UIImage`.
     var rawValue: RawValue { get }
 
-    /// Initializes an instance from a raw value.
+    /// Creates an instance that wraps `rawValue`.
     ///
-    /// This initializer is used to create a type from its underlying raw value, which is
-    /// typically the serialized form of the data (e.g., `String`, `Data`, or `UIImage`).
-    ///
-    /// - Parameter rawValue: The raw value representing the instance's data.
+    /// - Parameter rawValue: The value to wrap.
     init(rawValue: RawValue)
 
-    /// Initializes an instance from data stored in the container.
+    /// Creates an instance from the data in a container.
     ///
-    /// - Parameter container: The byte container containing data to read.
-    /// - Throws: An error if deserialization fails.
+    /// - Parameter container: A container in read mode.
+    /// - Throws: An error if the data cannot be read.
     init(from container: BytesContainer) throws
 
-    /// Serializes the instance's data and writes it to the provided container.
+    /// Writes the instance to a container.
     ///
-    /// - Parameter container: The byte container where data will be stored.
-    /// - Throws: An error if serialization fails.
+    /// - Parameter container: A container in write mode.
+    /// - Throws: An error if the instance cannot be written.
     func serialize(to container: BytesContainer) throws
 }

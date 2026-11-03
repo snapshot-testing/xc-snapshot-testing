@@ -15,32 +15,18 @@ private struct IncludeMajorPlatformVersionInPathEnvironmentKey: SnapshotEnvironm
 
 extension SnapshotEnvironmentValues {
 
-    /// A Boolean value that determines whether the major platform version is included in the path during snapshot testing.
+    /// Whether the major version of the platform is part of the path of the references.
     ///
-    /// When `true`, the snapshot paths will include the major version of the platform (e.g., "v14" for iOS 14).
-    /// This is useful for ensuring snapshots are version-specific and avoid conflicts between different platform versions.
+    /// When `true`, references are stored in a folder such as `v18`, inside the folder of the
+    /// platform, so each major version of the system has its own. The default is `false`.
     ///
-    /// - Note: The value is retrieved from the `SnapshotEnvironmentValues`:
-    ///   - `SnapshotEnvironment.current.includeMajorPlatformVersionInPath`
-    ///   - Or set within a testing environment closure:
-    ///
-    ///         withTestingEnvironment {
-    ///             $0.includeMajorPlatformVersionInPath = true
-    ///         } operation: { ... }
-    ///
-    /// Platform version retrieval is handled differently across platforms:
-    /// - **macOS**: Parses the OS version, handling macOS 10.x specially.
-    /// - **iOS/tvOS/visionOS**: Uses `UIDevice.current.systemVersion` on the main thread.
-    /// - **watchOS**: Uses `WKInterfaceDevice.current().systemVersion` on the main thread.
-    ///
-    /// The final version string is formatted as "v\{MajorVersion}".
+    /// On macOS 10, the version has two parts, such as `v10.15`.
     ///
     /// ```swift
-    /// // Enable versioned paths
     /// withTestingEnvironment {
     ///     $0.includeMajorPlatformVersionInPath = true
     /// } operation: {
-    ///     // Your testing code here
+    ///     // ...
     /// }
     /// ```
     public var includeMajorPlatformVersionInPath: Bool {

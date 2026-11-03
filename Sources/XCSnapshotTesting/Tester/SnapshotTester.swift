@@ -7,27 +7,71 @@ import Foundation
 import XCTest
 #endif
 
+/// Runs a snapshot assertion for a ``SnapshotEngine``.
+///
+/// The tester runs the executor of a ``Snapshot``, asks the engine for the reference, and acts
+/// according to the record mode:
+///
+/// - ``RecordMode/all``: writes the output as the new reference and fails.
+/// - ``RecordMode/missing``: when there is no reference, writes one and fails.
+/// - ``RecordMode/failed``: when the output differs from the reference, replaces it and fails.
+/// - ``RecordMode/never``: never writes a reference.
+///
+/// A missing reference and a mismatch always fail. Calling the tester returns the failure rather
+/// than reporting it, so each caller decides how to report it.
 @_spi(Internals)
 public struct SnapshotTester<Engine: SnapshotEngine>: Sendable {
 
+    /// The executor of the engine.
     public typealias Executor = Engine.Executor
 
+    /// The serialization used to encode and decode snapshots.
     public let serialization: DataSerialization
+
+    /// The time limit for the executor, in seconds.
+    ///
+    /// An asynchronous executor runs without a limit when this is zero or less.
     public let timeout: TimeInterval
 
+    /// The `#fileID` of the assertion.
     public let fileID: StaticString
+
+    /// The `#filePath` of the assertion.
     public let filePath: StaticString
+
+    /// The `#function` of the assertion.
     public let function: StaticString
+
+    /// The line of the assertion.
     public let line: UInt
+
+    /// The column of the assertion.
     public let column: UInt
 
+    /// The platform name in the path of the reference. It is empty when snapshots are shared between platforms.
     public let platform: String
+
+    /// The platform version in the path of the reference, or `nil` when the environment leaves it out.
     public let platformVersion: String?
 
     private let engine: Engine
     private let record: RecordMode
     private let name: String?
 
+    /// Creates a tester.
+    ///
+    /// - Parameters:
+    ///   - engine: The engine that finds, reads and writes references.
+    ///   - record: The record mode, or `nil` to use the one of the environment.
+    ///   - timeout: The time limit for the executor, in seconds.
+    ///   - name: A name that tells this snapshot apart from the others in the same test.
+    ///     When `nil`, the file name gets the position of the call if the environment adds the suffix.
+    ///   - serialization: The serialization used to encode and decode snapshots.
+    ///   - fileID: The `#fileID` of the assertion.
+    ///   - filePath: The `#filePath` of the assertion.
+    ///   - function: The `#function` of the assertion.
+    ///   - line: The line of the assertion.
+    ///   - column: The column of the assertion.
     public init(
         engine: Engine,
         record: RecordMode?,
@@ -60,6 +104,14 @@ public struct SnapshotTester<Engine: SnapshotEngine>: Sendable {
         self.column = column
     }
 
+    /// Runs the asynchronous executor on `input` and asserts its output.
+    ///
+    /// - Parameters:
+    ///   - input: The value to snapshot.
+    ///   - snapshot: The snapshot that turns `input` into the output to assert.
+    /// - Returns: `nil` if the output matches the reference, otherwise the failure.
+    ///   Reaching the time limit is a failure, not a thrown error.
+    /// - Throws: An error from the executor, the serialization or the engine.
     public func callAsFunction<Input: Sendable, Output: BytesRepresentable>(
         _ input: Input,
         for snapshot: Snapshot<Executor>
@@ -91,6 +143,16 @@ public struct SnapshotTester<Engine: SnapshotEngine>: Sendable {
         }
     }
 
+    /// Runs the synchronous executor on `input` and asserts its output.
+    ///
+    /// The calling thread blocks until the executor completes or the time limit is reached.
+    ///
+    /// - Parameters:
+    ///   - input: The value to snapshot.
+    ///   - snapshot: The snapshot that turns `input` into the output to assert.
+    /// - Returns: `nil` if the output matches the reference, otherwise the failure.
+    ///   Reaching the time limit is a failure, not a thrown error.
+    /// - Throws: An error from the executor, the serialization or the engine.
     public func callAsFunction<Input, Output: BytesRepresentable>(
         _ input: Input,
         for snapshot: Snapshot<Executor>
@@ -130,6 +192,10 @@ public struct SnapshotTester<Engine: SnapshotEngine>: Sendable {
 
 extension SnapshotTester {
 
+    /// Applies the record mode to the output of the executor.
+    ///
+    /// With `.all` the output is written and the assertion fails. In any other mode the output is
+    /// compared with the reference.
     fileprivate func assert(
         diffable: Executor.Output,
         pathExtension: String?,
@@ -161,6 +227,9 @@ extension SnapshotTester {
         )
     }
 
+    /// Compares the output with the reference if there is one.
+    ///
+    /// Without a reference, the output is written when the mode is `.missing`, and the assertion fails.
     private func assertWithReference(
         diffable: Executor.Output,
         snapshotURL: URL,
@@ -189,6 +258,11 @@ extension SnapshotTester {
         )
     }
 
+    /// Compares the output with the reference, using the attachment generator.
+    ///
+    /// When they match, the engine is notified and there is no failure. When they differ, the output is
+    /// kept in the temporary directory, unless the mode is `.failed`, which replaces the reference
+    /// instead. The failure carries the diff command and the description of the difference.
     private func compare(
         reference: Executor.Output,
         diffable: Executor.Output,
@@ -243,6 +317,7 @@ extension SnapshotTester {
         )
     }
 
+    /// Tells the engine that the output matches its reference.
     private func notify(
         _ diffable: Executor.Output,
         to url: URL
@@ -257,6 +332,9 @@ extension SnapshotTester {
         )
     }
 
+    /// Serializes the output, writes it or only notifies the engine, and attaches the result to the test.
+    ///
+    /// The attachment is the diff of a failed comparison when `attachments` is given, otherwise the recorded snapshot.
     private func record(
         _ diffable: Executor.Output,
         url: URL,
@@ -279,6 +357,7 @@ extension SnapshotTester {
         }
     }
 
+    /// Builds the failure, with the message written by the engine.
     private func fail(
         reason: SnapshotFailContext.Reason,
         snapshotURL: URL,
@@ -306,6 +385,11 @@ extension SnapshotTester {
 
 extension SnapshotTester {
 
+    /// The location of the reference.
+    ///
+    /// It is the source URL of the engine plus the name of the test function. The function name is
+    /// followed by `name`, or else by the position of the call (such as `L12C9`) when the environment
+    /// adds the suffix, and then by the path extension.
     fileprivate func snapshotURL(
         pathExtension: String?
     ) throws -> URL {
@@ -339,6 +423,7 @@ extension SnapshotTester {
 
 extension SnapshotTester {
 
+    /// Attaches `attachments` to the running test, under the name `named`.
     func add(_ named: String, attachments: [SnapshotAttachment]) {
         TestingSystem.shared.add(
             named,
@@ -350,6 +435,7 @@ extension SnapshotTester {
         )
     }
 
+    /// Attaches the recorded snapshot to the running test, named after the file at `url`.
     func add(
         _ diffable: Data,
         for url: URL
@@ -379,8 +465,12 @@ extension SnapshotTester {
     }
 }
 
+/// The result of a synchronous executor that never called back.
 struct UnsafeSyncDiffableError: Error {}
 
+/// Carries the result of a synchronous executor from its callback to the thread that is waiting.
+///
+/// It starts as a failure, so a callback that never runs shows up as an error.
 final class UnsafeSyncDiffable<Output: Sendable>: @unchecked Sendable {
 
     var result: Result<Output, Error> {

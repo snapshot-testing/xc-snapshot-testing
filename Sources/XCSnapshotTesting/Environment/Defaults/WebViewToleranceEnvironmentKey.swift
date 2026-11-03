@@ -10,25 +10,17 @@ private struct WebViewToleranceEnvironmentKey: SnapshotEnvironmentKey {
 
 extension SnapshotEnvironmentValues {
 
-    /// The maximum time (in seconds) to wait for a web view to load before taking a snapshot.
+    /// How long to wait, in seconds, for a web view to finish loading before the snapshot is taken.
     ///
-    /// This property configures the timeout duration for web view loading during snapshot operations.
-    /// It helps prevent tests from failing due to network latency or complex web content loading.
-    ///
-    /// - Default: 2.5 seconds
-    /// - Available on: iOS, iPadOS, macOS, visionOS
+    /// The default is 2.5. Available on iOS, macOS and visionOS.
     ///
     /// ```swift
-    /// // Increase web view loading timeout
     /// withTestingEnvironment {
-    ///     $0.webViewTolerance = 5.0
+    ///     $0.webViewTolerance = 5
     /// } operation: {
-    ///     // Your web view testing code here
+    ///     // ...
     /// }
     /// ```
-    ///
-    /// - Note: This setting is particularly useful when testing views containing `WKWebView` or similar web-rendering components.
-    /// - SeeAlso: ``withTestingEnvironment(_:operation:file:line:)``
     public var webViewTolerance: TimeInterval {
         get { self[WebViewToleranceEnvironmentKey.self] }
         set { self[WebViewToleranceEnvironmentKey.self] = newValue }

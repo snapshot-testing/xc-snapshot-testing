@@ -15,13 +15,16 @@ import UIKit
 /// to convert images to binary data (`Data`) and vice versa.
 public struct ImageBytes: BytesRepresentable {
 
+    /// Stores ``DataSerializationConfiguration/imageScale`` in the serialization configuration.
     fileprivate struct ImageScaleKey: DataSerializationConfigurationKey {
         static let defaultValue: Double = 1
     }
 
     #if os(macOS)
+    /// The wrapped image.
     public let rawValue: NSImage
     #else
+    /// The wrapped image.
     public let rawValue: UIKit.UIImage
     #endif
 
@@ -97,7 +100,7 @@ public struct ImageBytes: BytesRepresentable {
     /// Serializes the image to binary data and writes it to the container.
     ///
     /// - Parameter container: Destination container for the image data.
-    /// - Throws: Error if serialization fails (e.g., failed image-to-data conversion).
+    /// - Throws: ``BytesSerializationError`` if the image cannot be encoded as PNG.
     public func serialize(to container: BytesContainer) throws {
         // Returning here would leave the container empty, and an empty file would then be recorded
         // over the reference.
@@ -127,28 +130,21 @@ extension DataSerializationConfiguration {
 
 extension IdentitySyncSnapshot<ImageBytes> {
 
-    /// Default configuration for image snapshots.
-    ///
-    /// - Notes:
-    ///   - Uses default values like `precision: 1` (strict comparison) and `perceptualPrecision: nil` (Color/tonal tolerance).
-    ///   - Uses `ImageDiffAttachmentGenerator` for visual diffs.
+    /// Compares images, with the default precisions: every pixel must match exactly.
     public static var image: Self {
         .image()
     }
 
     #if os(iOS) || os(tvOS) || os(macOS) || os(visionOS)
-    /// Creates a custom image snapshot configuration with precision and scale settings.
+    /// Compares images with the given precisions.
     ///
     /// - Parameters:
-    ///   - precision: Pixel tolerance for comparison (e.g., `0.95` allows 5% difference).
-    ///   - perceptualPrecision: Color/tonal tolerance for perceptual comparison.
+    ///   - precision: The share of pixels, from 0 to 1, that must be the same. `1` requires every pixel to match.
+    ///   - perceptualPrecision: How close in color a pixel must be, from 0 to 1, to count as the same. `1` requires an exact match.
     ///
-    /// - Example:
-    ///   ```swift
-    ///   let config = IdentitySyncSnapshot<ImageBytes>.image(
-    ///       precision: 0.98
-    ///   )
-    ///   ```
+    /// ```swift
+    /// let snapshot = IdentitySyncSnapshot<ImageBytes>.image(precision: 0.98)
+    /// ```
     public static func image(
         precision: Float = 1,
         perceptualPrecision: Float = 1
@@ -162,6 +158,11 @@ extension IdentitySyncSnapshot<ImageBytes> {
         )
     }
     #else
+    /// Creates a custom image snapshot configuration with a precision setting.
+    ///
+    /// watchOS has no perceptual comparison, so only the pixel tolerance is configurable.
+    ///
+    /// - Parameter precision: Pixel tolerance for comparison (e.g., `0.95` allows 5% difference).
     public static func image(
         precision: Float = 1
     ) -> Self {
@@ -181,27 +182,16 @@ extension IdentitySyncSnapshot<ImageBytes> {
 #if os(macOS)
 extension SyncSnapshot where Input: NSImage, Output == ImageBytes {
 
-    /// Default configuration for image snapshots.
-    ///
-    /// - Notes:
-    ///   - Uses default values like `precision: 1` (strict comparison) and `perceptualPrecision: nil` (Color/tonal tolerance).
-    ///   - Uses `ImageDiffAttachmentGenerator` for visual diffs.
+    /// Compares images, with the default precisions: every pixel must match exactly.
     public static var image: SyncSnapshot<Input, Output> {
         .image()
     }
 
-    /// Creates a custom image snapshot configuration with precision and scale settings.
+    /// Compares images with the given precisions.
     ///
     /// - Parameters:
-    ///   - precision: Pixel tolerance for comparison (e.g., `0.95` allows 5% difference).
-    ///   - perceptualPrecision: Color/tonal tolerance for perceptual comparison.
-    ///
-    /// - Example:
-    ///   ```swift
-    ///   let config = IdentitySyncSnapshot<ImageBytes>.image(
-    ///       precision: 0.98
-    ///   )
-    ///   ```
+    ///   - precision: The share of pixels, from 0 to 1, that must be the same. `1` requires every pixel to match.
+    ///   - perceptualPrecision: How close in color a pixel must be, from 0 to 1, to count as the same. `1` requires an exact match.
     public static func image(
         precision: Float = 1,
         perceptualPrecision: Float = 1
@@ -215,28 +205,17 @@ extension SyncSnapshot where Input: NSImage, Output == ImageBytes {
 #else
 extension SyncSnapshot where Input: UIImage, Output == ImageBytes {
 
-    /// Default configuration for image snapshots.
-    ///
-    /// - Notes:
-    ///   - Uses default values like `precision: 1` (strict comparison) and `perceptualPrecision: nil` (Color/tonal tolerance).
-    ///   - Uses `ImageDiffAttachmentGenerator` for visual diffs.
+    /// Compares images, with the default precisions: every pixel must match exactly.
     public static var image: SyncSnapshot<Input, ImageBytes> {
         .image()
     }
 
     #if os(iOS) || os(tvOS) || os(visionOS)
-    /// Creates a custom image snapshot configuration with precision and scale settings.
+    /// Compares images with the given precisions.
     ///
     /// - Parameters:
-    ///   - precision: Pixel tolerance for comparison (e.g., `0.95` allows 5% difference).
-    ///   - perceptualPrecision: Color/tonal tolerance for perceptual comparison.
-    ///
-    /// - Example:
-    ///   ```swift
-    ///   let config = IdentitySyncSnapshot<ImageBytes>.image(
-    ///       precision: 0.98
-    ///   )
-    ///   ```
+    ///   - precision: The share of pixels, from 0 to 1, that must be the same. `1` requires every pixel to match.
+    ///   - perceptualPrecision: How close in color a pixel must be, from 0 to 1, to count as the same. `1` requires an exact match.
     public static func image(
         precision: Float = 1,
         perceptualPrecision: Float = 1
@@ -247,6 +226,11 @@ extension SyncSnapshot where Input: UIImage, Output == ImageBytes {
         ).pullback { $0 }
     }
     #elseif os(watchOS)
+    /// Creates a custom image snapshot configuration with a precision setting.
+    ///
+    /// watchOS has no perceptual comparison, so only the pixel tolerance is configurable.
+    ///
+    /// - Parameter precision: Pixel tolerance for comparison (e.g., `0.95` allows 5% difference).
     public static func image(
         precision: Float = 1
     ) -> SyncSnapshot<Input, Output> {

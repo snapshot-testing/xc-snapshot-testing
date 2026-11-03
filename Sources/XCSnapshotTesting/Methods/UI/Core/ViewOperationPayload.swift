@@ -8,6 +8,7 @@ import UIKit
 #endif
 
 #if os(iOS) || os(tvOS) || os(macOS) || os(visionOS)
+/// What the steps of a view snapshot pass along: the window, the root controller it had before, and the controller under test.
 @MainActor
 struct ViewOperationPayload {
     let previousRootViewController: SDKViewController?
@@ -59,6 +60,7 @@ final class ViewOperationRestoration {
 
 extension Async where Output == SnapshotUIController {
 
+    /// Makes the controller the root of the window, and keeps the previous root to restore it later.
     func connectToWindow(
         _ configuration: SnapshotWindowConfiguration<Input>
     ) -> Async<
@@ -79,6 +81,7 @@ extension Async where Output == SnapshotUIController {
 
 extension Async where Output == ViewOperationPayload {
 
+    /// Waits for the web views of the hierarchy to finish loading.
     func waitLoadingStateIfNeeded(tolerance: TimeInterval) -> Async<Input, Output> {
         map {
             await $0.input.view.waitLoadingStateIfNeeded(tolerance: tolerance)
@@ -93,6 +96,7 @@ extension Async where Output == ViewOperationPayload {
         }
     }
 
+    /// Runs `operation`, if there is one, right before the snapshot is taken.
     func prepare(
         _ operation: (@MainActor @Sendable () async throws -> Void)?
     ) -> Async<Input, Output> {
@@ -106,6 +110,10 @@ extension Async where Output == ViewOperationPayload {
         }
     }
 
+    /// Takes the image, converts it with `executor`, and undoes the setup.
+    ///
+    /// Undoing restores the previous root controller, detaches the content, and hides the window
+    /// unless it is the key window.
     func snapshot(
         _ executor: Sync<SDKImage, ImageBytes>
     ) -> Async<Input, ImageBytes> {
@@ -116,6 +124,8 @@ extension Async where Output == ViewOperationPayload {
         }
     }
 
+    /// Gets the text description with `method`, converts it with `executor`, and undoes the setup
+    /// the same way ``snapshot(_:)`` does.
     func descriptor(
         _ executor: Sync<String, StringBytes>,
         method: SnapshotUIController.DescriptorMethod

@@ -6,6 +6,7 @@ import CoreGraphics
 
 extension CGSize {
 
+    /// The factor, never above 1, that scales `size` down to fit inside this size.
     func scaleThatFits(_ size: CGSize) -> CGFloat {
         if size.width <= width && size.height <= height {
             return 1
@@ -17,6 +18,7 @@ extension CGSize {
         return min(scaleWidth, scaleHeight)
     }
 
+    /// `size` scaled down, keeping its proportions, to fit inside this size.
     func scaleToFit(_ size: CGSize) -> CGSize {
         let scale = scaleThatFits(size)
 
@@ -29,6 +31,7 @@ extension CGSize {
 
 extension CGRect {
 
+    /// The rectangle scaled by `scale` around its center.
     func scale(by scale: CGFloat) -> CGRect {
         guard scale != 1 else {
             return self
@@ -70,7 +73,7 @@ extension CGSize {
     /// 414 x 896
     static let screen6_5 = CGSize(width: 414, height: 896)
 
-    /// 414 x 896
+    /// 420 x 912
     static let screen6_5v2 = CGSize(width: 420, height: 912)
 
     /// 402 x 874
@@ -97,6 +100,7 @@ extension CGSize {
     /// 375 x 667
     static let screen4_7 = CGSize(width: 375, height: 667)
 
+    /// The size with width and height swapped, as in the other orientation.
     func reflected() -> CGSize {
         .init(width: height, height: width)
     }

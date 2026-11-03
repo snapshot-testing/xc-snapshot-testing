@@ -35,6 +35,7 @@ extension SDKViewController {
 
 extension Snapshot {
 
+    /// Makes the snapshot wait for the lock of its input before it runs, so two snapshots of the same view controller never render at once.
     func withLock<Input: SDKViewController, Output: BytesRepresentable>() -> AsyncSnapshot<
         Input, Output
     > where Executor == Async<Input, Output> {
@@ -67,6 +68,7 @@ extension SDKViewController {
         }
     }
 
+    /// Remembers `traits`, and warns if the view controller was last used with different ones.
     func inconsistentTraitsChecker(for traits: Traits) {
         defer { self.traits = traits }
         self.traits?.inconsistentTraitsChecker(self, to: traits)
@@ -75,6 +77,7 @@ extension SDKViewController {
 
 extension Snapshot {
 
+    /// Makes the snapshot check the traits of its input view controller before it runs.
     func inconsistentTraitsChecker<Input: SDKViewController, Output: BytesRepresentable>(
         _ traits: @escaping @Sendable () -> Traits
     ) -> AsyncSnapshot<Input, Output> where Executor == Async<Input, Output> {

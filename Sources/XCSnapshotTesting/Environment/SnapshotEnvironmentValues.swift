@@ -3,21 +3,21 @@
 
 import Foundation
 
-/// A collection of values that configure the snapshot testing environment.
+/// The configuration of the snapshot tests: record mode, diff tool, platform and so on.
 ///
-/// `SnapshotEnvironmentValues` provides a type-safe way to store and retrieve configuration values for snapshot testing.
-/// It uses a subscript syntax with keys conforming to `SnapshotEnvironmentKey` to access and modify environment settings.
+/// Values are stored by key. A key is a type that conforms to ``SnapshotEnvironmentKey`` and
+/// provides a default. Read the values of the running test through ``SnapshotEnvironment/current``,
+/// and change them for a scope with ``withTestingEnvironment(record:diffTool:maxConcurrentTests:platform:operation:file:line:)-(_,_,_,_,()->R,_,_)``.
 ///
 /// ```swift
 /// struct MyEnvironmentKey: SnapshotEnvironmentKey {
-///     typealias Value = Int
 ///     static let defaultValue = 42
 /// }
 ///
-/// try await withTestingEnvironment {
+/// try withTestingEnvironment {
 ///     $0[MyEnvironmentKey.self] = 100
 /// } operation: {
-///     print(SnapshotEnvironment.current[MyEnvironmentKey.self]) // prints 100
+///     print(SnapshotEnvironment.current[MyEnvironmentKey.self])  // 100
 /// }
 /// ```
 public struct SnapshotEnvironmentValues: Sendable {
@@ -28,13 +28,9 @@ public struct SnapshotEnvironmentValues: Sendable {
 
     init() {}
 
-    /// Accesses or sets a configuration value associated with a specific key.
+    /// The value stored for `key`, or its default value if none was set.
     ///
-    /// This subscript provides type-safe access to configuration values stored in `SnapshotEnvironmentValues`.
-    /// It uses keys conforming to `SnapshotEnvironmentKey` to retrieve or modify values.
-    ///
-    /// - Parameter key: The type of key identifying the configuration value.
-    /// - Returns: The stored value for the provided key. If no value is set, returns the key's default value.
+    /// - Parameter key: The type of the key.
     public subscript<Key: SnapshotEnvironmentKey>(_ key: Key.Type) -> Key.Value {
         get {
             values[ObjectIdentifier(key)] as? Key.Value ?? Key.defaultValue
@@ -45,21 +41,17 @@ public struct SnapshotEnvironmentValues: Sendable {
     }
 }
 
-/// Temporarily modifies the testing environment for the duration of the specified operation.
+/// Runs a asynchronous operation with some environment values changed.
 ///
-/// This function allows you to safely mutate the testing environment within a defined scope. After the operation completes, the environment is restored to its original state.
+/// The changes apply to the operation only. Afterwards, the environment is as it was before.
 ///
 /// - Parameters:
-///   - mutating: A closure that takes a mutable reference to `SnapshotEnvironmentValues` and modifies it as needed.
-///   - operation: The asynchronous operation to perform within the modified environment.
-///   - file: The file name for diagnostic purposes. Defaults to the current file.
-///   - line: The line number for diagnostic purposes. Defaults to the current line.
-///
-/// - Returns: The result of the asynchronous operation.
-///
-/// - Throws: Any error thrown by the operation closure.
-///
-/// - Note: The changes made to the environment are only in effect for the duration of the operation.
+///   - mutating: Changes the values of the environment.
+///   - operation: The work to run.
+///   - file: The file of the call, for diagnostics.
+///   - line: The line of the call, for diagnostics.
+/// - Returns: The result of `operation`.
+/// - Throws: An error thrown by `operation`.
 public nonisolated(nonsending) func withTestingEnvironment<R: Sendable>(
     _ mutating: @Sendable (inout SnapshotEnvironmentValues) -> Void,
     operation: nonisolated(nonsending) () async throws -> R,
@@ -76,21 +68,17 @@ public nonisolated(nonsending) func withTestingEnvironment<R: Sendable>(
     )
 }
 
-/// Temporarily modifies the testing environment for the duration of the specified operation.
+/// Runs a synchronous operation with some environment values changed.
 ///
-/// This function allows you to safely mutate the testing environment within a defined scope. After the operation completes, the environment is restored to its original state.
+/// The changes apply to the operation only. Afterwards, the environment is as it was before.
 ///
 /// - Parameters:
-///   - mutating: A closure that takes a mutable reference to `SnapshotEnvironmentValues` and modifies it as needed.
-///   - operation: The synchronous operation to perform within the modified environment.
-///   - file: The file name for diagnostic purposes. Defaults to the current file.
-///   - line: The line number for diagnostic purposes. Defaults to the current line.
-///
-/// - Returns: The result of the synchronous operation.
-///
-/// - Throws: Any error thrown by the operation closure.
-///
-/// - Note: The changes made to the environment are only in effect for the duration of the operation.
+///   - mutating: Changes the values of the environment.
+///   - operation: The work to run.
+///   - file: The file of the call, for diagnostics.
+///   - line: The line of the call, for diagnostics.
+/// - Returns: The result of `operation`.
+/// - Throws: An error thrown by `operation`.
 public func withTestingEnvironment<R>(
     _ mutating: @Sendable (inout SnapshotEnvironmentValues) -> Void,
     operation: () throws -> R,
@@ -107,24 +95,21 @@ public func withTestingEnvironment<R>(
     )
 }
 
-/// Temporarily modifies the testing environment with specified parameters and executes an asynchronous operation within this modified context.
+/// Runs a asynchronous operation with some environment values changed.
 ///
-/// This function allows granular control over the testing environment for the duration of the specified asynchronous operation. It combines direct parameter customization (`record`, `diffTool`, etc.) with a closure for additional environment modifications.
+/// The changes apply to the operation only. Afterwards, the environment is as it was before.
 ///
 /// - Parameters:
-///   - record: Optionally sets the recording mode for the operation.
-///   - diffTool: Optionally specifies a custom diff tool for the operation.
-///   - maxConcurrentTests: Optionally limits the number of concurrent tests.
-///   - platform: Optionally overrides the platform identifier for snapshot paths.
-///   - mutating: A closure that can further modify the `SnapshotEnvironmentValues`.
-///   - operation: The asynchronous operation to perform within the modified environment.
-///   - file: The file name for diagnostic purposes. Defaults to the current file.
-///   - line: The line number for diagnostic purposes. Defaults to the current line.
-///
-/// - Returns: The result of the asynchronous operation.
-/// - Throws: Any error thrown by the operation closure.
-///
-/// - Note: The environment changes are only effective for the duration of the operation.
+///   - record: The record mode, or `nil` to keep the current one.
+///   - diffTool: The diff tool, or `nil` to keep the current one.
+///   - maxConcurrentTests: The maximum number of windows used at once to render UI snapshots, or `nil` to keep the current limit.
+///   - platform: The platform name in the path of the references, or `nil` to keep the current one.
+///   - mutating: Makes further changes, after the ones above.
+///   - operation: The work to run.
+///   - file: The file of the call, for diagnostics.
+///   - line: The line of the call, for diagnostics.
+/// - Returns: The result of `operation`.
+/// - Throws: An error thrown by `operation`.
 public nonisolated(nonsending) func withTestingEnvironment<R: Sendable>(
     record: RecordMode? = nil,
     diffTool: DiffTool? = nil,
@@ -152,23 +137,20 @@ public nonisolated(nonsending) func withTestingEnvironment<R: Sendable>(
     )
 }
 
-/// Temporarily modifies the testing environment with specified parameters and executes an asynchronous operation within this modified context.
+/// Runs a asynchronous operation with some environment values changed.
 ///
-/// This function allows quick configuration of common testing environment parameters for the duration of the specified asynchronous operation.
+/// The changes apply to the operation only. Afterwards, the environment is as it was before.
 ///
 /// - Parameters:
-///   - record: Optionally sets the recording mode for the operation.
-///   - diffTool: Optionally specifies a custom diff tool for the operation.
-///   - maxConcurrentTests: Optionally limits the number of concurrent tests.
-///   - platform: Optionally overrides the platform identifier for snapshot paths.
-///   - operation: The asynchronous operation to perform within the modified environment.
-///   - file: The file name for diagnostic purposes. Defaults to the current file.
-///   - line: The line number for diagnostic purposes. Defaults to the current line.
-///
-/// - Returns: The result of the asynchronous operation.
-/// - Throws: Any error thrown by the operation closure.
-///
-/// - Note: The environment changes are only effective for the duration of the operation.
+///   - record: The record mode, or `nil` to keep the current one.
+///   - diffTool: The diff tool, or `nil` to keep the current one.
+///   - maxConcurrentTests: The maximum number of windows used at once to render UI snapshots, or `nil` to keep the current limit.
+///   - platform: The platform name in the path of the references, or `nil` to keep the current one.
+///   - operation: The work to run.
+///   - file: The file of the call, for diagnostics.
+///   - line: The line of the call, for diagnostics.
+/// - Returns: The result of `operation`.
+/// - Throws: An error thrown by `operation`.
 public nonisolated(nonsending) func withTestingEnvironment<R: Sendable>(
     record: RecordMode? = nil,
     diffTool: DiffTool? = nil,
@@ -194,24 +176,21 @@ public nonisolated(nonsending) func withTestingEnvironment<R: Sendable>(
     )
 }
 
-/// Temporarily modifies the testing environment with specified parameters and executes a synchronous operation within this modified context.
+/// Runs a synchronous operation with some environment values changed.
 ///
-/// This function allows granular control over the testing environment for the duration of the specified synchronous operation. It combines direct parameter customization (`record`, `diffTool`, etc.) with a closure for additional environment modifications.
+/// The changes apply to the operation only. Afterwards, the environment is as it was before.
 ///
 /// - Parameters:
-///   - record: Optionally sets the recording mode for the operation.
-///   - diffTool: Optionally specifies a custom diff tool for the operation.
-///   - maxConcurrentTests: Optionally limits the number of concurrent tests.
-///   - platform: Optionally overrides the platform identifier for snapshot paths.
-///   - mutating: A closure that can further modify the `SnapshotEnvironmentValues`.
-///   - operation: The synchronous operation to perform within the modified environment.
-///   - file: The file name for diagnostic purposes. Defaults to the current file.
-///   - line: The line number for diagnostic purposes. Defaults to the current line.
-///
-/// - Returns: The result of the synchronous operation.
-/// - Throws: Any error thrown by the operation closure.
-///
-/// - Note: The environment changes are only effective for the duration of the operation.
+///   - record: The record mode, or `nil` to keep the current one.
+///   - diffTool: The diff tool, or `nil` to keep the current one.
+///   - maxConcurrentTests: The maximum number of windows used at once to render UI snapshots, or `nil` to keep the current limit.
+///   - platform: The platform name in the path of the references, or `nil` to keep the current one.
+///   - mutating: Makes further changes, after the ones above.
+///   - operation: The work to run.
+///   - file: The file of the call, for diagnostics.
+///   - line: The line of the call, for diagnostics.
+/// - Returns: The result of `operation`.
+/// - Throws: An error thrown by `operation`.
 public func withTestingEnvironment<R>(
     record: RecordMode? = nil,
     diffTool: DiffTool? = nil,
@@ -239,23 +218,20 @@ public func withTestingEnvironment<R>(
     )
 }
 
-/// Temporarily modifies the testing environment with specified parameters and executes a synchronous operation within this modified context.
+/// Runs a synchronous operation with some environment values changed.
 ///
-/// This function allows quick configuration of common testing environment parameters for the duration of the specified synchronous operation.
+/// The changes apply to the operation only. Afterwards, the environment is as it was before.
 ///
 /// - Parameters:
-///   - record: Optionally sets the recording mode for the operation.
-///   - diffTool: Optionally specifies a custom diff tool for the operation.
-///   - maxConcurrentTests: Optionally limits the number of concurrent tests.
-///   - platform: Optionally overrides the platform identifier for snapshot paths.
-///   - operation: The synchronous operation to perform within the modified environment.
-///   - file: The file name for diagnostic purposes. Defaults to the current file.
-///   - line: The line number for diagnostic purposes. Defaults to the current line.
-///
-/// - Returns: The result of the synchronous operation.
-/// - Throws: Any error thrown by the operation closure.
-///
-/// - Note: The environment changes are only effective for the duration of the operation.
+///   - record: The record mode, or `nil` to keep the current one.
+///   - diffTool: The diff tool, or `nil` to keep the current one.
+///   - maxConcurrentTests: The maximum number of windows used at once to render UI snapshots, or `nil` to keep the current limit.
+///   - platform: The platform name in the path of the references, or `nil` to keep the current one.
+///   - operation: The work to run.
+///   - file: The file of the call, for diagnostics.
+///   - line: The line of the call, for diagnostics.
+/// - Returns: The result of `operation`.
+/// - Throws: An error thrown by `operation`.
 public func withTestingEnvironment<R>(
     record: RecordMode? = nil,
     diffTool: DiffTool? = nil,
@@ -281,6 +257,7 @@ public func withTestingEnvironment<R>(
     )
 }
 
+/// Sets in `environment` the values that are not `nil`, and leaves the others as they are.
 private func mutatingEnvironmentValues(
     record: RecordMode?,
     diffTool: DiffTool?,
