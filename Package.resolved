@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/o-nnerb/swift-async-stream",
       "state" : {
-        "revision" : "e97828eb629b8aec419791cbfe367d4d7d8ba97d",
-        "version" : "3.0.1"
+        "revision" : "7f4944bef421c17ab71469a84b407e106092b3bc",
+        "version" : "3.0.2"
       }
     },
     {
